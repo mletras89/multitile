@@ -45,14 +45,9 @@ import multitile.architecture.Tile;
 import multitile.architecture.Architecture;
 import multitile.architecture.Memory;
 import multitile.architecture.TileLocalMemory;
-
 import multitile.application.Application;
-import multitile.application.Actor;
-import multitile.application.Actor;
-import multitile.application.Fifo;
 
 import java.util.List;
-import java.util.Map;
 import java.util.*;
 
 public class BaseScheduler{

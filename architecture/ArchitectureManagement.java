@@ -39,7 +39,7 @@
 package multitile.architecture;
 
 import multitile.application.Fifo;
-import java.util.*;
+
 
 public class ArchitectureManagement{
   private static int processorIdCounter;

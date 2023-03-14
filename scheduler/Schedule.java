@@ -37,12 +37,6 @@
 
 package multitile.scheduler;
 
-//import src.multitile.application.Actor;
-//import src.multitile.application.Fifo;
-
-import java.util.List;
-import java.util.Map;
-
 interface Schedule{
   public void schedule();
 }

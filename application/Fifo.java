@@ -39,7 +39,6 @@ package multitile.application;
 
 import multitile.architecture.Tile;
 import multitile.Transfer;
-import multitile.Transfer;
 import multitile.architecture.Memory;
 import java.util.*;
 
@@ -314,7 +313,7 @@ public class Fifo implements Buffer{
   
   public boolean removeReMapping() {
     this.numberOfReadsReMapping++;
-    int currentNumberOfReads = this.numberOfReadsReMapping;
+    //int currentNumberOfReads = this.numberOfReadsReMapping;
     boolean status = false;
 	  
     status = this.ReMapping.remove();

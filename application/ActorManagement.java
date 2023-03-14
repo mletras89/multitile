@@ -38,8 +38,6 @@
 
 package multitile.application;
 
-import java.util.*;
-import multitile.application.Actor;
 
 public class ActorManagement{
   private static int actorIdCounter;
