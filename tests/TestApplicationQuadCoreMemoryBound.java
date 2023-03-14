@@ -38,46 +38,22 @@
 package multitile.tests;
 
 import multitile.architecture.Tile;
-import multitile.architecture.Memory;
-import multitile.architecture.LocalMemory;
-import multitile.architecture.TileLocalMemory;
+
 import multitile.architecture.Processor;
 import multitile.architecture.GlobalMemory;
 
 import multitile.application.Application;
 import multitile.application.Actor;
 import multitile.application.Fifo;
-import multitile.application.CompositeFifo;
-import multitile.application.FifoManagement;
-import multitile.application.ApplicationManagement;
 import multitile.application.Fifo.FIFO_MAPPING_TYPE;
 
-import java.io.*;
-import java.math.*;
-import java.security.*;
-import java.text.*;
 import java.util.*;
-import java.util.concurrent.*;
-import java.util.function.*;
-import java.util.regex.*;
-import java.util.stream.*;
-import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toList;
 
 public class TestApplicationQuadCoreMemoryBound{
   private Application sampleApplication;
 
   public TestApplicationQuadCoreMemoryBound(Tile t1,Tile t2, GlobalMemory globalMemory){
-      TileLocalMemory tileLocalMemory1 	= t1.getTileLocalMemory();
-      LocalMemory tile1LocalMemory1 	= t1.getProcessors().get(0).getLocalMemory();
-      LocalMemory tile1LocalMemory2 	= t1.getProcessors().get(1).getLocalMemory();
-
-      TileLocalMemory tileLocalMemory2 	= t2.getTileLocalMemory();
-      LocalMemory tile2LocalMemory1 	= t2.getProcessors().get(2).getLocalMemory();
-      LocalMemory tile2LocalMemory2 	= t2.getProcessors().get(3).getLocalMemory();
-
-
-      Processor cpu1 = t1.getProcessors().get(0);
+	  Processor cpu1 = t1.getProcessors().get(0);
       Processor cpu2 = t1.getProcessors().get(1);
 
       Processor cpu3 = t2.getProcessors().get(2);
@@ -189,11 +165,6 @@ public class TestApplicationQuadCoreMemoryBound{
 
 
   public TestApplicationQuadCoreMemoryBound(Tile t1){
-      TileLocalMemory tileLocalMemory = t1.getTileLocalMemory();
-      LocalMemory localMemory1 = t1.getProcessors().get(0).getLocalMemory();
-      LocalMemory localMemory2 = t1.getProcessors().get(1).getLocalMemory();
-      LocalMemory localMemory3 = t1.getProcessors().get(2).getLocalMemory();
-
       Processor cpu1 = t1.getProcessors().get(0);
       Processor cpu2 = t1.getProcessors().get(1);
       Processor cpu3 = t1.getProcessors().get(2);
