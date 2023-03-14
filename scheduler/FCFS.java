@@ -38,12 +38,9 @@ package multitile.scheduler;
 
 import multitile.Action;
 import multitile.Transfer;
-
 import multitile.architecture.Tile;
 import multitile.architecture.Processor;
-
 import multitile.application.Actor;
-import multitile.application.Fifo;
 
 import java.util.List;
 import java.util.Map;
@@ -59,8 +56,8 @@ public class FCFS extends BaseScheduler implements Schedule{
   }
   
   public void schedule(){
-    List<Actor> actors = application.getListActors(); 
-    Map<Integer,Fifo> fifoMap = application.getFifos();
+    //List<Actor> actors = application.getListActors(); 
+    //Map<Integer,Fifo> fifoMap = application.getFifos();
     for(HashMap.Entry<Integer,Tile> t : architecture.getTiles().entrySet()){
       // reseting all the tiles in the architecture
       t.getValue().resetTile();
