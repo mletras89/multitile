@@ -49,38 +49,38 @@ public class Application{
   }
 
   public void resetApplication(){
-    for(Map.Entry<Integer,Fifo> fifo : this.fifos.entrySet()){
+    for(Map.Entry<Integer,Fifo> fifo : fifos.entrySet()){
       fifo.getValue().resetFifo();
     }
   }
 
-  public void setActors(Map<Integer,Actor> actors){
-    this.actors = actors;
+  public void setActors(Map<Integer,Actor> actorsN){
+    actors = actorsN;
   }
 
   public void setActorsFromList(List<Actor> actorsList){
-    this.actors = new HashMap<>();
+    actors = new HashMap<>();
     for(Actor actor:actorsList){
-      this.actors.put(actor.getId(),actor);
+      actors.put(actor.getId(),actor);
     }
   }
 
-  public void setFifos(Map<Integer,Fifo> fifos){
-    this.fifos = fifos;
+  public void setFifos(Map<Integer,Fifo> fifosN){
+    fifos = fifosN;
   }
 
   public Map<Integer,Fifo> getFifos(){
-    return this.fifos;
+    return fifos;
   }
 
   public Map<Integer,Actor> getActors(){
-    return this.actors;
+    return actors;
   }
 
   public List<Actor> getListActors(){
     List<Actor> listActors = new ArrayList<>();
 //   System.out.println("Getting list ");
-    for(Map.Entry<Integer,Actor> actor : this.actors.entrySet() ){
+    for(Map.Entry<Integer,Actor> actor : actors.entrySet() ){
 //      System.out.println("Adding: "+actor.getValue().getName());
       listActors.add(actor.getValue());
     }
@@ -89,20 +89,20 @@ public class Application{
   }
 
   public void printActors(){
-    for(Map.Entry<Integer,Actor> actorEntry : this.actors.entrySet()){   
+    for(Map.Entry<Integer,Actor> actorEntry : actors.entrySet()){   
       System.out.println("Actor:"+actorEntry.getValue().getName()+" is multicast:"+actorEntry.getValue().isMulticastActor()+" is mergeable: "+actorEntry.getValue().isMergeMulticast()+" mapped to "+actorEntry.getValue().getMapping().getName());
     }
   }
 
 
   public void printFifos(){
-    for(Map.Entry<Integer,Fifo> fifoEntry : this.fifos.entrySet()){
+    for(Map.Entry<Integer,Fifo> fifoEntry : fifos.entrySet()){
       System.out.println("Fifo:"+fifoEntry.getValue().getName()+" is composite?:"+fifoEntry.getValue().isCompositeChannel()+" mapped to: "+fifoEntry.getValue().getMapping().getName());
     }
   }
 
   public void printFifosState(){
-    for(Map.Entry<Integer,Fifo> fifoEntry : this.fifos.entrySet()){
+    for(Map.Entry<Integer,Fifo> fifoEntry : fifos.entrySet()){
       System.out.println("Fifo: "+fifoEntry.getValue().getName()+" contains tokens: "+fifoEntry.getValue().get_tokens());
       System.out.println("\t"+fifoEntry.getValue().getTimeProducedToken());
     }
