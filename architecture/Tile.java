@@ -39,25 +39,7 @@
 */
 package multitile.architecture;
 
-import multitile.application.Actor;
-import multitile.application.Fifo;
-import multitile.application.Application;
-
-//import src.multitile.FCFS;
-import multitile.Action;
-import multitile.Transfer;
-
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
-import java.util.Vector;
-import java.util.stream.Collectors;
-import java.util.Queue;
 import java.util.*;
 
 public class Tile{
@@ -146,6 +128,10 @@ public class Tile{
   
   public void setTotalIterations(int totalIterations){
     this.totalIterations = totalIterations;
+  }
+  
+  public int getTotalIterations(){
+	return this.totalIterations;
   }
   
   public TileLocalMemory getTileLocalMemory(){
