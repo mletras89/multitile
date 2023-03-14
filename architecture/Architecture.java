@@ -88,6 +88,17 @@ public class Architecture{
     noc = new NoC();
   }
   
+  // a new constructor that creates an architecture from a set tiles
+  public Architecture(String name, List<Tile> tilesL) {
+	  this.name = name;
+	  tiles = new HashMap<>();
+	  globalMemory = new GlobalMemory("GlobalMemory");
+	  noc = new NoC();
+	  for(Tile t : tilesL) {
+		  tiles.put(t.getId(), t);
+	  }
+  }
+  
   public double getEndTime(){
     double endTime = 0.0;
     for(Map.Entry<Integer,Tile> t : tiles.entrySet()){
@@ -122,6 +133,14 @@ public class Architecture{
   	this.name = name;
   }
   
+  public Tile getTileByName(String tileName) {
+	  for(Map.Entry<Integer, Tile> entry : this.tiles.entrySet()){
+		  if (entry.getValue().getName() == tileName)
+			  return entry.getValue();
+	  }
+	  return null;
+  }
+  
   public HashMap<Integer,Tile> getTiles(){
   	return this.tiles;
   }
@@ -148,6 +167,21 @@ public class Architecture{
       t.getValue().getTileLocalMemory().printMemoryState();
     }
   }
+  
+  public void printArchitecture() {
+	  for(HashMap.Entry<Integer,Tile> t: this.tiles.entrySet()){
+		  System.out.println("Tile: "+t.getValue().getName());
+	      for(HashMap.Entry<Integer,Processor> p : t.getValue().getProcessors().entrySet()){
+	        System.out.println("\tProcessor "+p.getValue().getName());
+	        System.out.println("\t\tLocal memory "+p.getValue().getLocalMemory().getName()+" capacity "+p.getValue().getLocalMemory().getCapacity());
+	      }
+	      System.out.println("\tTile Local memory: "+t.getValue().getTileLocalMemory().getName()+" capacity "+t.getValue().getTileLocalMemory().getCapacity());
+	      System.out.println("\tCrossbar: "+t.getValue().getCrossbar().getName()+" bW "+t.getValue().getCrossbar().getBandwidth()+" channels "+t.getValue().getCrossbar().getNumberofParallelChannels()+ " bw per channel "+t.getValue().getCrossbar().getBandwithPerChannel());
+	  }
+	  System.out.println("NoC: "+this.getNoC().getName()+" bW "+this.getNoC().getBandwidth()+" channels "+this.getNoC().getNumberOfParallelChannels()+ " bw per channel "+this.getNoC().getBandwithPerChannel());
+	  System.out.println("Global Memory: "+this.getGlobalMemory().getName()+" capacity "+this.getGlobalMemory().getCapacity());
+  }
+  
 
   // DUMPING the architecture utilization stats
   // processor and local memory Utilization
