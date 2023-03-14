@@ -61,8 +61,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
-import java.util.Vector;
-import java.util.stream.Collectors;
 import java.util.Queue;
 import java.util.Arrays;
 
@@ -193,8 +191,6 @@ public class Scheduler{
     SchedulerManagement.sort(transfersToMemory);
     for(Transfer t: this.transfersToMemory){
       // now we update the memory of this transfer
-      int numberTokens = t.getFifo().getProdRate();
-      int numberBytesperToken  = t.getFifo().getTokenSize();
       if(t.getType() == Transfer.TRANSFER_TYPE.READ)
         t.getFifo().fifoReadFromMemory(t);
       else
