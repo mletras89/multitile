@@ -1,16 +1,6 @@
 package multitile.tests;
 
 import java.io.*;
-import java.math.*;
-import java.security.*;
-import java.text.*;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.function.*;
-import java.util.regex.*;
-import java.util.stream.*;
-import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toList;
 
 import multitile.application.Actor;
 import multitile.architecture.Processor;
@@ -32,11 +22,7 @@ public class testProcessor {
       Actor actor4 = new Actor("actor4");
       actor4.setExecutionTime(10000);
       Action a4 = new Action(actor4);
-      Actor actor5 = new Actor("actor5");
-      Actor actor6 = new Actor("actor6");
-      Actor actor7 = new Actor("actor5");
-      Actor actor8 = new Actor("actor6");
-
+      
       Processor cpu1 = new Processor("cpu1");
       
       cpu1.getScheduler().insertAction(a1);
