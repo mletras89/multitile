@@ -46,13 +46,10 @@ import multitile.Transfer;
 
 import multitile.architecture.Processor;
 import multitile.architecture.Tile;
-import multitile.architecture.Architecture;
 import multitile.architecture.ArchitectureManagement;
 import multitile.architecture.Memory;
 
 import multitile.application.ApplicationManagement;
-import multitile.application.Application;
-import multitile.application.Actor;
 import multitile.application.Actor;
 import multitile.application.Fifo;
 
@@ -163,8 +160,8 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
     }
     
     // the number of the control step and the list is the actors scheduled in that control step
-    HashMap<Integer,List<Integer>> controlStep = new HashMap<>();
-    HashMap<Integer,List<Integer>> occHard     = new HashMap<>();
+    //HashMap<Integer,List<Integer>> controlStep = new HashMap<>();
+    //HashMap<Integer,List<Integer>> occHard     = new HashMap<>();
 
     while(!V.isEmpty()) {
       List<Integer> removeV = new ArrayList<>();
@@ -484,10 +481,10 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
         resourceOcupation.put(i,currentTilesOccupation);
         i++;
       }else{
-        Memory newMapping = ArchitectureManagement.getMemoryToBeRelocated(ReMapTransfer.getFifo(),architecture);
-	// do the ReMapping
-	Memory reMappingMemory = ArchitectureManagement.getMemoryToBeRelocated(ReMapTransfer.getFifo(),architecture);
-	ApplicationManagement.remapFifo(ReMapTransfer.getFifo(),application, reMappingMemory);
+        //Memory newMapping = ArchitectureManagement.getMemoryToBeRelocated(ReMapTransfer.getFifo(),architecture);
+	    // do the ReMapping
+	    Memory reMappingMemory = ArchitectureManagement.getMemoryToBeRelocated(ReMapTransfer.getFifo(),architecture);
+	    ApplicationManagement.remapFifo(ReMapTransfer.getFifo(),application, reMappingMemory);
         return false;
         // return after doing the remaping, to run again the scheduler
       }
