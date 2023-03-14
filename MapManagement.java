@@ -59,7 +59,7 @@ public class MapManagement{
       if(fifo.getId() == idFifo)
         return fifo;
     }
-    assert (true) : "the Fifo id is not in the list, this must not happen!";
+    System.out.println("the Fifo id is not in the list, this must not happen!");
     return null;
   }
 }
