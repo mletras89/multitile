@@ -94,6 +94,11 @@ public class Application{
     }
   }
 
+  public void printActorsShort(){
+	for(Map.Entry<Integer,Actor> actorEntry : actors.entrySet()){   
+	  System.out.println("Actor:"+actorEntry.getValue().getName()+" is multicast:"+actorEntry.getValue().isMulticastActor()+" is mergeable: "+actorEntry.getValue().isMergeMulticast());
+	}
+  }
 
   public void printFifos(){
     for(Map.Entry<Integer,Fifo> fifoEntry : fifos.entrySet()){
@@ -101,6 +106,13 @@ public class Application{
     }
   }
 
+  public void printFifosShort(){
+	for(Map.Entry<Integer,Fifo> fifoEntry : fifos.entrySet()){
+	  System.out.println("Fifo:"+fifoEntry.getValue().getName()+" is composite?:"+fifoEntry.getValue().isCompositeChannel());
+	}
+  }
+  
+  
   public void printFifosState(){
     for(Map.Entry<Integer,Fifo> fifoEntry : fifos.entrySet()){
       System.out.println("Fifo: "+fifoEntry.getValue().getName()+" contains tokens: "+fifoEntry.getValue().get_tokens());
