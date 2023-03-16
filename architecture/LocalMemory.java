@@ -48,6 +48,7 @@ public class LocalMemory extends Memory{
 
   public LocalMemory(LocalMemory other){
     super(other);
+    this.setType(MEMORY_TYPE.LOCAL_MEM);
   }
 
   public LocalMemory(String name, int capacity){
