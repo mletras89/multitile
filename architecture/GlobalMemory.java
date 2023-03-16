@@ -49,7 +49,9 @@ public class GlobalMemory extends Memory{
 
 	public GlobalMemory(GlobalMemory other){
 		super(other);
-		this.setCapacity(Double.POSITIVE_INFINITY);
+		this.setType(MEMORY_TYPE.GLOBAL_MEM);
+		this.setCapacity(other.getCapacity());
+		this.setEmbeddedToProcessor(null);
 	}
 
 	public GlobalMemory(String name){
