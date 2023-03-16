@@ -54,7 +54,7 @@ public class Actor{
   private Processor mapping;  // mapping to the Processor object
   private Tile mappingToTile;  // mapping to the Tile
 
-  private double executionTime;  // the execution time is associated with the mapping
+  private double executionTime=100.0;  // the execution time is associated with the mapping
 
   private ACTOR_TYPE type;
   private boolean mergeMulticast = false;
@@ -91,9 +91,15 @@ public class Actor{
     this.setOutputs(another.getOutputs());
     this.setExecutionTime(another.getExecutionTime());
     this.setMapping(another.getMapping());
-    this.setType(ACTOR_TYPE.ACTOR);
-    this.inputFifos    = another.getInputFifos();
-    this.outputFifos   = another.getOutputFifos();
+    this.setType(another.getType());
+    this.inputFifos  = new Vector<Fifo>();   
+    this.outputFifos = new Vector<Fifo>();
+    for(Fifo f : another.getInputFifos()) {
+    	this.inputFifos.add(new Fifo(f));
+    }
+    for(Fifo f: another.getOutputFifos()) {
+    	this.outputFifos.add(new Fifo(f));
+    }
   }
     
   public Actor(String name){
