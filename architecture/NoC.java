@@ -82,11 +82,16 @@ public class NoC{
   public NoC(NoC other){
     this.id = other.getId();
     this.setName(other.getName()); 
-    this.channels = new ArrayList<>(other.getScheduledTransfersChannels()); 
-    this.queueTransfers = new ArrayList<>(other.getQueueTransfers()); 
+    this.channels = new ArrayList<>(); 
+    this.queueTransfers = new ArrayList<>(); 
     this.numberofParallelChannels = other.getNumberOfParallelChannels();
     this.setBandwidth(other.getNumberOfParallelChannels(),other.getBandwidth());
-    this.timeEachChannel = new ArrayList<Double>(other.getTimeEachChannel());
+    this.timeEachChannel = new ArrayList<Double>();
+    for(int i = 0; i<numberofParallelChannels;i++){
+        LinkedList<Transfer> schedActions =  new LinkedList<Transfer>();
+        this.channels.add(schedActions);
+        this.timeEachChannel.add(0.0);
+    }
   }
 
   public void restartNoC(){
