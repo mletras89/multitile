@@ -54,6 +54,38 @@ import multitile.scheduler.ModuloScheduler;
 
 public class ApplicationManagement{
 
+	public static Application cloneApplication(Application app) {
+		Application newApp = new Application();
+		HashMap<Integer,Actor> actors = new HashMap<>();
+		HashMap<Integer,Fifo> fifos = new HashMap<>();
+		// cloning the actors
+		for(Map.Entry<Integer, Actor> actor : app.getActors().entrySet()) {
+			actors.put(actor.getKey(), new Actor(actor.getValue()));
+		}
+		// cloning the fifos
+		for(Map.Entry<Integer, Fifo> fifo: app.getFifos().entrySet()) {
+			fifos.put(fifo.getKey(), new Fifo(fifo.getValue()));
+		}
+		return newApp;
+	}
+	
+	public static void setFifosToActors(Application app) {
+		for(Map.Entry<Integer, Actor> actor : app.getActors().entrySet()) {
+			Vector<Fifo> inputs= new Vector<Fifo>();
+			Vector<Fifo> outputs = new Vector<Fifo>();
+			for(Map.Entry<Integer, Fifo> fifo : app.getFifos().entrySet()) {
+				if (fifo.getValue().getSource().equals(actor.getValue())){
+					outputs.add(fifo.getValue());
+				}
+				if (fifo.getValue().getDestination().equals(actor.getValue())) {
+					inputs.add(fifo.getValue());
+				}
+			}
+			app.getActors().get(actor.getKey()).setInputFifos(inputs);
+			app.getActors().get(actor.getKey()).setOutputFifos(outputs);
+		}
+	}
+		
 	public static void remapFifo(Fifo fifo,Application application, Memory newMapping){
 			application.getFifos().get(fifo.getId()).setMapping(newMapping);
 	}
@@ -160,7 +192,32 @@ public class ApplicationManagement{
       app.getActors().get(selectedActor.getId()).setMergeMulticast(true);
     }
   }
-
+  
+  public static void setAllMulticastActorsAsNotMergeable(Application app){
+	    //System.out.println("setAllMulticastActorsAsMergeable");
+	    // get all the multicast actors
+	    Map<Integer,Actor> multicastActors = getMulticastActors(app);
+	    
+	    for(Map.Entry<Integer,Actor> multicastActor : multicastActors.entrySet()){
+	      Actor selectedActor = multicastActor.getValue();
+	      //System.out.println("Setting: "+selectedActor.getName());
+	      app.getActors().get(selectedActor.getId()).setMergeMulticast(false);
+	    }
+  }
+  
+  // this method selectively set multicast actors as mergeable
+  public static void setMulticastActorsAsMergeable(Application app, ArrayList<Boolean> mergeable) {
+	// get all the multicast actors
+	Map<Integer,Actor> multicastActors = getMulticastActors(app);
+	assert multicastActors.size() == mergeable.size() : "SOMETHING WRONG SIZE OF multicastActors AND mergeable MUST BE THE SAME";
+	int count = 0;
+	for(Map.Entry<Integer,Actor> multicastActor : multicastActors.entrySet()){
+	      Actor selectedActor = multicastActor.getValue();
+	      app.getActors().get(selectedActor.getId()).setMergeMulticast(mergeable.get(count));
+	      count++;
+	}
+  }
+  
   // these method receives an application and returns a modified application removing 
   // all the mergeable multicast actors from the application and replace them by composite channels
   public static void collapseMergeableMulticastActors(Application app){
