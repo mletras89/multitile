@@ -56,6 +56,12 @@ public class ArchitectureManagement{
     nocIdCounter = 0;
   }
 
+  public static Architecture cloneArchitecture(Architecture arch) {
+	  Architecture clonedArchitecture = new Architecture(arch);
+	  
+	  return clonedArchitecture;
+  }
+  
   public static void updateLastEventInProcessor(Architecture architecture, Processor processor, double time){
     double timeEvent = architecture.getTiles().get(processor.getOwnerTile().getId()).getProcessors().get(processor.getId()).getScheduler().getLastEventinProcessor(); 
     if (time>timeEvent)
