@@ -69,7 +69,7 @@ public class Architecture{
     tiles = new HashMap<>(); 
     // declaring NoC for multitile architecture
     noc = new NoC();      
-		for(int i=0; i < nTiles; i++){
+	for(int i=0; i < nTiles; i++){
       Tile t = new Tile("Tile"+(i+1), nProcPerTile, BWCrossbars, channelsCrossbar);
       tiles.put(t.getId(),t);  
     }
@@ -97,6 +97,18 @@ public class Architecture{
 	  for(Tile t : tilesL) {
 		  tiles.put(t.getId(), t);
 	  }
+  }
+  
+  // clone architecture from another architecture
+  public Architecture(Architecture another) {
+	  this.name = another.getName();
+	  this.tiles = new HashMap<>();
+	  for(Map.Entry<Integer, Tile> t : another.getTiles().entrySet()) {
+		  Tile clonedTile = new Tile(t.getValue());
+		  tiles.put(clonedTile.getId(), clonedTile);
+	  }
+	  this.noc = new NoC(another.getNoC());
+	  this.globalMemory = new GlobalMemory(another.getGlobalMemory()); 
   }
   
   public double getEndTime(){
