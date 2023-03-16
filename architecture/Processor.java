@@ -61,10 +61,11 @@ public class Processor {
   }
     
   public Processor(Processor other) {
-    this.setName(other.getName());
-    this.setId(other.getId());
-    this.scheduler = other.scheduler;
-    this.localMemory.setEmbeddedToProcessor(this);
+	  this.setId(other.getId());
+	  this.setName(other.getName());
+	  this.scheduler = new Scheduler(name,this);
+	  this.localMemory = new LocalMemory(other.getLocalMemory());
+	  this.localMemory.setEmbeddedToProcessor(this);
   }
 
   public double calculateOverallProcessorUtilization(double endTime){
