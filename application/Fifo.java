@@ -167,8 +167,8 @@ public class Fifo implements Buffer{
     this.setConsRate(another.getConsRate());
     this.setProdRate(another.getProdRate());
 
-    this.setSource(another.getSource());
-    this.setDestination(another.getDestination());
+    this.setSource(new Actor(another.getSource()));
+    this.setDestination(new Actor(another.getDestination()));
 
     this.timeProducedToken = new LinkedList<>();
     this.setNumberOfReadsTimeProduced(another.getNumberOfReadsTimeProduced());
