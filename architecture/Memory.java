@@ -77,11 +77,12 @@ public class Memory{
   }
    // cloning memory
   public Memory(Memory other) {
+	this.setId(other.getId());
     this.setName(other.getName());
-    this.setId(other.getId());
-    this.resetMemoryUtilization();
     this.setCapacity(other.getCapacity());
+    this.resetMemoryUtilization();
     this.setType(other.getType());
+    this.setEmbeddedToProcessor(other.getEmbeddedToProcessor());
   }
   // creating memory from given parameters
   public Memory(String name, double capacity){
