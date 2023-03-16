@@ -73,6 +73,22 @@ public class Tile{
     tileLocalMemory.setOwnerTile(this);
   }
 
+  public Tile(Tile another) {
+	  this.id = another.getId();
+	  this.name = another.getName();
+	  this.numberProcessors = another.getNumberOfProcessoers();
+	  this.processors = new HashMap<>();
+	  for(Map.Entry<Integer,Processor> proc : another.getProcessors().entrySet()){
+	      Processor processor = new Processor(proc.getValue());
+	      processor.setOwnerTile(this);
+	      processors.put(processor.getId(),processor);
+	  }
+	  crossbar = new Crossbar(another.getCrossbar());
+	  tileLocalMemory = new TileLocalMemory(another.getTileLocalMemory());
+	  tileLocalMemory.setOwnerTile(this);
+	  totalIterations = another.getTotalIterations();
+  }
+  
   public Tile(String name,int numberProcessors,double crossbarBw,int crossbarChannels){
     this.id = ArchitectureManagement.getTileId();
     this.name = name;
@@ -94,6 +110,10 @@ public class Tile{
     tileLocalMemory.setOwnerTile(this);
   }
 
+  public int getNumberOfProcessoers(){
+	  return this.numberProcessors;
+  }
+  
   public double averageProcessorUtilization(double endTime){
     double processorUtilization = 0.0;
     double nProcs=0;
