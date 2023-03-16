@@ -45,7 +45,7 @@ public class TileLocalMemory extends Memory{
     this.setType(MEMORY_TYPE.TILE_LOCAL_MEM);
   }
 
-  public TileLocalMemory(LocalMemory other){
+  public TileLocalMemory(TileLocalMemory other){
     super(other);
   }
 
