@@ -87,10 +87,16 @@ public class Crossbar{
     this.id   = other.getId();
     this.queueTransfers = new ArrayList<>(other.getQueueTransfers());
     this.scheduledActions = new ArrayList<>(other.getScheduledActions());
-    this.setBandwidth(other.getNumberofParallelChannels(),other.getBandwidth());
     this.scheduledReadTransfers = new HashMap<>();
     this.scheduledWriteTransfers = new HashMap<>();
-    //this.ownerTile = other.getOwnerTile();
+    this.timeEachChannel  = new ArrayList<>();
+    this.numberofParallelChannels = other.getNumberofParallelChannels();
+    for(int i = 0; i<numberofParallelChannels;i++){
+        LinkedList<Transfer> schedActions =  new LinkedList<Transfer>();
+        this.scheduledActions.add(schedActions);
+        this.timeEachChannel.add(0.0);
+    }
+    this.setBandwidth(other.getNumberofParallelChannels(),other.getBandwidth());
   }
   // creating crossbar from given parameters
   public Crossbar(String name, double bandwidth, int numberofParallelChannels){
