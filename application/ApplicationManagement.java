@@ -48,25 +48,82 @@ import multitile.architecture.Memory;
 import multitile.application.Actor;
 import multitile.application.Application;
 import multitile.application.Fifo;
+import multitile.application.Fifo.FIFO_MAPPING_TYPE;
 import multitile.application.CompositeFifo;
 
 import multitile.scheduler.ModuloScheduler;
 
 public class ApplicationManagement{
 
-	public static Application cloneApplication(Application app) {
-		Application newApp = new Application();
-		HashMap<Integer,Actor> actors = new HashMap<>();
-		HashMap<Integer,Fifo> fifos = new HashMap<>();
-		// cloning the actors
-		for(Map.Entry<Integer, Actor> actor : app.getActors().entrySet()) {
-			actors.put(actor.getKey(), new Actor(actor.getValue()));
+	public static Application cloneApplication(Application appSpec){
+		Application appImplementation = new Application();
+		Map<Integer,Actor> clonedActors = new HashMap<>();
+		Map<Integer,Fifo> clonedFifos =  new HashMap<>();
+		
+		for(Map.Entry<Integer, Actor> actor : appSpec.getActors().entrySet()) {
+			Actor clonedActor = new Actor(actor.getValue());
+			clonedActors.put(clonedActor.getId(), clonedActor);
 		}
 		// cloning the fifos
-		for(Map.Entry<Integer, Fifo> fifo: app.getFifos().entrySet()) {
-			fifos.put(fifo.getKey(), new Fifo(fifo.getValue()));
+		for(Map.Entry<Integer, Fifo> fifo: appSpec.getFifos().entrySet()) {
+			Fifo clonedFifo = new Fifo(fifo.getValue());
+			clonedFifos.put(clonedFifo.getId(), clonedFifo);
 		}
-		return newApp;
+		appImplementation.setActors(clonedActors);
+		appImplementation.setFifos(clonedFifos);
+		return appImplementation;
+	}
+	
+	public static void setAllFifosToSource(Application app) {
+		for(Map.Entry<Integer, Fifo> fifo: app.getFifos().entrySet()) {
+			fifo.getValue().setMappingType(FIFO_MAPPING_TYPE.SOURCE);
+		}
+	}
+	
+	public static void setAllFifosToDestination(Application app) {
+		for(Map.Entry<Integer, Fifo> fifo: app.getFifos().entrySet()) {
+			fifo.getValue().setMappingType(FIFO_MAPPING_TYPE.DESTINATION);
+		}
+	}
+	
+	public static void setAllFifosToTileLocalMemory(Application app) {
+		for(Map.Entry<Integer, Fifo> fifo: app.getFifos().entrySet()) {
+			fifo.getValue().setMappingType(FIFO_MAPPING_TYPE.TILE_LOCAL);
+		}
+	}
+	
+	public static void setAllFifosToGlobalMemory(Application app) {
+		for(Map.Entry<Integer, Fifo> fifo: app.getFifos().entrySet()) {
+			fifo.getValue().setMappingType(FIFO_MAPPING_TYPE.GLOBAL);
+		}
+	}
+	
+	public static void setFifosToDecision(Application app,ArrayList<Integer> decision) {
+		//System.out.println("Decision size "+decision.size());
+		//System.out.println("number fifos "+app.getFifos().size());
+		assert app.getFifos().size() == decision.size() : "SOMETHING WRONG SIZE OF fifos AND decision MUST BE THE SAME";
+		int counter = 0;
+        for(Map.Entry<Integer, Fifo> fifo : app.getFifos().entrySet()) {
+        	int fifoMapping = decision.get(counter);
+        	switch(fifoMapping) {
+        		case 0:
+        			// fifo mapped to produced
+        			fifo.getValue().setMappingType(FIFO_MAPPING_TYPE.SOURCE);
+        			break;
+        		case 1:
+        			// fifo mapped to consumer
+        			fifo.getValue().setMappingType(FIFO_MAPPING_TYPE.DESTINATION);
+        			break;
+        		case 2:
+        			fifo.getValue().setMappingType(FIFO_MAPPING_TYPE.TILE_LOCAL);
+        			// fifo mapped to tile local memory
+        			break;
+        		default:
+        			// fifo mapped to global memory
+        			fifo.getValue().setMappingType(FIFO_MAPPING_TYPE.GLOBAL);
+        	}
+        	counter++;
+        }
 	}
 	
 	public static void setFifosToActors(Application app) {
