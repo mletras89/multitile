@@ -82,7 +82,7 @@ public class Actor{
     this.inputFifos  = new Vector<Fifo>();   
     this.outputFifos = new Vector<Fifo>();    
   }
-    
+  
   public Actor(Actor another){
     this.setId(another.getId());
     this.setName(another.getName());
@@ -94,12 +94,6 @@ public class Actor{
     this.setType(another.getType());
     this.inputFifos  = new Vector<Fifo>();   
     this.outputFifos = new Vector<Fifo>();
-    for(Fifo f : another.getInputFifos()) {
-    	this.inputFifos.add(new Fifo(f));
-    }
-    for(Fifo f: another.getOutputFifos()) {
-    	this.outputFifos.add(new Fifo(f));
-    }
   }
     
   public Actor(String name){
