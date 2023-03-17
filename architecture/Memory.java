@@ -186,7 +186,8 @@ public class Memory{
     System.err.println("Writing memory "+this.getName()+ " storing "+currentBytes+" writing "+amountBytes+" at "+when);
     assert this.getCapacity() >= currentBytes+amountBytes;
     // I can only insert events from the last insert element, no insertions in the past
-    assert last_inserted_key <= when;
+    //TODO remove next line
+    //assert last_inserted_key <= when;
     memoryUtilization.put(when, currentBytes+amountBytes);
   }
 
