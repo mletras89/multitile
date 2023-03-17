@@ -396,7 +396,7 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
           Map<Actor,List<Transfer>> processorWriteTransfers = new HashMap<>();
           for(Action action : actions){
             // schedule the action
-            p.getValue().getScheduler().commitSingleAction(action,architecture); // modificar este
+            p.getValue().getScheduler().commitSingleAction(action,architecture,application); // modificar este
             // finally, schedule the write of tokens
             p.getValue().getScheduler().commitWritesToCrossbar(action);
             // put writing transfers to crossbar(s) or NoC
@@ -483,7 +483,7 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
       }else{
         //Memory newMapping = ArchitectureManagement.getMemoryToBeRelocated(ReMapTransfer.getFifo(),architecture);
 	    // do the ReMapping
-	    Memory reMappingMemory = ArchitectureManagement.getMemoryToBeRelocated(ReMapTransfer.getFifo(),architecture);
+	    Memory reMappingMemory = ArchitectureManagement.getMemoryToBeRelocated(ReMapTransfer.getFifo(),architecture,application);
 	    ApplicationManagement.remapFifo(ReMapTransfer.getFifo(),application, reMappingMemory);
         return false;
         // return after doing the remaping, to run again the scheduler
