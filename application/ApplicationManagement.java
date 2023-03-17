@@ -86,9 +86,9 @@ public class ApplicationManagement{
 		}
 	}
 	
-	public static void setAllFifosToTileLocalMemory(Application app) {
+	public static void setAllFifosToTileLocalMemory(Application app, FIFO_MAPPING_TYPE type) {
 		for(Map.Entry<Integer, Fifo> fifo: app.getFifos().entrySet()) {
-			fifo.getValue().setMappingType(FIFO_MAPPING_TYPE.TILE_LOCAL);
+			fifo.getValue().setMappingType(type);
 		}
 	}
 	
@@ -115,7 +115,11 @@ public class ApplicationManagement{
         			fifo.getValue().setMappingType(FIFO_MAPPING_TYPE.DESTINATION);
         			break;
         		case 2:
-        			fifo.getValue().setMappingType(FIFO_MAPPING_TYPE.TILE_LOCAL);
+        			fifo.getValue().setMappingType(FIFO_MAPPING_TYPE.TILE_LOCAL_SOURCE);
+        			// fifo mapped to tile local memory
+        			break;
+        		case 3:
+        			fifo.getValue().setMappingType(FIFO_MAPPING_TYPE.TILE_LOCAL_DESTINATION);
         			// fifo mapped to tile local memory
         			break;
         		default:
@@ -180,25 +184,35 @@ public class ApplicationManagement{
   // this method assign the mapping of each fifo according the type
   public static void assignFifoMapping(Application application, Architecture architecture){
     for(Map.Entry<Integer,Fifo> f : application.getFifos().entrySet()){
+      System.out.println("Fifo: "+f.getValue().getName()+" mapping type "+f.getValue().getMappingType());
       Fifo.FIFO_MAPPING_TYPE type = f.getValue().getMappingType();
-      Processor p;
+      int processorId, tileId, sourceActorId,destinationActorId;
       switch(type){
         case SOURCE:
-          p = f.getValue().getSource().getMapping();
-          //f.getValue().setMapping(p.getLocalMemory());
-          application.getFifos().get(f.getKey()).setMapping(p.getLocalMemory());
+          sourceActorId = f.getValue().getSource().getId();
+          processorId = application.getActors().get(sourceActorId).getMapping().getId();
+          tileId = application.getActors().get(sourceActorId).getMappingToTile().getId();
+          //System.out.println("Source "+f.getValue().getSource().getName()+" mapped to "+architecture.getTiles().get(tileId).getProcessors().get(processorId).getName());
+          application.getFifos().get(f.getKey()).setMapping( architecture.getTiles().get(tileId).getProcessors().get(processorId).getLocalMemory()  );
           break;
         case DESTINATION:
-          p = f.getValue().getDestination().getMapping();
-          //f.getValue().setMapping(p.getLocalMemory());
-          application.getFifos().get(f.getKey()).setMapping(p.getLocalMemory());
+          destinationActorId = f.getValue().getDestination().getId();
+          processorId = application.getActors().get(destinationActorId).getMapping().getId();
+          tileId  = application.getActors().get(destinationActorId).getMappingToTile().getId();
+          application.getFifos().get(f.getKey()).setMapping( architecture.getTiles().get(tileId).getProcessors().get(processorId).getLocalMemory());
           break;
-        case TILE_LOCAL:
-          //System.out.println("Type:"+type);
-          Tile t = f.getValue().getMappingToTile();
-          f.getValue().setMapping(t.getTileLocalMemory());
-          application.getFifos().put(f.getKey(),f.getValue());
-          break;
+        case TILE_LOCAL_SOURCE:
+        	sourceActorId = f.getValue().getSource().getId();
+            processorId = application.getActors().get(sourceActorId).getMapping().getId();
+            tileId = application.getActors().get(sourceActorId).getMappingToTile().getId();
+            application.getFifos().get(f.getKey()).setMapping( architecture.getTiles().get(tileId).getTileLocalMemory()  );
+        	break;
+        case TILE_LOCAL_DESTINATION:
+        	destinationActorId = f.getValue().getDestination().getId();
+            processorId = application.getActors().get(destinationActorId).getMapping().getId();
+            tileId  = application.getActors().get(destinationActorId).getMappingToTile().getId();
+            application.getFifos().get(f.getKey()).setMapping( architecture.getTiles().get(tileId).getTileLocalMemory()  );
+        	break;
         case GLOBAL:
           application.getFifos().get(f.getKey()).setMapping(architecture.getGlobalMemory());
           break;
