@@ -313,4 +313,46 @@ public class ApplicationManagement{
     }
   }
 
+  public static void collapseMergeableMulticastActors(Application app,int startIndex){
+	    // get all the multicast actors
+	    Map<Integer,Actor> multicastActors = getMulticastActors(app);
+	    
+	    for(Map.Entry<Integer,Actor> multicastActor : multicastActors.entrySet()){
+	      Actor selectedActor = multicastActor.getValue();
+	      
+	      if(selectedActor.isMergeMulticast() == true){
+	        // if the actor is mergeable, we remove it and replace it by a composite channel
+	        Vector<Fifo> inputFifos  = selectedActor.getInputFifos(); // it should be only one writer
+	        Vector<Fifo> outputFifos = selectedActor.getOutputFifos(); // it might be multiple readers, more that one
+	        Fifo writer = inputFifos.get(0);
+	        List<Fifo>  readerFifos = new ArrayList<Fifo>(outputFifos);
+
+	        CompositeFifo compositeFifo = FifoManagement.createCompositeChannel(writer,readerFifos,selectedActor,startIndex++); 
+	        // once created the compositefifo, we have to connected into the application
+	        int idWriterActor = writer.getSource().getId();
+	        app.getActors().get(idWriterActor).removeOutputFifo(writer.getId());
+	        // connecting the input of the composite fifo
+	        app.getActors().get(idWriterActor).getOutputFifos().add(compositeFifo);
+
+	        // now connect the readers to the composite fifo
+	        for(Fifo dstFifo : readerFifos){
+	          int idReaderActor = dstFifo.getDestination().getId();
+	          app.getActors().get(idReaderActor).removeInputFifo(dstFifo.getId());
+	          // connectinf the outputs of the composite fifo
+	          app.getActors().get(idReaderActor).getInputFifos().add(compositeFifo);
+	        }
+	        // remove the fifos
+	        app.getFifos().remove(writer.getId());
+	        for(Fifo dstFifo : readerFifos) {
+	        	app.getFifos().remove(dstFifo.getId());
+	        }
+	        // remove the merged multicast actor from the map of actors
+	        app.getActors().remove(multicastActor.getKey());
+	        // add the new composite fifo into the app fifo map
+	        app.getFifos().put(compositeFifo.getId(),compositeFifo);
+	      }
+	    }
+  }
+  
+  
 }
