@@ -50,6 +50,7 @@ import multitile.MapManagement;
 import multitile.scheduler.SchedulerManagement;
 
 import multitile.application.Actor;
+import multitile.application.Application;
 import multitile.application.Fifo;
 
 import java.io.File;
@@ -315,13 +316,14 @@ public class Scheduler{
       this.lastEventinProcessor = lastWrite;
   }
 
-  public void syncTimeOfSrcActors(Action commitAction, Architecture architecture){
+  public void syncTimeOfSrcActors(Action commitAction, Architecture architecture, Application application){
     List<Transfer>  transfers = this.readTransfers.get(commitAction.getActor());
     if(transfers != null){
       //System.out.println("Number of read transfers: "+transfers.size());
       for(Transfer t: transfers){
         //System.out.println(t);
-        Actor actorWriting = t.getFifo().getSource();
+        Actor actorWriting = application.getActors().get(t.getFifo().getSource().getId());
+        System.out.println("actorWriting "+actorWriting.getName()+" mapped to "+actorWriting.getMapping().getName());
         if(actorWriting.getInputFifos().size() == 0){
           // update the processor after reading the token
           //System.out.println("ACTOR ACTOR: "+actorWriting.getName());
@@ -348,7 +350,7 @@ public class Scheduler{
     //System.out.println("\tScheduling actor "+commitAction.getActor().getName()+ " start time "+commitAction.getStart_time()+" due time "+commitAction.getDue_time());
   }
 
-  public void commitSingleAction(Action commitAction,Architecture architecture){
+  public void commitSingleAction(Action commitAction,Architecture architecture,Application application){
     // proceed to schedule the Action
     double ActionTime = commitAction.getProcessing_time();
     double startTime = Collections.max(Arrays.asList(this.lastEventinProcessor,commitAction.getStart_time(),this.getTimeLastReadofActor(commitAction.getActor())));
@@ -361,7 +363,7 @@ public class Scheduler{
     // commit the Action
     this.scheduledActions.addLast(commitAction);
     System.out.println("COMITTING:"+commitAction.getActor().getName());
-    this.syncTimeOfSrcActors(commitAction,architecture);
+    this.syncTimeOfSrcActors(commitAction,architecture,application);
   }
 
 
