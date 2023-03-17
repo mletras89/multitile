@@ -38,6 +38,7 @@
 
 package multitile.architecture;
 
+import multitile.application.Application;
 import multitile.application.Fifo;
 
 
@@ -63,19 +64,21 @@ public class ArchitectureManagement{
   }
   
   public static void updateLastEventInProcessor(Architecture architecture, Processor processor, double time){
+	  System.out.println("Processor "+processor.getName());
     double timeEvent = architecture.getTiles().get(processor.getOwnerTile().getId()).getProcessors().get(processor.getId()).getScheduler().getLastEventinProcessor(); 
     if (time>timeEvent)
       timeEvent = time;
     architecture.getTiles().get(processor.getOwnerTile().getId()).getProcessors().get(processor.getId()).getScheduler().setLastEventinProcessor(timeEvent);
   }
 
-  public static Memory getMemoryToBeRelocated(Fifo fifo,Architecture architecture){
-    Memory mappedMemory = fifo.getMapping();
-    Tile mappedTile = fifo.getMappingToTile();
+  public static Memory getMemoryToBeRelocated(Fifo fifo,Architecture architecture,Application application){
+    Memory mappedMemory =  application.getFifos().get(fifo.getId()).getMapping();
+    //System.out.println("Mapped Memory "+mappedMemory.getName());
     Memory newMapping;
     switch(mappedMemory.getType()){
       case LOCAL_MEM:
-        newMapping = architecture.getTiles().get(mappedTile.getId()).getTileLocalMemory();
+    	  Tile mappedTile = architecture.getTiles().get(mappedMemory.getEmbeddedToProcessor().getOwnerTile().getId());
+    	  newMapping = architecture.getTiles().get(mappedTile.getId()).getTileLocalMemory();
         break;
       default:
         newMapping = architecture.getGlobalMemory();
