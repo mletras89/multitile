@@ -40,12 +40,12 @@ package multitile.application;
 import java.util.*;
 
 public class Application{
-  private static Map<Integer,Actor> actors;
-  private static Map<Integer,Fifo> fifos;
+  private Map<Integer,Actor> actors;
+  private Map<Integer,Fifo> fifos;
 
   public Application(){
-    actors = new HashMap<>();
-    fifos  = new HashMap<>();
+    this.actors = new HashMap<>();
+    this.fifos  = new HashMap<>();
   }
 
   public void resetApplication(){
