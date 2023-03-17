@@ -73,6 +73,8 @@ public class Fifo implements Buffer{
     SOURCE,
     DESTINATION,
     TILE_LOCAL,
+    TILE_LOCAL_SOURCE,
+    TILE_LOCAL_DESTINATION,
     GLOBAL
   }
 
