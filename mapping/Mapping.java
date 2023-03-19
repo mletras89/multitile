@@ -34,7 +34,7 @@
      Mapping T(Actor or fifo) to U(processor or memory)
 --------------------------------------------------------------------------
 */
-package multitile.application;
+package multitile.mapping;
 
 import java.util.*;
 
