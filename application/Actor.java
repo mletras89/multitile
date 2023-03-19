@@ -51,11 +51,6 @@ public class Actor{
   private Vector<Fifo> inputFifos;
   private Vector<Fifo> outputFifos;
 
-  private Processor mapping;  // mapping to the Processor object
-  private Tile mappingToTile;  // mapping to the Tile
-
-  private double executionTime=100.0;  // the execution time is associated with the mapping
-
   private ACTOR_TYPE type;
   private boolean mergeMulticast = false;
 
@@ -68,16 +63,12 @@ public class Actor{
                String name,
                int priority,
                int inputs, 
-               int outputs, 
-               double executionTime, 
-               Processor mapping){
+               int outputs){
     this.setId(ActorManagement.getActorId());
     this.setName(name);
     this.setPriority(priority);
     this.setInputs(inputs);
     this.setOutputs(outputs);
-    this.setExecutionTime(executionTime);
-    this.setMapping(mapping);
     this.setType(ACTOR_TYPE.ACTOR);
     this.inputFifos  = new Vector<Fifo>();   
     this.outputFifos = new Vector<Fifo>();    
@@ -89,8 +80,6 @@ public class Actor{
     this.setPriority(another.getPriority());
     this.setInputs(another.getInputs());
     this.setOutputs(another.getOutputs());
-    this.setExecutionTime(another.getExecutionTime());
-    this.setMapping(another.getMapping());
     this.setType(another.getType());
     this.inputFifos  = new Vector<Fifo>();   
     this.outputFifos = new Vector<Fifo>();
@@ -104,21 +93,13 @@ public class Actor{
     this.setType(ACTOR_TYPE.ACTOR);
   }
 
-  public void setMappingToTile(Tile tile){
-    this.mappingToTile = tile;
-  }
-
-  public Tile getMappingToTile(){
-    return this.mappingToTile;
-  }
-
   public boolean equals(Actor actor){
     return this.getId() == actor.getId() && this.getName().equals(actor.getName());
   }
 
   public boolean isMulticastActor(){
     if (this.getType() == ACTOR_TYPE.ACTOR)
-    return false;
+      return false;
     return true;
   }
 
@@ -172,14 +153,6 @@ public class Actor{
     this.outputs = outputs;
   }
   
-  public double getExecutionTime() {
-    return executionTime;
-  }
-  
-  public void setExecutionTime(double executionTime) {
-    this.executionTime = executionTime;
-  }
-  
   public String getName() {
     return name;
   }
@@ -196,14 +169,6 @@ public class Actor{
     this.priority = priority;
   }
 
-  public Processor getMapping() {
-    return mapping;
-  }
-  
-  public void setMapping(Processor mapping) {
-    this.mapping = mapping;
-  }
-  
   public int getId() {
     return id;
   }
