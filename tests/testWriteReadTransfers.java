@@ -75,7 +75,7 @@ public class testWriteReadTransfers {
       a5.setOutputs(0);
       
 
-      Fifo c1 = new Fifo("c1",0,1,1000000,memory1,1,1,a1,a5);
+      Fifo c1 = new Fifo("c1",0,1,1000000,1,1,a1,a5);
 
       Vector<Fifo> v1 = new Vector<Fifo>();
       v1.addElement(c1);
@@ -93,12 +93,13 @@ public class testWriteReadTransfers {
       Application application = new Application();
       application.setActorsFromList(actors);
       application.setFifos(fifoMap);
-
+      // actor binding
       bindings.getActorProcessorBindings().put(a1.getId(), new Binding<Processor>(cpu1));
       bindings.getActorProcessorBindings().put(a5.getId(), new Binding<Processor>(cpu1));
-      
       bindings.getActorProcessorBindings().get(a1.getId()).getProperties().put("runtime", 10000.0);
       bindings.getActorProcessorBindings().get(a1.getId()).getProperties().put("runtime", 10000.0);
+      // memory binding
+      bindings.getFifoMemoryBindings().put(c1.getId(), new Binding<Memory>(memory1));
       
       FCFS scheduler = new FCFS();
       scheduler.setApplication(application);
