@@ -37,6 +37,7 @@
 package multitile.application;
 
 import multitile.Transfer;
+import multitile.mapping.Bindings;
 
 interface Buffer{
   public boolean isCompositeChannel();
@@ -51,7 +52,7 @@ interface Buffer{
 
   // methods for handling the writes/reads to/from memory 
   //public void fifoWriteToMemory(Transfer transfer);
-  public void fifoReadFromMemory(Transfer transfer);
-  public boolean canFifoReadFromMemory();
+  public void fifoReadFromMemory(Transfer transfer,Bindings bindings);
+  public boolean canFifoReadFromMemory(Bindings bindings);
 }
 
