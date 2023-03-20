@@ -56,6 +56,10 @@ public class Binding<T>{
 	  return properties;
   }
   
+  public void setProperties(HashMap<String,Object> properties){
+	  this.properties = new HashMap<String,Object>(properties);
+  }
+  
   public void setTarget(T target) {
 	  this.target = target;
   }
