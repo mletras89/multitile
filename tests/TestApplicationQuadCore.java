@@ -38,7 +38,8 @@
 package multitile.tests;
 
 import multitile.architecture.Tile;
-import multitile.architecture.Memory;
+import multitile.mapping.Binding;
+import multitile.mapping.Bindings;
 import multitile.architecture.Processor;
 
 import multitile.application.Application;
@@ -50,8 +51,8 @@ import java.util.*;
 public class TestApplicationQuadCore{
   private Application sampleApplication;
 
-  public TestApplicationQuadCore(Tile t1){
-      Memory memory1 = t1.getTileLocalMemory();
+  public TestApplicationQuadCore(Tile t1, Bindings bindings){
+      
       Processor cpu1 = t1.getProcessors().get(0);
       Processor cpu2 = t1.getProcessors().get(1);
       Processor cpu3 = t1.getProcessors().get(2);
@@ -59,57 +60,42 @@ public class TestApplicationQuadCore{
 
       Actor a1 = new Actor("a1");
       a1.setId(1) ;
-      a1.setExecutionTime(10000);
       a1.setInputs(0);
       a1.setOutputs(1);
-      a1.setMapping(cpu1);
-      a1.setMappingToTile(t1);
 
       Actor a2 = new Actor("a2");  // is a multicast actor
       a2.setId(2) ;
-      a2.setExecutionTime(10000);
       a2.setInputs(1);
       a2.setOutputs(2);
-      a2.setMapping(cpu2);
-      a2.setMappingToTile(t1);
-
       //a2.setType(Actor.ACTOR_TYPE.MULTICAST);
       //System.out.println("Actor 2 type:"+a2.getType());
 
       Actor a3 = new Actor("a3");
       a3.setId(3) ;
-      a3.setExecutionTime(10000);
       a3.setInputs(1);
       a3.setOutputs(1);
-      a3.setMapping(cpu3);
-      a3.setMappingToTile(t1);
+      
 
       Actor a4 = new Actor("a4");
       a4.setId(4) ;
-      a4.setExecutionTime(10000);
       a4.setInputs(1);
       a4.setOutputs(1);
-      a4.setMapping(cpu4);
-      a4.setMappingToTile(t1);
-
 
       Actor a5 = new Actor("a5:sink");
       a5.setId(5) ;
-      a5.setExecutionTime(10000);
       a5.setInputs(2);
       a5.setOutputs(0);
-      a5.setMapping(cpu1);
-      a5.setMappingToTile(t1);
+      
 
-      Fifo c1 = new Fifo("c1",0,1,1000000,memory1,1,1,a1,a2);  // channel connected to writer
+      Fifo c1 = new Fifo("c1",0,1,1000000,1,1,a1,a2);  // channel connected to writer
       //System.out.prin architecturen("c1.id = "+c1.getId());
-      Fifo c2 = new Fifo("c2",0,1,1000000,memory1,1,1,a2,a3);  // channels connected to readers
+      Fifo c2 = new Fifo("c2",0,1,1000000,1,1,a2,a3);  // channels connected to readers
       //System.out.println("c2.id = "+c2.getId());
-      Fifo c3 = new Fifo("c3",0,1,1000000,memory1,1,1,a2,a4);  // channels connected to readers
+      Fifo c3 = new Fifo("c3",0,1,1000000,1,1,a2,a4);  // channels connected to readers
       //System.out.println("c3.id = "+c3.getId());
-      Fifo c4 = new Fifo("c4",0,1,1000000,memory1,1,1,a3,a5);
+      Fifo c4 = new Fifo("c4",0,1,1000000,1,1,a3,a5);
       //System.out.println("c4.id = "+c4.getId());
-      Fifo c5 = new Fifo("c5",0,1,1000000,memory1,1,1,a4,a5);
+      Fifo c5 = new Fifo("c5",0,1,1000000,1,1,a4,a5);
       //System.out.println("c5.id = "+c5.getId());
 
       Vector<Fifo> v1 = new Vector<Fifo>();
@@ -158,6 +144,26 @@ public class TestApplicationQuadCore{
 
       sampleApplication.setActorsFromList(actors);
       sampleApplication.setFifos(fifoMap);
+      
+      // actor binding
+      bindings.getActorProcessorBindings().put(a1.getId(), new Binding<Processor>(cpu1));
+      bindings.getActorProcessorBindings().put(a2.getId(), new Binding<Processor>(cpu2));
+      bindings.getActorProcessorBindings().put(a3.getId(), new Binding<Processor>(cpu3));
+      bindings.getActorProcessorBindings().put(a4.getId(), new Binding<Processor>(cpu4));
+      bindings.getActorProcessorBindings().put(a5.getId(), new Binding<Processor>(cpu1));
+      
+      bindings.getActorTileBindings().put(a1.getId(), new Binding<Tile>(t1));
+      bindings.getActorTileBindings().put(a2.getId(), new Binding<Tile>(t1));
+      bindings.getActorTileBindings().put(a3.getId(), new Binding<Tile>(t1));
+      bindings.getActorTileBindings().put(a4.getId(), new Binding<Tile>(t1));
+      bindings.getActorTileBindings().put(a5.getId(), new Binding<Tile>(t1));
+      
+      bindings.getActorProcessorBindings().get(a1.getId()).getProperties().put("runtime", 10000.0);
+      bindings.getActorProcessorBindings().get(a2.getId()).getProperties().put("runtime", 10000.0);
+      bindings.getActorProcessorBindings().get(a3.getId()).getProperties().put("runtime", 10000.0);
+      bindings.getActorProcessorBindings().get(a4.getId()).getProperties().put("runtime", 10000.0);
+      bindings.getActorProcessorBindings().get(a5.getId()).getProperties().put("runtime", 10000.0);
+      
   }
 
   public Application getSampleApplication(){
