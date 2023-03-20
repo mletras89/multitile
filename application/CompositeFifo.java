@@ -41,6 +41,8 @@ package multitile.application;
 
 import multitile.Transfer;
 import multitile.architecture.Memory;
+import multitile.mapping.Bindings;
+
 import java.util.*;
 
 public class CompositeFifo extends Fifo implements Buffer{
@@ -48,8 +50,8 @@ public class CompositeFifo extends Fifo implements Buffer{
   private List<Actor> destinations;
   private Actor multicastActor;
 
-  public CompositeFifo(String name, int tokens, int capacity, int tokenSize,Memory mapping,int consRate, int prodRate, Actor src, List<Fifo> destinationFifos,Actor multicastActor){
-    super(name,tokens,capacity,tokenSize,mapping,consRate,prodRate);
+  public CompositeFifo(String name, int tokens, int capacity, int tokenSize,int consRate, int prodRate, Actor src, List<Fifo> destinationFifos,Actor multicastActor){
+    super(name,tokens,capacity,tokenSize,consRate,prodRate);
     this.setSource(src);
     this.setDestinations(destinationFifos);
     this.setMulticastActor(multicastActor);
@@ -105,14 +107,16 @@ public class CompositeFifo extends Fifo implements Buffer{
     }
   }
 
-  public boolean canFifoReadFromMemory(){
-    return this.getMapping().canRemoveDataFromMemory(this.getConsRate()*this.getTokenSize());
+  public boolean canFifoReadFromMemory(Bindings bindings){
+	  Memory mapping = bindings.getFifoMemoryBindings().get(this.getId()).getTarget();
+      return mapping.canRemoveDataFromMemory(this.getConsRate()*this.getTokenSize());
   }
 
-  public void fifoReadFromMemory(Transfer transfer){
+  public void fifoReadFromMemory(Transfer transfer,Bindings bindings){
     this.numberOfReads++;
     if(this.canFlushData()){
-      this.getMapping().readDataInMemory(this.getConsRate()*this.getTokenSize(),transfer.getDue_time());
+    	Memory mapping = bindings.getFifoMemoryBindings().get(this.getId()).getTarget();
+    	mapping.readDataInMemory(this.getConsRate()*this.getTokenSize(),transfer.getDue_time());
     }
   }
 
@@ -171,13 +175,4 @@ public class CompositeFifo extends Fifo implements Buffer{
   public void setMulticastActor(Actor multicastActor){
     this.multicastActor = multicastActor;
   }
-
-//  public void setReaders(List<Fifo> readers){
-//    this.readers = readers;
-//  }
-//
-//  public List<Fifo> getReaders(){
-//    return this.readers;
-//  }
-
 }
