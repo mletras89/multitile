@@ -61,7 +61,7 @@ public class testTileSingleCoreCrossbar4{
       scheduler.setArchitecture(architecture);
 
       scheduler.setMaxIterations(5);;
-      scheduler.schedule(bindings);
+      scheduler.schedule(bindings,null);
 
       architecture.getTiles().get(0).getProcessors().get(0).getScheduler().saveScheduleStats(".");
       architecture.getTiles().get(0).getCrossbar().saveCrossbarUtilizationStats(".");
