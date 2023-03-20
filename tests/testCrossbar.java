@@ -60,6 +60,15 @@ public class testCrossbar {
       Actor actor8 = new Actor("actor6");
       actor8.setId(8);
       
+      bindings.getActorProcessorBindings().put(actor1.getId(), new Binding<Processor>(processor));
+      bindings.getActorProcessorBindings().put(actor2.getId(), new Binding<Processor>(processor));
+      bindings.getActorProcessorBindings().put(actor3.getId(), new Binding<Processor>(processor));
+      bindings.getActorProcessorBindings().put(actor4.getId(), new Binding<Processor>(processor));
+      bindings.getActorProcessorBindings().put(actor5.getId(), new Binding<Processor>(processor));
+      bindings.getActorProcessorBindings().put(actor6.getId(), new Binding<Processor>(processor));
+      bindings.getActorProcessorBindings().put(actor7.getId(), new Binding<Processor>(processor));
+      bindings.getActorProcessorBindings().put(actor8.getId(), new Binding<Processor>(processor));
+      
       bindings.getFifoMemoryBindings().put(fifo1.getId(), new Binding<Memory>(memoryTest1));
       bindings.getFifoMemoryBindings().put(fifo2.getId(), new Binding<Memory>(memoryTest1));
       bindings.getFifoMemoryBindings().put(fifo3.getId(), new Binding<Memory>(memoryTest1));
