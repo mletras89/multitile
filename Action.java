@@ -43,13 +43,14 @@ public class Action {
   private double due_time;
   private Actor actor;
   private int step;
-  private double execTime;
+  private double processingTime;
 
-  public Action(Actor actor) {
+  public Action(Actor actor,Double processingTime) {
       this.setStart_time(0.0);
       this.setDue_time(0.0);
       this.actor = actor;
       this.step = 0;
+      this.processingTime = processingTime;
   }
   
   public Action(Action other) {
@@ -57,16 +58,13 @@ public class Action {
     this.setDue_time(other.getDue_time());
     this.setActor(other.getActor());
     this.setStep(other.getStep());
+    this.processingTime = other.getProcessingTime();
   }
   
-  public void setExecTime(){
-    this.execTime = execTime;
+  public double getProcessingTime() {
+	  return processingTime;
   }
- 
-  public double getExecTime(){
-    return execTime;
-  }
-
+  
   public int getStep(){
     return this.step;
   }
@@ -92,10 +90,6 @@ public class Action {
   }
   
   
-  public double getProcessing_time() {
-      return execTime;
-  }
-
   public Actor getActor(){
     return this.actor;
   }    
