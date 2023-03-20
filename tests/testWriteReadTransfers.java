@@ -40,6 +40,8 @@ import multitile.scheduler.FCFS;
 
 import multitile.architecture.Architecture;
 import multitile.architecture.Tile;
+import multitile.mapping.Binding;
+import multitile.mapping.Bindings;
 import multitile.architecture.Memory;
 import multitile.architecture.Processor;
 
@@ -55,23 +57,23 @@ public class testWriteReadTransfers {
       System.out.println("Testing testWriteReadTransfers!");
       
       Architecture architecture = new Architecture("Arch","TileReadWrite",1,1.0,2); 
+      Bindings bindings = new Bindings();
+      
       Tile t1 = architecture.getTiles().get(0);
       Memory memory1 = t1.getTileLocalMemory();
       Processor cpu1 = t1.getProcessors().get(0);
 
       Actor a1 = new Actor("a1");
       a1.setId(1) ;
-      a1.setExecutionTime(10000);
       a1.setInputs(0);
       a1.setOutputs(1);
-      a1.setMapping(cpu1);
+      
 
       Actor a5 = new Actor("a5:sink");
       a5.setId(5) ;
-      a5.setExecutionTime(10000);
       a5.setInputs(1);
       a5.setOutputs(0);
-      a5.setMapping(cpu1);
+      
 
       Fifo c1 = new Fifo("c1",0,1,1000000,memory1,1,1,a1,a5);
 
@@ -92,6 +94,12 @@ public class testWriteReadTransfers {
       application.setActorsFromList(actors);
       application.setFifos(fifoMap);
 
+      bindings.getActorProcessorBindings().put(a1.getId(), new Binding<Processor>(cpu1));
+      bindings.getActorProcessorBindings().put(a5.getId(), new Binding<Processor>(cpu1));
+      
+      bindings.getActorProcessorBindings().get(a1.getId()).getProperties().put("runtime", 10000);
+      bindings.getActorProcessorBindings().get(a1.getId()).getProperties().put("runtime", 10000);
+      
       FCFS scheduler = new FCFS();
       scheduler.setApplication(application);
       scheduler.setArchitecture(architecture);
