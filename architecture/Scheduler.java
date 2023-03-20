@@ -171,32 +171,34 @@ public class Scheduler{
     return this.transfersToMemory;
   }
 
-  public void updateWritesStateMemory(){
+  public void updateWritesStateMemory(Bindings bindings){
     for(Transfer t : this.writeTransfersToMemory){
       // now we update the memory of this transfer
       int numberTokens = t.getFifo().getProdRate();
       int numberBytesperToken  = t.getFifo().getTokenSize();
-      t.getFifo().getMapping().writeDataInMemory(numberTokens*numberBytesperToken,t.getDue_time());
+      Memory fifoMapping = bindings.getFifoMemoryBindings().get(t.getFifo().getId()).getTarget();
+      fifoMapping.writeDataInMemory(numberTokens*numberBytesperToken,t.getDue_time());
     }
   }
 
-  public void updateReadsStateMemory(){
+  public void updateReadsStateMemory(Bindings bindings){
     for(Transfer t : this.readTransfersToMemory){
       // now we update the memory of this transfer
       int numberTokens = t.getFifo().getConsRate();
       int numberBytesperToken  = t.getFifo().getTokenSize();
-      t.getFifo().getMapping().readDataInMemory(numberTokens*numberBytesperToken,t.getDue_time());
+      Memory fifoMapping = bindings.getFifoMemoryBindings().get(t.getFifo().getId()).getTarget();
+      fifoMapping.readDataInMemory(numberTokens*numberBytesperToken,t.getDue_time());
     }
   }
 
-  public void updateStateMemory(){
+  public void updateStateMemory(Bindings bindings){
     SchedulerManagement.sort(transfersToMemory);
     for(Transfer t: this.transfersToMemory){
       // now we update the memory of this transfer
       if(t.getType() == Transfer.TRANSFER_TYPE.READ)
-        t.getFifo().fifoReadFromMemory(t);
+        t.getFifo().fifoReadFromMemory(t,bindings);
       else
-        t.getFifo().fifoWriteToMemory(t);
+        t.getFifo().fifoWriteToMemory(t,bindings);
     }
   }
 
