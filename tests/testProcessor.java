@@ -27,10 +27,10 @@ public class testProcessor {
       bindings.getActorProcessorBindings().put(actor3.getId(), new Binding<Processor>(cpu1));
       bindings.getActorProcessorBindings().put(actor4.getId(), new Binding<Processor>(cpu1));
       // setting execution time to binding
-      bindings.getActorProcessorBindings().get(actor1.getId()).getProperties().put("runtime", 10000);
-      bindings.getActorProcessorBindings().get(actor2.getId()).getProperties().put("runtime", 10000);
-      bindings.getActorProcessorBindings().get(actor3.getId()).getProperties().put("runtime", 10000);
-      bindings.getActorProcessorBindings().get(actor4.getId()).getProperties().put("runtime", 10000);
+      bindings.getActorProcessorBindings().get(actor1.getId()).getProperties().put("runtime", 10000.0);
+      bindings.getActorProcessorBindings().get(actor2.getId()).getProperties().put("runtime", 10000.0);
+      bindings.getActorProcessorBindings().get(actor3.getId()).getProperties().put("runtime", 10000.0);
+      bindings.getActorProcessorBindings().get(actor4.getId()).getProperties().put("runtime", 10000.0);
       Action a1 = new Action(actor1,10000.0);
       Action a2 = new Action(actor2,10000.0);
       Action a3 = new Action(actor3,10000.0);
