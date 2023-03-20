@@ -141,9 +141,9 @@ public class FCFS extends BaseScheduler implements Schedule{
 
       for(Transfer t : transfersToMemory){
         if(t.getType() == Transfer.TRANSFER_TYPE.READ)
-          t.getFifo().fifoReadFromMemory(t);
+          t.getFifo().fifoReadFromMemory(t,bindings);
         else
-          t.getFifo().fifoWriteToMemory(t);
+          t.getFifo().fifoWriteToMemory(t,bindings);
       }
       transfersToMemory.clear();
       runIterations = this.getRunIterations();
