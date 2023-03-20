@@ -37,7 +37,7 @@
 */
 package multitile.application;
 
-import multitile.architecture.Tile;
+import multitile.mapping.Bindings;
 import multitile.Transfer;
 import multitile.architecture.Memory;
 import java.util.*;
@@ -52,10 +52,7 @@ public class Fifo implements Buffer{
   private int             consRate;
   private int             prodRate;
   private Queue<Transfer> timeProducedToken;  // each transfer transport a token, thus the due time is the produced token time
-
-  private Memory mapping=null;   // map to memory 
-  private Tile mappingToTile;  // mapping to the Tile
-
+  
   private FIFO_MAPPING_TYPE mappingType;
 
   private Actor source; // source actor
@@ -72,20 +69,18 @@ public class Fifo implements Buffer{
   public static enum FIFO_MAPPING_TYPE {
     SOURCE,
     DESTINATION,
-    TILE_LOCAL,
     TILE_LOCAL_SOURCE,
     TILE_LOCAL_DESTINATION,
     GLOBAL
   }
 
-  public Fifo(String name, int tokens, int capacity, int tokenSize,Memory mapping,int consRate, int prodRate, Actor src, Actor dst){
+  public Fifo(String name, int tokens, int capacity, int tokenSize,int consRate, int prodRate, Actor src, Actor dst){
     //this.id                          = id;
     this.id                          = FifoManagement.getFifoId();
     this.name                        = name;
     this.tokens                      = tokens;
     this.capacity                    = capacity;
     this.setTokenSize(tokenSize);
-    this.setMapping(mapping);
     this.initial_tokens              = tokens;
     this.setConsRate(consRate);
     this.setProdRate(prodRate);
@@ -118,14 +113,13 @@ public class Fifo implements Buffer{
     this.setNumberOfReadsReMapping(0);
   }
 
-  public Fifo(String name, int tokens, int capacity, int tokenSize,Memory mapping,int consRate, int prodRate){
+  public Fifo(String name, int tokens, int capacity, int tokenSize,int consRate, int prodRate){
   //  this.id                          = id;
     this.id                          = FifoManagement.getFifoId();
     this.name                        = name;
     this.tokens                      = tokens;
     this.capacity                    = capacity;
     this.setTokenSize(tokenSize);
-    this.setMapping(mapping);
     this.initial_tokens              = tokens;
     this.setConsRate(consRate);
     this.setProdRate(prodRate);
@@ -163,7 +157,6 @@ public class Fifo implements Buffer{
     this.tokens                      = another.get_tokens();
     this.capacity                    = another.get_capacity();
     this.setTokenSize(another.getTokenSize());
-    this.setMapping(another.getMapping());
     this.setMappingType(another.getMappingType());
     this.initial_tokens              = another.initial_tokens;
     this.setConsRate(another.getConsRate());
@@ -182,14 +175,6 @@ public class Fifo implements Buffer{
 
   public Queue<Transfer> getTimeProducedToken(){
     return this.timeProducedToken;
-  }
-
-  public Tile getMappingToTile(){
-    return this.mappingToTile;
-  }
-
-  public void setMappingToTile(Tile tile){
-    this.mappingToTile = tile;  
   }
 
   public FIFO_MAPPING_TYPE getMappingType(){
@@ -237,24 +222,29 @@ public class Fifo implements Buffer{
     return this.getId()==fifo.getId() && this.getName().equals(fifo.getName());
   }
 
-  public boolean canFifoWriteToMemory(){
-    return this.mapping.canPutDataInMemory(this.prodRate*this.tokenSize);
+  public boolean canFifoWriteToMemory(Bindings bindings){
+	Memory mapping = bindings.getFifoMemoryBindings().get(this.getId()).getTarget();
+    return mapping.canPutDataInMemory(this.prodRate*this.tokenSize);
   }
 
-  public boolean canFifoReadFromMemory(){
-    return this.mapping.canRemoveDataFromMemory(this.consRate*this.tokenSize);
+  public boolean canFifoReadFromMemory(Bindings bindings){
+	  Memory mapping = bindings.getFifoMemoryBindings().get(this.getId()).getTarget();
+	  return mapping.canRemoveDataFromMemory(this.consRate*this.tokenSize);
   }
 
-  public void fifoWriteToMemory(Transfer transfer){
-    this.mapping.writeDataInMemory(this.prodRate*this.tokenSize,transfer.getDue_time());
+  public void fifoWriteToMemory(Transfer transfer,Bindings bindings){
+	  Memory mapping = bindings.getFifoMemoryBindings().get(this.getId()).getTarget();
+      mapping.writeDataInMemory(this.prodRate*this.tokenSize,transfer.getDue_time());
   }
 
-  public void fifoReadFromMemory(Transfer transfer){
-    this.mapping.readDataInMemory(this.consRate*this.tokenSize,transfer.getDue_time());  
+  public void fifoReadFromMemory(Transfer transfer, Bindings bindings){
+	  Memory mapping = bindings.getFifoMemoryBindings().get(this.getId()).getTarget();
+	  mapping.readDataInMemory(this.consRate*this.tokenSize,transfer.getDue_time());  
   }
 
-  public void fifoReadFromMemory(Transfer transfer,double time){
-    this.mapping.readDataInMemory(this.consRate*this.tokenSize,time);  
+  public void fifoReadFromMemory(Transfer transfer,double time,Bindings bindings){
+	  Memory mapping = bindings.getFifoMemoryBindings().get(this.getId()).getTarget();
+	  mapping.readDataInMemory(this.consRate*this.tokenSize,time);  
   }
 
   public void fifoWrite(){
@@ -361,14 +351,6 @@ public class Fifo implements Buffer{
 
   public void setTokenSize(int tokenSize) {
     this.tokenSize = tokenSize;
-  }
-
-  public Memory getMapping() {
-    return mapping;
-  }
-
-  public void setMapping(Memory mapping) {
-    this.mapping = mapping;
   }
 
   public int getConsRate() {
