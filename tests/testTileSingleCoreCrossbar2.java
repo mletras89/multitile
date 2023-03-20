@@ -40,7 +40,7 @@ import multitile.scheduler.FCFS;
 
 import multitile.architecture.Architecture;
 import multitile.architecture.Tile;
-
+import multitile.mapping.Bindings;
 import multitile.application.Application;
 
 import java.io.*;
@@ -52,7 +52,8 @@ public class testTileSingleCoreCrossbar2 {
       Architecture architecture = new Architecture("Arch","TileSingleCoreCrossbar2_1",1,1.0,2);
       Tile t1 = architecture.getTiles().get(0);
 
-      TestApplication sampleApplication = new TestApplication(t1);  
+      Bindings bindings = new Bindings();
+      TestApplication sampleApplication = new TestApplication(t1,bindings);  
       Application application = sampleApplication.getSampleApplication();
 
       FCFS scheduler = new FCFS();
@@ -60,7 +61,7 @@ public class testTileSingleCoreCrossbar2 {
       scheduler.setArchitecture(architecture);
 
       scheduler.setMaxIterations(10);
-      scheduler.schedule();
+      scheduler.schedule(bindings);
 
       architecture.getTiles().get(0).getProcessors().get(0).getScheduler().saveScheduleStats(".");
       architecture.getTiles().get(0).getCrossbar().saveCrossbarUtilizationStats(".");
