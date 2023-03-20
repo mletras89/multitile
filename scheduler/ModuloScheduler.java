@@ -46,6 +46,10 @@ import multitile.Transfer;
 
 import multitile.architecture.Processor;
 import multitile.architecture.Tile;
+import multitile.mapping.Binding;
+import multitile.mapping.Bindings;
+import multitile.mapping.Mapping;
+import multitile.mapping.Mappings;
 import multitile.architecture.ArchitectureManagement;
 import multitile.architecture.Memory;
 
@@ -93,7 +97,7 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
   }
   
 
-  public void calculateModuloSchedule(){
+  public void calculateModuloSchedule(Bindings bindings){
     HashMap<Integer,Tile> tiles = architecture.getTiles();
     List<Integer> V = new ArrayList<>();
     for(Map.Entry<Integer,Actor> v : application.getActors().entrySet()){
@@ -172,17 +176,17 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
 	  //System.out.println("TRY Scheduling "+actors.get(v).getName()+" on control step "+l.get(v)+ " on resource "+cpus.get(actors.get(v).getMapping()).getName());
 	  /* Check that no more than num(r(v)) operations are scheduled on the
              resources corresponding to *R(r(v)) at the same time modulo MII */
-	  int BU = calcU(l,MII,U,v);
+	  int BU = calcU(l,MII,U,v,bindings);
           //System.out.println("l:");
           //System.out.println(l);
           //System.out.println("U");
           //System.out.println(U);
 	  	  //int mappingV = application.getActors().get(v).getMapping().getOwnerTile().getId();
-	      int mappingV = application.getActors().get(v).getMappingToTile().getId();
+	      int mappingV =  bindings.getActorTileBindings().get(v).getTarget().getId();   //application.getActors().get(v).getMappingToTile().getId();
           //System.out.println("BU:"+BU);
 	  while(BU>=tiles.get(mappingV).getProcessors().size()) {
 	    l.put(v, l.get(v)+1);
-	    BU = calcU(l,MII,U,v);  
+	    BU = calcU(l,MII,U,v,bindings);  
 	  }
           ArrayList<Integer> pair = new ArrayList<>();
           pair.add(mappingV);
@@ -285,17 +289,17 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
     this.stepEndKernel   = stepEndKernel;
   }
 
-  public void schedule(){
+  public void schedule(Bindings bindings,Mappings mappings){
     architecture.resetArchitecture();
     application.resetApplication();
-    while(!scheduleModulo()){
+    while(!scheduleModulo(bindings,mappings)){
       architecture.resetArchitecture();
       application.resetApplication();
     }
 
   }
 
-  public boolean scheduleModulo(){
+  public boolean scheduleModulo(Bindings bindings, Mappings mappings){
     HashMap<Integer,Tile> tiles = architecture.getTiles();
     this.getScheduledStepActions().clear();
     // 4) set the resource ocupation of all the resources as empty
@@ -327,15 +331,20 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
         Action action = queueActions.remove();
         action.setStep(i);
         //System.out.println("current actor "+action.getActor().getName());
-        int actionToTileId = action.getActor().getMappingToTile().getId();
+        int actionToTileId = bindings.getActorTileBindings().get(action.getActor().getId()).getTarget().getId(); //    action.getActor().getMappingToTile().getId();
         // get the mapping 
         HashMap<Integer,Boolean> processorUtilization = currentTilesOccupation.get(actionToTileId);
         int availableProcessor = getNextAvailableProcessor(processorUtilization);
         assert availableProcessor != -1;
         Processor p = tiles.get(actionToTileId).getProcessors().get(availableProcessor);
         // setting the mapping of the actor and action
-        application.getActors().get(action.getActor().getId()).setMapping(p);
-        action.getActor().setMapping(p);
+        bindings.getActorProcessorBindings().put(action.getActor().getId(), new Binding<>(p));
+        Mapping mapping = mappings.getActorProcessorMappings().get(action.getActor().getId()).get(p.getId());
+        bindings.getActorProcessorBindings().get(action.getActor().getId()).setProperties(mapping.getProperties());
+        //mappings.getActorProcessorMappings().get(action.getActor().getId()).get(key)
+        //application.getActors().get(action.getActor().getId()).setMapping(p);
+        action.setProcessingTime((double)mapping.getProperties().get("runtime"));
+        //action.getActor().setMapping(p);
         // put the action in the processor
         tiles.get(actionToTileId).getProcessors().get(availableProcessor).getScheduler().getQueueActions().add(action);
         processorUtilization.put(availableProcessor,true);
@@ -362,7 +371,7 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
             for(Map.Entry<Actor,List<Transfer>> entry : readTransfers.entrySet()){
               // the iterate over Tranfesrs to calculate the routing
               for(Transfer transfer : entry.getValue()){
-	        Queue<PassTransferOverArchitecture> routings = calculatePathOfTransfer(transfer);
+	        Queue<PassTransferOverArchitecture> routings = calculatePathOfTransfer(transfer,bindings);
 	        int routingsLength = routings.size();
                 Transfer scheduledTransfer = null;
                 Transfer temporalTransfer = new Transfer(transfer);
@@ -396,7 +405,7 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
           Map<Actor,List<Transfer>> processorWriteTransfers = new HashMap<>();
           for(Action action : actions){
             // schedule the action
-            p.getValue().getScheduler().commitSingleAction(action,architecture,application); // modificar este
+            p.getValue().getScheduler().commitSingleAction(action,architecture,application,bindings); // modificar este
             // finally, schedule the write of tokens
             p.getValue().getScheduler().commitWritesToCrossbar(action);
             // put writing transfers to crossbar(s) or NoC
@@ -405,7 +414,7 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
             List<Transfer> listSchedTransfers = new ArrayList<Transfer>();
             for(Map.Entry<Actor,List<Transfer>> entry: writeTransfers.entrySet()){
               for(Transfer transfer : entry.getValue()){
-                Queue<PassTransferOverArchitecture> routings = calculatePathOfTransfer(transfer);
+                Queue<PassTransferOverArchitecture> routings = calculatePathOfTransfer(transfer,bindings);
                 int routingsLength = routings.size();
                 Transfer scheduledTransfer = null;
                 Transfer temporalTransfer = new Transfer(transfer);
@@ -454,19 +463,19 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
         if(t.getType()==Transfer.TRANSFER_TYPE.READ){
           // at this point all the transfers are writes
           //assert true: "Something wrong when updating memories after write!";
-          if(!t.getFifo().canFifoReadFromMemory()){
+          if(!t.getFifo().canFifoReadFromMemory(bindings)){
             ReMapTransfer = t;
             successMemoryOperations = false;
             break;
           }
-          t.getFifo().fifoReadFromMemory(t);
+          t.getFifo().fifoReadFromMemory(t,bindings);
         }else{
-          if(!t.getFifo().canFifoWriteToMemory()){
+          if(!t.getFifo().canFifoWriteToMemory(bindings)){
             ReMapTransfer = t;
             successMemoryOperations = false;
             break;
           }
-          t.getFifo().fifoWriteToMemory(t);
+          t.getFifo().fifoWriteToMemory(t,bindings);
         }
       }
       if(successMemoryOperations){
@@ -483,8 +492,8 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
       }else{
         //Memory newMapping = ArchitectureManagement.getMemoryToBeRelocated(ReMapTransfer.getFifo(),architecture);
 	    // do the ReMapping
-	    Memory reMappingMemory = ArchitectureManagement.getMemoryToBeRelocated(ReMapTransfer.getFifo(),architecture,application);
-	    ApplicationManagement.remapFifo(ReMapTransfer.getFifo(),application, reMappingMemory);
+	    Memory reMappingMemory = ArchitectureManagement.getMemoryToBeRelocated(ReMapTransfer.getFifo(),architecture,application,bindings);
+	    ApplicationManagement.remapFifo(ReMapTransfer.getFifo(), reMappingMemory,bindings);
         return false;
         // return after doing the remaping, to run again the scheduler
       }
@@ -534,7 +543,7 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
     List<Integer> actorsInStep = kernel.get(step);
     for(int v : actorsInStep){
       if (actors.get(v).canFire(fifos)){
-        Action action = new Action(actors.get(v));
+    	Action action = new Action(actors.get(v));
         this.insertAction(action);
       }
     }
@@ -563,7 +572,7 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
     return SUCC;
   }
 
-  int calcU(HashMap<Integer,Integer> l,int MII, Map<ArrayList<Integer>, Integer> U,int v) {
+  int calcU(HashMap<Integer,Integer> l,int MII, Map<ArrayList<Integer>, Integer> U,int v,Bindings bindings) {
     int BU=0;
     /*System.out.println("Here");
     for(Map.Entry<ArrayList<Integer>, Integer> u : U.entrySet()) {
@@ -572,7 +581,8 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
     System.out.println("==================================");*/
     for (int i=0;i<=Math.floor(l.get(v)/MII);i++) {
             //int mapping = application.getActors().get(v).getMapping().getOwnerTile().getId();
-    		int mapping = application.getActors().get(v).getMappingToTile().getId();
+    		int mapping = bindings.getActorTileBindings().get(v).getTarget().getId();
+    		//int mapping = application.getActors().get(v).getMappingToTile().getId();
             //System.out.println("getting key :["+mapping+","+(l.get(v)-i*MII)+"]");
             ArrayList<Integer> pair = new ArrayList<>();
             pair.add(mapping);
