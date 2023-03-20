@@ -69,7 +69,7 @@ public class testCompositeChannel {
 
       // merge all the multicast actors in the application
       ApplicationManagement.setAllMulticastActorsAsMergeable(app);
-      ApplicationManagement.collapseMergeableMulticastActors(app);
+      ApplicationManagement.collapseMergeableMulticastActors(app,bindings);
       app.resetApplication();
       architecture.resetArchitecture();
       
