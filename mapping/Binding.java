@@ -36,9 +36,31 @@
 */
 package multitile.mapping;
 
+import java.util.HashMap;
+
 public class Binding{
   private HashMap<String,Object> properties;
-  private int target; // id of the target object
+  private int targetId; // id of the target object
 
+  public Binding() {
+	properties 	= new HashMap<>();
+	targetId	= -1;
+  }
 
+  public Binding(int targetId) {
+	this.properties = new HashMap<>();
+	this.targetId	=  targetId;
+  }
+  
+  public HashMap<String,Object> getProperties(){
+	  return properties;
+  }
+  
+  public void setTargetId(int targetId) {
+	  this.targetId = targetId;
+  }
+  
+  public int getTargetId() {
+	  return targetId;
+  }
 }

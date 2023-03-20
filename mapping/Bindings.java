@@ -38,10 +38,30 @@
 
 package multitile.mapping;
 
+import java.util.HashMap;
+
 public class Bindings{
   // Key is the actor id
-  // Annidated map
-  //    -> Key is processor ID
-  //    -> Value is the property mapping class
-  //<IdActor, Map <processorId,ExecutionTime>
+  // Value is the binding
+	private HashMap<Integer,Binding> actorTileBindings;
+	private HashMap<Integer,Binding> actorProcessorBindings;
+	private HashMap<Integer,Binding> fifoMemoryBindings;
+	
+	public Bindings() {
+		actorTileBindings = new HashMap<>();
+		actorProcessorBindings = new HashMap<>();
+		fifoMemoryBindings = new HashMap<>();
+	}
+	
+	public HashMap<Integer,Binding> getActorTileBindings(){
+		return actorTileBindings;
+	}
+	
+	public HashMap<Integer,Binding> getActorProcessorBindings(){
+		return actorProcessorBindings;
+	}
+	
+	public HashMap<Integer,Binding> getFifoMemoryBindings(){
+		return fifoMemoryBindings;
+	}
 }

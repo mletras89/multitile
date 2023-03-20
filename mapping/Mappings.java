@@ -37,7 +37,7 @@
 */
 package multitile.mapping;
 
-
+import java.util.HashMap;
 
 public class Mappings{
   // Key is the actor id
