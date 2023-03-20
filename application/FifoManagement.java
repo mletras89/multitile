@@ -42,6 +42,9 @@ package multitile.application;
 import java.util.*;
 import multitile.application.Actor;
 import multitile.application.Fifo;
+import multitile.architecture.Memory;
+import multitile.mapping.Binding;
+import multitile.mapping.Bindings;
 import multitile.application.CompositeFifo;
 
 public class FifoManagement{
@@ -66,7 +69,7 @@ public class FifoManagement{
     return fifoIdCounter++;
   }
 
-  public static CompositeFifo createCompositeChannel(Fifo writer,List<Fifo> readerFifos, Actor multicastActor){
+  public static CompositeFifo createCompositeChannel(Fifo writer,List<Fifo> readerFifos, Actor multicastActor,Bindings bindings){
     // create a composite channel from a given list of fifos
     // a composite actor has only one writer and multiple readers
     //
@@ -83,14 +86,15 @@ public class FifoManagement{
       fifo.set_capacity(capacityWriter+capacityReader);
     }
 
-    // when doing the composite channel, we take the mapping of the writer
-           
-    CompositeFifo compositeFifo = new CompositeFifo("compositeFifo_"+getCompositeCounter(),writer.get_tokens(),capacityWriter+capacityReader,writer.getTokenSize(),writer.getMapping(),writer.getConsRate(),writer.getProdRate(),writer.getSource(),readerFifos,multicastActor);
-
+    CompositeFifo compositeFifo = new CompositeFifo("compositeFifo_"+getCompositeCounter(),writer.get_tokens(),capacityWriter+capacityReader,writer.getTokenSize(),writer.getConsRate(),writer.getProdRate(),writer.getSource(),readerFifos,multicastActor);
+    // 	when doing the composite channel, we take the mapping of the writer
+    // assigning the new mapping to the new compositefifo
+    Memory memoryBinding =  bindings.getFifoMemoryBindings().get(writer.getId()).getTarget();
+    bindings.getFifoMemoryBindings().put(compositeFifo.getId(), new Binding<Memory>(memoryBinding));
     return compositeFifo;
   }
   // passing as parameter the index of composite actors
-  public static CompositeFifo createCompositeChannel(Fifo writer,List<Fifo> readerFifos, Actor multicastActor,int index){
+  public static CompositeFifo createCompositeChannel(Fifo writer,List<Fifo> readerFifos, Actor multicastActor,int index,Bindings bindings){
 	    // create a composite channel from a given list of fifos
 	    // a composite actor has only one writer and multiple readers
 	    //
@@ -107,10 +111,12 @@ public class FifoManagement{
 	      fifo.set_capacity(capacityWriter+capacityReader);
 	    }
 
+	    CompositeFifo compositeFifo = new CompositeFifo("compositeFifo_"+index,writer.get_tokens(),capacityWriter+capacityReader,writer.getTokenSize(),writer.getConsRate(),writer.getProdRate(),writer.getSource(),readerFifos,multicastActor);
 	    // when doing the composite channel, we take the mapping of the writer
-	           
-	    CompositeFifo compositeFifo = new CompositeFifo("compositeFifo_"+index,writer.get_tokens(),capacityWriter+capacityReader,writer.getTokenSize(),writer.getMapping(),writer.getConsRate(),writer.getProdRate(),writer.getSource(),readerFifos,multicastActor);
-
+	    // assigning the new mapping to the new compositefifo
+	    Memory memoryBinding =  bindings.getFifoMemoryBindings().get(writer.getId()).getTarget();
+	    bindings.getFifoMemoryBindings().put(compositeFifo.getId(), new Binding<Memory>(memoryBinding));
+	    
 	    return compositeFifo;
   }
 
