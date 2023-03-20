@@ -52,6 +52,7 @@ import multitile.scheduler.SchedulerManagement;
 import multitile.application.Actor;
 import multitile.application.Application;
 import multitile.application.Fifo;
+import multitile.mapping.Bindings;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -316,20 +317,21 @@ public class Scheduler{
       this.lastEventinProcessor = lastWrite;
   }
 
-  public void syncTimeOfSrcActors(Action commitAction, Architecture architecture, Application application){
+  public void syncTimeOfSrcActors(Action commitAction, Architecture architecture, Application application, Bindings bindings){
     List<Transfer>  transfers = this.readTransfers.get(commitAction.getActor());
     if(transfers != null){
       //System.out.println("Number of read transfers: "+transfers.size());
       for(Transfer t: transfers){
         //System.out.println(t);
         Actor actorWriting = application.getActors().get(t.getFifo().getSource().getId());
-        System.out.println("actorWriting "+actorWriting.getName()+" mapped to "+actorWriting.getMapping().getName());
+        Processor actorBinding = bindings.getActorProcessorBindings().get(actorWriting.getId()).getTarget();
+        System.out.println("actorWriting "+actorWriting.getName()+" mapped to "+actorBinding.getName());
         if(actorWriting.getInputFifos().size() == 0){
           // update the processor after reading the token
           //System.out.println("ACTOR ACTOR: "+actorWriting.getName());
           //assert true;
           double timeProcessor = t.getDue_time();
-          ArchitectureManagement.updateLastEventInProcessor(architecture,actorWriting.getMapping(),timeProcessor);
+          ArchitectureManagement.updateLastEventInProcessor(architecture,actorBinding,timeProcessor);
         }
       }
     }
@@ -350,7 +352,7 @@ public class Scheduler{
     //System.out.println("\tScheduling actor "+commitAction.getActor().getName()+ " start time "+commitAction.getStart_time()+" due time "+commitAction.getDue_time());
   }
 
-  public void commitSingleAction(Action commitAction,Architecture architecture,Application application){
+  public void commitSingleAction(Action commitAction,Architecture architecture,Application application,Bindings bindings){
     // proceed to schedule the Action
     double ActionTime = commitAction.getProcessing_time();
     double startTime = Collections.max(Arrays.asList(this.lastEventinProcessor,commitAction.getStart_time(),this.getTimeLastReadofActor(commitAction.getActor())));
@@ -363,7 +365,7 @@ public class Scheduler{
     // commit the Action
     this.scheduledActions.addLast(commitAction);
     System.out.println("COMITTING:"+commitAction.getActor().getName());
-    this.syncTimeOfSrcActors(commitAction,architecture,application);
+    this.syncTimeOfSrcActors(commitAction,architecture,application,bindings);
   }
 
 
@@ -431,16 +433,20 @@ public class Scheduler{
     }
   }
   
-  public void commitWritesToCrossbar(){
+  public void commitWritesToCrossbar(Bindings bindings){
     for(Action commitAction : this.queueActions){
       List<Transfer> writes = new ArrayList<>();
       for(Fifo fifo : commitAction.getActor().getOutputFifos()){
       //System.out.println("1)Actor: "+commitAction.getActor().getName()+" writing to "+fifo.getName());
         int prod    = fifo.getProdRate();
         for(int n=0; n<prod; n++){
-          if(fifo.getMapping().getType() == Memory.MEMORY_TYPE.TILE_LOCAL_MEM ||
-            (fifo.getMapping().getType() == Memory.MEMORY_TYPE.LOCAL_MEM &&
-            !fifo.getMapping().getEmbeddedToProcessor().equals(commitAction.getActor().getMapping()))){
+          // get the mapping of the fifo and actor
+          Memory fifoBinding = bindings.getFifoMemoryBindings().get(fifo.getId()).getTarget();
+          Processor actorBinding = bindings.getActorProcessorBindings().get(commitAction.getActor().getId()).getTarget();
+          
+          if(fifoBinding.getType() == Memory.MEMORY_TYPE.TILE_LOCAL_MEM ||
+            (fifoBinding.getType() == Memory.MEMORY_TYPE.LOCAL_MEM &&
+            !fifoBinding.getEmbeddedToProcessor().equals( actorBinding ))){
               // Then the write must be scheduled in the crossbar
               Transfer writeTransfer = new Transfer(commitAction.getActor(),fifo,this.lastEventinProcessor,Transfer.TRANSFER_TYPE.WRITE);
               writes.add(writeTransfer);
