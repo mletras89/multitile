@@ -110,7 +110,7 @@ public class BaseScheduler{
 
     if (transfer.getType() == Transfer.TRANSFER_TYPE.READ){
       // then here the source is the memory and the destination is the processor
-      Memory source           = transfer.getFifo().getMapping();
+      Memory source           = bindings.getFifoMemoryBindings().get(transfer.getFifo().getId()).getTarget();
 
       Processor destination   = bindings.getActorProcessorBindings().get(transfer.getActor().getId()).getTarget();
       Tile destinationTile    = bindings.getActorTileBindings().get(transfer.getActor().getId()).getTarget();
@@ -157,7 +157,7 @@ public class BaseScheduler{
       Processor source    = bindings.getActorProcessorBindings().get(transfer.getActor().getId()).getTarget();
       Tile sourceTile     = bindings.getActorTileBindings().get(transfer.getActor().getId()).getTarget();
       
-      Memory destination  = transfer.getFifo().getMapping();
+      Memory destination  = bindings.getFifoMemoryBindings().get(transfer.getFifo().getId()).getTarget();
       Tile destinationTile;
       switch(destination.getType()){
         case GLOBAL_MEM:
