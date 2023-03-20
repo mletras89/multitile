@@ -42,6 +42,8 @@ import java.util.*;
 
 import multitile.architecture.Architecture;
 import multitile.architecture.Tile;
+import multitile.mapping.Binding;
+import multitile.mapping.Bindings;
 import multitile.architecture.Processor;
 import multitile.architecture.Memory;
 
@@ -147,12 +149,12 @@ public class ApplicationManagement{
 		}
 	}
 		
-	public static void remapFifo(Fifo fifo,Application application, Memory newMapping){
-			application.getFifos().get(fifo.getId()).setMapping(newMapping);
+	public static void remapFifo(Fifo fifo, Memory newBinding, Bindings bindings){
+		bindings.getFifoMemoryBindings().put(fifo.getId(), new Binding<Memory>(newBinding));
 	}
 
   public static void assignActorMapping(Application application,Architecture architecture, ModuloScheduler scheduler){
-    HashMap<Integer,List<Integer>> kernel = scheduler.getKernel();
+    /*HashMap<Integer,List<Integer>> kernel = scheduler.getKernel();
     // hashmap tile ID, list of actors ID
     HashMap<Integer,List<Integer>> tilesToActors = new HashMap<>();
     for(Map.Entry<Integer,Tile> entry : architecture.getTiles().entrySet()){
@@ -178,12 +180,12 @@ public class ApplicationManagement{
           countProcessor++;
         }
       }
-    }
+    }*/
   }
 
   // this method assign the mapping of each fifo according the type
   public static void assignFifoMapping(Application application, Architecture architecture){
-    for(Map.Entry<Integer,Fifo> f : application.getFifos().entrySet()){
+    /*for(Map.Entry<Integer,Fifo> f : application.getFifos().entrySet()){
       System.out.println("Fifo: "+f.getValue().getName()+" mapping type "+f.getValue().getMappingType());
       Fifo.FIFO_MAPPING_TYPE type = f.getValue().getMappingType();
       int processorId, tileId, sourceActorId,destinationActorId;
@@ -233,7 +235,7 @@ public class ApplicationManagement{
       }
       e.getValue().setInputFifos(newInputs);
       e.getValue().setOutputFifos(newOutputs);
-    }
+    }*/
   
   }
 
@@ -291,7 +293,7 @@ public class ApplicationManagement{
   
   // these method receives an application and returns a modified application removing 
   // all the mergeable multicast actors from the application and replace them by composite channels
-  public static void collapseMergeableMulticastActors(Application app){
+  public static void collapseMergeableMulticastActors(Application app,Bindings bindings){
     // get all the multicast actors
     Map<Integer,Actor> multicastActors = getMulticastActors(app);
     
@@ -305,7 +307,7 @@ public class ApplicationManagement{
         Fifo writer = inputFifos.get(0);
         List<Fifo>  readerFifos = new ArrayList<Fifo>(outputFifos);
 
-        CompositeFifo compositeFifo = FifoManagement.createCompositeChannel(writer,readerFifos,selectedActor); 
+        CompositeFifo compositeFifo = FifoManagement.createCompositeChannel(writer,readerFifos,selectedActor,bindings); 
         // once created the compositefifo, we have to connected into the application
         int idWriterActor = writer.getSource().getId();
         app.getActors().get(idWriterActor).removeOutputFifo(writer.getId());
@@ -327,7 +329,7 @@ public class ApplicationManagement{
     }
   }
 
-  public static void collapseMergeableMulticastActors(Application app,int startIndex){
+  public static void collapseMergeableMulticastActors(Application app,int startIndex,Bindings bindings){
 	    // get all the multicast actors
 	    Map<Integer,Actor> multicastActors = getMulticastActors(app);
 	    
@@ -341,7 +343,7 @@ public class ApplicationManagement{
 	        Fifo writer = inputFifos.get(0);
 	        List<Fifo>  readerFifos = new ArrayList<Fifo>(outputFifos);
 
-	        CompositeFifo compositeFifo = FifoManagement.createCompositeChannel(writer,readerFifos,selectedActor,startIndex++); 
+	        CompositeFifo compositeFifo = FifoManagement.createCompositeChannel(writer,readerFifos,selectedActor,startIndex++,bindings); 
 	        // once created the compositefifo, we have to connected into the application
 	        int idWriterActor = writer.getSource().getId();
 	        app.getActors().get(idWriterActor).removeOutputFifo(writer.getId());
