@@ -105,7 +105,7 @@ public class testWriteReadTransfers {
       scheduler.setArchitecture(architecture);
 
       scheduler.setMaxIterations(10);
-      scheduler.schedule();
+      scheduler.schedule(bindings);
 
       architecture.getTiles().get(0).getProcessors().get(0).getScheduler().saveScheduleStats(".");
       architecture.getTiles().get(0).getCrossbar().saveCrossbarUtilizationStats(".");
