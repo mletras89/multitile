@@ -37,6 +37,8 @@
 
 package multitile.scheduler;
 
+import multitile.mapping.Bindings;
+
 interface Schedule{
-  public void schedule();
+  public void schedule(Bindings bindings);
 }

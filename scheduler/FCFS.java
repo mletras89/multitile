@@ -39,6 +39,7 @@ package multitile.scheduler;
 import multitile.Action;
 import multitile.Transfer;
 import multitile.architecture.Tile;
+import multitile.mapping.Bindings;
 import multitile.architecture.Processor;
 import multitile.application.Actor;
 
@@ -55,7 +56,7 @@ public class FCFS extends BaseScheduler implements Schedule{
     this.setMaxIterations(1); 
   }
   
-  public void schedule(){
+  public void schedule(Bindings bindings){
     //List<Actor> actors = application.getListActors(); 
     //Map<Integer,Fifo> fifoMap = application.getFifos();
     for(HashMap.Entry<Integer,Tile> t : architecture.getTiles().entrySet()){
@@ -68,7 +69,7 @@ public class FCFS extends BaseScheduler implements Schedule{
       // get schedulable actions in all the processors in all the tiles
       for(HashMap.Entry<Integer,Tile> t :architecture.getTiles().entrySet()){
         for(HashMap.Entry<Integer,Processor> p : t.getValue().getProcessors().entrySet()){
-          this.getSchedulableActors(p.getValue());
+          this.getSchedulableActors(p.getValue(),bindings);
         }
       }
       // proceed to schedule each of the actions per processor
@@ -84,9 +85,9 @@ public class FCFS extends BaseScheduler implements Schedule{
               t.getValue().getCrossbar().insertTransfers(entry.getValue());
             }
             //commit the read transfers
-            t.getValue().getCrossbar().commitTransfersinQueue();
+            t.getValue().getCrossbar().commitTransfersinQueue(bindings);
             // update the read transfers of each processor with the correct due time
-            Map<Actor,List<Transfer>> processorReadTransfers = t.getValue().getCrossbar().getScheduledReadTransfers(p.getValue());
+            Map<Actor,List<Transfer>> processorReadTransfers = t.getValue().getCrossbar().getScheduledReadTransfers(p.getValue(),bindings);
             // commit the action in the processor
             p.getValue().getScheduler().setReadTransfers(processorReadTransfers);
             p.getValue().getScheduler().commitSingleAction(action); // modificar este 
@@ -99,9 +100,9 @@ public class FCFS extends BaseScheduler implements Schedule{
               t.getValue().getCrossbar().insertTransfers(entry.getValue());
             }
             // commit write transfers in the crossbar
-            t.getValue().getCrossbar().commitTransfersinQueue();
+            t.getValue().getCrossbar().commitTransfersinQueue(bindings);
             // update the write transfers of each processor with the correct start and due time
-            Map<Actor,List<Transfer>> processorWriteTransfers = t.getValue().getCrossbar().getScheduledWriteTransfers(p.getValue());
+            Map<Actor,List<Transfer>> processorWriteTransfers = t.getValue().getCrossbar().getScheduledWriteTransfers(p.getValue(),bindings);
             p.getValue().getScheduler().setWriteTransfers(processorWriteTransfers);
             // update the last event in processor, taking into the account the processorWriteTransfers
             p.getValue().getScheduler().updateLastEventAfterWrite(action);
@@ -160,18 +161,20 @@ public class FCFS extends BaseScheduler implements Schedule{
   }
 
 
-  public void getSchedulableActors(Processor processor){
+  public void getSchedulableActors(Processor processor, Bindings bindings){
     // from the list of actors in Processor, check which of them can fire
     int processorId = processor.getId();
     int tileId = processor.getOwnerTile().getId();
 
     architecture.getTiles().get(tileId).getProcessors().get(processorId).getScheduler().cleanQueue();
     for(Actor actor: this.application.getListActors()){
-      if(actor.getMapping().equals(processor)){
+      Processor actorBinding = bindings.getActorProcessorBindings().get(actor.getId()).getTarget();
+      if(actorBinding.equals(processor)){
       	if(actor.canFire(application.getFifos())){
-          //System.out.println("Fireable: "+actor.getName());
-	  Action action = new Action(actor);
-          architecture.getTiles().get(tileId).getProcessors().get(processorId).getScheduler().insertAction(action);
+            //System.out.println("Fireable: "+actor.getName());
+      		double runtime = (double) bindings.getActorProcessorBindings().get(actor.getId()).getProperties().get("runtime");
+      		Action action = new Action(actor,runtime);
+      		architecture.getTiles().get(tileId).getProcessors().get(processorId).getScheduler().insertAction(action);
       	}
       }
     }
