@@ -40,6 +40,7 @@ import multitile.scheduler.FCFS;
 
 import multitile.architecture.Architecture;
 import multitile.architecture.Tile;
+import multitile.mapping.Bindings;
 import multitile.architecture.Processor;
 
 import multitile.application.Application;
@@ -54,7 +55,9 @@ public class testQuadCoreImplementation {
       Architecture architecture = new Architecture("Arch","Tile_testQuadCore",4,1.0,2);
       Tile t1 = architecture.getTiles().get(0);
 
-      TestApplicationQuadCore sampleApplication = new TestApplicationQuadCore(t1);  
+      Bindings bindings = new Bindings();
+      
+      TestApplicationQuadCore sampleApplication = new TestApplicationQuadCore(t1,bindings);  
       Application app = sampleApplication.getSampleApplication();
 
       FCFS scheduler = new FCFS();
@@ -62,7 +65,7 @@ public class testQuadCoreImplementation {
       scheduler.setArchitecture(architecture);
 
       scheduler.setMaxIterations(3);
-      scheduler.schedule();
+      scheduler.schedule(bindings,null);
 
       for(HashMap.Entry<Integer,Processor> p: architecture.getTiles().get(0).getProcessors().entrySet()){
         p.getValue().getScheduler().saveScheduleStats(".");
