@@ -318,7 +318,7 @@ public class Crossbar{
       double transferTime = this.calculateTransferTime(commitTransfer);
       double startTime = (commitTransfer.getStart_time() > timeLastAction) ? commitTransfer.getStart_time() : timeLastAction;
       double endTime  = startTime + transferTime;
-      // get the mapping of the fifo
+      // get the mapping of the fifo and actor
       Memory fifoBinding = bindings.getFifoMemoryBindings().get(commitTransfer.getFifo().getId()).getTarget();
       Processor actorBinding = bindings.getActorProcessorBindings().get(commitTransfer.getActor().getId()).getTarget();
       if(fifoBinding.getType() == Memory.MEMORY_TYPE.TILE_LOCAL_MEM ||
