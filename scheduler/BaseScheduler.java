@@ -45,6 +45,7 @@ import multitile.architecture.Tile;
 import multitile.architecture.Architecture;
 import multitile.architecture.Memory;
 import multitile.architecture.TileLocalMemory;
+import multitile.mapping.Bindings;
 import multitile.application.Application;
 
 import java.util.List;
@@ -103,7 +104,7 @@ public class BaseScheduler{
     return schedTransfer;
   }
 
-  public Queue<PassTransferOverArchitecture> calculatePathOfTransfer(Transfer transfer){
+  public Queue<PassTransferOverArchitecture> calculatePathOfTransfer(Transfer transfer,Bindings bindings){
     // this function returns a list of interconnect sequences
     Queue<PassTransferOverArchitecture> sequence = new LinkedList<>();
 
@@ -111,8 +112,8 @@ public class BaseScheduler{
       // then here the source is the memory and the destination is the processor
       Memory source           = transfer.getFifo().getMapping();
 
-      Processor destination   = transfer.getActor().getMapping();
-      Tile destinationTile    = destination.getOwnerTile();
+      Processor destination   = bindings.getActorProcessorBindings().get(transfer.getActor().getId()).getTarget();
+      Tile destinationTile    = bindings.getActorTileBindings().get(transfer.getActor().getId()).getTarget();
       switch(source.getType()){
         case GLOBAL_MEM:
           // this is the easiest case, the sequence es GlobalMemory -> NoC -> Tile local crossbar -> processor
@@ -153,8 +154,8 @@ public class BaseScheduler{
     }
     if(transfer.getType() == Transfer.TRANSFER_TYPE.WRITE){
       // here the source is the processor and the destination is the memory
-      Processor source    = transfer.getActor().getMapping();
-      Tile sourceTile     = source.getOwnerTile();
+      Processor source    = bindings.getActorProcessorBindings().get(transfer.getActor().getId()).getTarget();
+      Tile sourceTile     = bindings.getActorTileBindings().get(transfer.getActor().getId()).getTarget();
       
       Memory destination  = transfer.getFifo().getMapping();
       Tile destinationTile;
