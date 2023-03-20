@@ -40,6 +40,7 @@ import multitile.Action;
 import multitile.Transfer;
 import multitile.architecture.Tile;
 import multitile.mapping.Bindings;
+import multitile.mapping.Mappings;
 import multitile.architecture.Processor;
 import multitile.application.Actor;
 
@@ -56,7 +57,7 @@ public class FCFS extends BaseScheduler implements Schedule{
     this.setMaxIterations(1); 
   }
   
-  public void schedule(Bindings bindings){
+  public void schedule(Bindings bindings,Mappings mappings){
     //List<Actor> actors = application.getListActors(); 
     //Map<Integer,Fifo> fifoMap = application.getFifos();
     for(HashMap.Entry<Integer,Tile> t : architecture.getTiles().entrySet()){
