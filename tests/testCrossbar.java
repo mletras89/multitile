@@ -4,6 +4,9 @@ import multitile.Transfer;
 import multitile.application.Actor;
 import multitile.application.Fifo;
 import multitile.architecture.Memory;
+import multitile.architecture.Processor;
+import multitile.mapping.Binding;
+import multitile.mapping.Bindings;
 import multitile.architecture.Crossbar;
 
 import java.io.*;
@@ -12,10 +15,14 @@ import java.util.*;
 public class testCrossbar {
     public static void main(String[] args) throws IOException {
       System.out.println("Testing crossbar!");
-
-      Memory memoryTest1 = new Memory("Memory_1");
-      memoryTest1.setType(Memory.MEMORY_TYPE.TILE_LOCAL_MEM);
-
+      
+      Bindings bindings = new Bindings();
+      Processor processor = new Processor("Processor1");
+      //Memory memoryTest1 = new Memory("Memory_1");
+      Memory memoryTest1 = processor.getLocalMemory();
+      memoryTest1.setCapacity(Double.MAX_VALUE);
+      //memoryTest1.setType(Memory.MEMORY_TYPE.);
+      
       Actor actor1 = new Actor("actor1");
       actor1.setId(1);
       Fifo fifo1 = new Fifo("fifo1",0,2,1000000,memoryTest1,1,1,actor1,actor1);
@@ -52,7 +59,12 @@ public class testCrossbar {
       actor7.setId(7);
       Actor actor8 = new Actor("actor6");
       actor8.setId(8);
-
+      
+      bindings.getFifoMemoryBindings().put(fifo1.getId(), new Binding<Memory>(memoryTest1));
+      bindings.getFifoMemoryBindings().put(fifo2.getId(), new Binding<Memory>(memoryTest1));
+      bindings.getFifoMemoryBindings().put(fifo3.getId(), new Binding<Memory>(memoryTest1));
+      bindings.getFifoMemoryBindings().put(fifo4.getId(), new Binding<Memory>(memoryTest1));
+      
 
       Crossbar crossbar1 = new Crossbar("Crossbar",1,4);
       crossbar1.insertTransfer(t1);
@@ -76,7 +88,7 @@ public class testCrossbar {
       List<Transfer> transfers = Arrays.asList(t4,t4,t4);
       crossbar1.insertTransfers(transfers);
 
-      crossbar1.commitTransfersinQueue();
+      crossbar1.commitTransfersinQueue(bindings);
       crossbar1.saveCrossbarUtilizationStats(".");
 
       System.out.println("Finishing testing crossbar!");
