@@ -31,49 +31,17 @@
   @date   19 March 2023
   @version 1.1
   @ brief
-     Mappings for all actor  ->  for all processor
-     Mappings for all fifo   ->  for all memory
+     Bindings for all actor  ->  to a single processor
+     Bindings for all fifo   ->  to a single memory
 --------------------------------------------------------------------------
 */
+
 package multitile.mapping;
 
-
-
-public class Mappings{
+public class Bindings{
   // Key is the actor id
   // Annidated map
   //    -> Key is processor ID
   //    -> Value is the property mapping class
   //<IdActor, Map <processorId,ExecutionTime>
-  private HashMap<Integer,HashMap<Integer,Mapping>> actorProcessorMappings;
-  // Key is the actor id
-  // Annidated map
-  //    -> Key is tile id
-  //    -> Value is the property mapping class
-  //<IdActor, Map <tileId,ExecutionTime>
-  private HashMap<Integer,HashMap<Integer,Mapping>> actorTileMappings;
-  // Key is the fifo id
-  // Annidated map
-  //    -> Key is memory ID
-  //    -> Value is the property mapping class
-  //<IdFifo, Map <tileId,ExecutionTime>
-  private HashMap<Integer,HashMap<Integer,Mapping>> fifoMemoryMappings;
-
-  public Mappings(){
-	this.actorProcessorMappings = new HashMap<>();
-	this.actorTileMappings = new HashMap<>();
-	this.fifoMemoryMappings = new HashMap<>();
-  }
-
-  public HashMap<Integer,HashMap<Integer,Mapping>> getActorProcessorMappings(){
-	return actorProcessorMappings;
-  }
-
-  public HashMap<Integer,HashMap<Integer,Mapping>> getActorTileMappings(){
-	return actorTileMappings;
-  }
-
-  public HashMap<Integer,HashMap<Integer,Mapping>> getFifoMemoryMappings(){
-	return fifoMemoryMappings;
-  }
 }

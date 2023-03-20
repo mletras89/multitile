@@ -31,44 +31,18 @@
   @date   19 March 2023
   @version 1.1
   @ brief
-     Mapping T(Actor or fifo) to U(processor or memory)
+     Stores only the properties of the mapping
 --------------------------------------------------------------------------
 */
 package multitile.mapping;
 
 import java.util.*;
 
-public class Mapping<T,U>{
-  private T source;
-  private U destination;
+public class Mapping{
   private HashMap<String,Object> properties;
   
   public Mapping(){
-    source = null;
-    destination = null;
     properties = new HashMap<String,Object>();
-  }
-
-  public Mapping(T source, U destination){
-    this.source = source;
-    this.destination = destination;
-    properties = new HashMap<String,Object>();
-  }
-
-  public T getSource(){
-    return source;
-  }
-
-  public void setSource(T source){
-    this.source = source;
-  }
-
-  public U getDestination(){
-    return destination;
-  }
-
-  public void setDestination(U destination){
-    this.destination = destination;
   }
 
   public HashMap<String,Object> getProperties(){
