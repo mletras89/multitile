@@ -41,7 +41,7 @@ import multitile.scheduler.FCFS;
 
 import multitile.architecture.Architecture;
 import multitile.architecture.Tile;
-
+import multitile.mapping.Bindings;
 import multitile.application.Application;
 import multitile.application.ApplicationManagement;
 
@@ -54,16 +54,18 @@ public class testDualCoreImplementation {
       Architecture architecture = new Architecture("Arch","Tile_testDualCore",2,1.0,2);
       Tile t1 = architecture.getTiles().get(0); 
       
-      TestApplicationDualCore sampleApplication = new TestApplicationDualCore(t1);  
+      Bindings bindings = new Bindings();
+      
+      TestApplicationDualCore sampleApplication = new TestApplicationDualCore(t1,bindings);  
       Application app = sampleApplication.getSampleApplication();
-      ApplicationManagement.assignFifoMapping(app,architecture); 
+      ApplicationManagement.assignFifoMapping(app,architecture,bindings); 
 
       FCFS scheduler = new FCFS();
       scheduler.setApplication(app);
       scheduler.setArchitecture(architecture);
 
       scheduler.setMaxIterations(3);
-      scheduler.schedule();
+      scheduler.schedule(bindings,null);
 
       architecture.getTiles().get(0).getProcessors().get(0).getScheduler().saveScheduleStats(".");
       architecture.getTiles().get(0).getProcessors().get(1).getScheduler().saveScheduleStats(".");
