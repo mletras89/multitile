@@ -40,6 +40,7 @@ package multitile.architecture;
 
 import multitile.application.Application;
 import multitile.application.Fifo;
+import multitile.mapping.Bindings;
 
 
 public class ArchitectureManagement{
@@ -71,8 +72,8 @@ public class ArchitectureManagement{
     architecture.getTiles().get(processor.getOwnerTile().getId()).getProcessors().get(processor.getId()).getScheduler().setLastEventinProcessor(timeEvent);
   }
 
-  public static Memory getMemoryToBeRelocated(Fifo fifo,Architecture architecture,Application application){
-    Memory mappedMemory =  application.getFifos().get(fifo.getId()).getMapping();
+  public static Memory getMemoryToBeRelocated(Fifo fifo,Architecture architecture,Application application,Bindings bindings){
+    Memory mappedMemory = bindings.getFifoMemoryBindings().get(fifo.getId()).getTarget();
     //System.out.println("Mapped Memory "+mappedMemory.getName());
     Memory newMapping;
     switch(mappedMemory.getType()){
