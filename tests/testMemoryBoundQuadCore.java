@@ -39,7 +39,7 @@ package multitile.tests;
 import multitile.scheduler.FCFS;
 
 import multitile.architecture.Architecture;
-
+import multitile.mapping.Bindings;
 import multitile.application.Application;
 import multitile.application.ApplicationManagement;
 
@@ -57,16 +57,18 @@ public class testMemoryBoundQuadCore {
       architecture.getTiles().get(0).getProcessors().get(2).getLocalMemory().setCapacity(2000000);
       architecture.getTiles().get(0).getProcessors().get(3).getLocalMemory().setCapacity(2000000);
 
-      TestApplicationQuadCoreMemoryBound sampleApplication = new TestApplicationQuadCoreMemoryBound(architecture.getTiles().get(0));  
+      Bindings bindings = new Bindings();
+      
+      TestApplicationQuadCoreMemoryBound sampleApplication = new TestApplicationQuadCoreMemoryBound(architecture.getTiles().get(0),bindings);  
       Application app = sampleApplication.getSampleApplication();
-      ApplicationManagement.assignFifoMapping(app,architecture); 
+      ApplicationManagement.assignFifoMapping(app,architecture,bindings); 
 
       FCFS scheduler = new FCFS();
       scheduler.setApplication(app);
       scheduler.setArchitecture(architecture);
 
       scheduler.setMaxIterations(10);
-      scheduler.schedule();
+      scheduler.schedule(bindings,null);
 
       architecture.getTiles().get(0).getProcessors().get(0).getScheduler().saveScheduleStats(".");
       architecture.getTiles().get(0).getProcessors().get(1).getScheduler().saveScheduleStats(".");
