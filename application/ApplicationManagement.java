@@ -184,39 +184,44 @@ public class ApplicationManagement{
   }
 
   // this method assign the mapping of each fifo according the type
-  public static void assignFifoMapping(Application application, Architecture architecture){
-    /*for(Map.Entry<Integer,Fifo> f : application.getFifos().entrySet()){
+  public static void assignFifoMapping(Application application, Architecture architecture,Bindings bindings){
+    for(Map.Entry<Integer,Fifo> f : application.getFifos().entrySet()){
       System.out.println("Fifo: "+f.getValue().getName()+" mapping type "+f.getValue().getMappingType());
       Fifo.FIFO_MAPPING_TYPE type = f.getValue().getMappingType();
       int processorId, tileId, sourceActorId,destinationActorId;
       switch(type){
         case SOURCE:
           sourceActorId = f.getValue().getSource().getId();
-          processorId = application.getActors().get(sourceActorId).getMapping().getId();
-          tileId = application.getActors().get(sourceActorId).getMappingToTile().getId();
+          processorId 	=  bindings.getActorProcessorBindings().get(sourceActorId).getTarget().getId(); //  application.getActors().get(sourceActorId).getMapping().getId();
+          tileId 		= bindings.getActorTileBindings().get(sourceActorId).getTarget().getId();    // application.getActors().get(sourceActorId).getMappingToTile().getId();
           //System.out.println("Source "+f.getValue().getSource().getName()+" mapped to "+architecture.getTiles().get(tileId).getProcessors().get(processorId).getName());
-          application.getFifos().get(f.getKey()).setMapping( architecture.getTiles().get(tileId).getProcessors().get(processorId).getLocalMemory()  );
+          bindings.getFifoMemoryBindings().put(f.getKey(), new Binding<Memory>( architecture.getTiles().get(tileId).getProcessors().get(processorId).getLocalMemory() ) );
+          //application.getFifos().get(f.getKey()).setMapping( architecture.getTiles().get(tileId).getProcessors().get(processorId).getLocalMemory()  );
           break;
         case DESTINATION:
-          destinationActorId = f.getValue().getDestination().getId();
-          processorId = application.getActors().get(destinationActorId).getMapping().getId();
-          tileId  = application.getActors().get(destinationActorId).getMappingToTile().getId();
-          application.getFifos().get(f.getKey()).setMapping( architecture.getTiles().get(tileId).getProcessors().get(processorId).getLocalMemory());
+          destinationActorId 	= f.getValue().getDestination().getId();
+          processorId 			= bindings.getActorProcessorBindings().get(destinationActorId).getTarget().getId(); // application.getActors().get(destinationActorId).getMapping().getId();
+          tileId  				= bindings.getActorTileBindings().get(destinationActorId).getTarget().getId();  //application.getActors().get(destinationActorId).getMappingToTile().getId();
+          //application.getFifos().get(f.getKey()).setMapping( architecture.getTiles().get(tileId).getProcessors().get(processorId).getLocalMemory());
+          bindings.getFifoMemoryBindings().put(f.getKey(), new Binding<Memory>(architecture.getTiles().get(tileId).getProcessors().get(processorId).getLocalMemory() ));
           break;
         case TILE_LOCAL_SOURCE:
-        	sourceActorId = f.getValue().getSource().getId();
-            processorId = application.getActors().get(sourceActorId).getMapping().getId();
-            tileId = application.getActors().get(sourceActorId).getMappingToTile().getId();
-            application.getFifos().get(f.getKey()).setMapping( architecture.getTiles().get(tileId).getTileLocalMemory()  );
+        	sourceActorId 	= f.getValue().getSource().getId();
+            processorId 	= bindings.getActorProcessorBindings().get(sourceActorId).getTarget().getId(); // application.getActors().get(sourceActorId).getMapping().getId();
+            tileId 			= bindings.getActorTileBindings().get(sourceActorId).getTarget().getId(); //   application.getActors().get(sourceActorId).getMappingToTile().getId();
+            //application.getFifos().get(f.getKey()).setMapping( architecture.getTiles().get(tileId).getTileLocalMemory()  );
+            bindings.getFifoMemoryBindings().put(f.getKey(), new Binding<Memory>( architecture.getTiles().get(tileId).getTileLocalMemory() ));
         	break;
         case TILE_LOCAL_DESTINATION:
-        	destinationActorId = f.getValue().getDestination().getId();
-            processorId = application.getActors().get(destinationActorId).getMapping().getId();
-            tileId  = application.getActors().get(destinationActorId).getMappingToTile().getId();
-            application.getFifos().get(f.getKey()).setMapping( architecture.getTiles().get(tileId).getTileLocalMemory()  );
-        	break;
+        	destinationActorId 	= f.getValue().getDestination().getId();
+            processorId			= bindings.getActorProcessorBindings().get(destinationActorId).getTarget().getId();  //application.getActors().get(destinationActorId).getMapping().getId();
+            tileId  			= bindings.getActorTileBindings().get(destinationActorId).getTarget().getId();  //application.getActors().get(destinationActorId).getMappingToTile().getId();
+            //application.getFifos().get(f.getKey()).setMapping( architecture.getTiles().get(tileId).getTileLocalMemory()  );
+            bindings.getFifoMemoryBindings().put(f.getKey(), new Binding<Memory>( architecture.getTiles().get(tileId).getTileLocalMemory() ) );
+            break;
         case GLOBAL:
-          application.getFifos().get(f.getKey()).setMapping(architecture.getGlobalMemory());
+          //application.getFifos().get(f.getKey()).setMapping(architecture.getGlobalMemory());
+          bindings.getFifoMemoryBindings().put(f.getKey(), new Binding<Memory>( architecture.getGlobalMemory() ));
           break;
       }
     }
@@ -235,7 +240,7 @@ public class ApplicationManagement{
       }
       e.getValue().setInputFifos(newInputs);
       e.getValue().setOutputFifos(newOutputs);
-    }*/
+    }
   
   }
 
