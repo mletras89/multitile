@@ -339,7 +339,7 @@ public class Scheduler{
 
   public void commitSingleAction(Action commitAction){
     // proceed to schedule the Action
-    double ActionTime = commitAction.getProcessing_time();
+    double ActionTime = commitAction.getProcessingTime();
     double startTime = Collections.max(Arrays.asList(this.lastEventinProcessor,commitAction.getStart_time(),this.getTimeLastReadofActor(commitAction.getActor())));
     double endTime = startTime + ActionTime;
     // update now the commit Action
@@ -354,7 +354,7 @@ public class Scheduler{
 
   public void commitSingleAction(Action commitAction,Architecture architecture,Application application,Bindings bindings){
     // proceed to schedule the Action
-    double ActionTime = commitAction.getProcessing_time();
+    double ActionTime = commitAction.getProcessingTime();
     double startTime = Collections.max(Arrays.asList(this.lastEventinProcessor,commitAction.getStart_time(),this.getTimeLastReadofActor(commitAction.getActor())));
     double endTime = startTime + ActionTime;
     // update now the commit Action
