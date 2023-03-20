@@ -18,10 +18,11 @@ public class testCrossbar {
       
       Bindings bindings = new Bindings();
       Processor processor = new Processor("Processor1");
-      //Memory memoryTest1 = new Memory("Memory_1");
-      Memory memoryTest1 = processor.getLocalMemory();
-      memoryTest1.setCapacity(Double.MAX_VALUE);
-      //memoryTest1.setType(Memory.MEMORY_TYPE.);
+      Memory memoryTest1 = new Memory("Memory_1");
+      //Memory memoryTest1 = processor.getLocalMemory();
+      //memoryTest1.setCapacity(Double.MAX_VALUE);
+      //memoryTest1.setType(type);
+      memoryTest1.setType(Memory.MEMORY_TYPE.TILE_LOCAL_MEM);
       
       Actor actor1 = new Actor("actor1");
       actor1.setId(1);
