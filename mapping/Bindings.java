@@ -40,12 +40,16 @@ package multitile.mapping;
 
 import java.util.HashMap;
 
+import multitile.architecture.Memory;
+import multitile.architecture.Processor;
+import multitile.architecture.Tile;
+
 public class Bindings{
   // Key is the actor id
   // Value is the binding
-	private HashMap<Integer,Binding> actorTileBindings;
-	private HashMap<Integer,Binding> actorProcessorBindings;
-	private HashMap<Integer,Binding> fifoMemoryBindings;
+	private HashMap<Integer,Binding<Tile>> actorTileBindings;
+	private HashMap<Integer,Binding<Processor>> actorProcessorBindings;
+	private HashMap<Integer,Binding<Memory>> fifoMemoryBindings;
 	
 	public Bindings() {
 		actorTileBindings = new HashMap<>();
@@ -53,15 +57,15 @@ public class Bindings{
 		fifoMemoryBindings = new HashMap<>();
 	}
 	
-	public HashMap<Integer,Binding> getActorTileBindings(){
+	public HashMap<Integer,Binding<Tile>> getActorTileBindings(){
 		return actorTileBindings;
 	}
 	
-	public HashMap<Integer,Binding> getActorProcessorBindings(){
+	public HashMap<Integer,Binding<Processor>> getActorProcessorBindings(){
 		return actorProcessorBindings;
 	}
 	
-	public HashMap<Integer,Binding> getFifoMemoryBindings(){
+	public HashMap<Integer,Binding<Memory>> getFifoMemoryBindings(){
 		return fifoMemoryBindings;
 	}
 }
