@@ -42,6 +42,8 @@ package multitile.architecture;
 
 import multitile.Transfer;
 import multitile.application.Actor;
+import multitile.application.Application;
+import multitile.mapping.Bindings;
 import multitile.MapManagement;
 
 import java.io.File;
@@ -228,11 +230,12 @@ public class Crossbar{
     return scheduledReadTransfers;
   }
   
-  public Map<Actor,List<Transfer>> getScheduledReadTransfers(Processor processor){
+  public Map<Actor,List<Transfer>> getScheduledReadTransfers(Processor processor, Bindings bindings){
     Map<Actor,List<Transfer>> processorTransfers = new HashMap<>();
     for(Map.Entry<Actor,List<Transfer>> entry : this.scheduledReadTransfers.entrySet()){
-      if(entry.getKey().getMapping().equals(processor)){
-	processorTransfers.put(entry.getKey(),entry.getValue());
+      Processor actorBinding = bindings.getActorProcessorBindings().get(entry.getKey().getId()).getTarget();
+      if(actorBinding.equals(processor)){
+    	  processorTransfers.put(entry.getKey(),entry.getValue());
       }
     }
     return processorTransfers;
@@ -242,18 +245,18 @@ public class Crossbar{
     return this.scheduledWriteTransfers;
   }
 
-  public Map<Actor,List<Transfer>> getScheduledWriteTransfers(Processor processor){
+  public Map<Actor,List<Transfer>> getScheduledWriteTransfers(Processor processor, Bindings bindings){
     Map<Actor,List<Transfer>> processorTransfers = new HashMap<>();
     for(Map.Entry<Actor,List<Transfer>> entry : this.scheduledWriteTransfers.entrySet()){
-      if(entry.getKey().getMapping().equals(processor)){
-	processorTransfers.put(entry.getKey(),entry.getValue());
+      Processor actorBinding = bindings.getActorProcessorBindings().get(entry.getKey().getId()).getTarget();
+      if(actorBinding.equals(processor)){
+    	  processorTransfers.put(entry.getKey(),entry.getValue());
       }
     }
     return processorTransfers;
   }
 
-// methods for managing the crossbar, the insertion in each channel
-
+  // methods for managing the crossbar, the insertion in each channel
   public void insertTransfer(Transfer transfer) {
     queueTransfers.add(new Transfer(transfer));
   }
@@ -303,7 +306,7 @@ public class Crossbar{
     return commitTransfer;
   }
 
-  public void commitTransfersinQueue(){
+  public void commitTransfersinQueue(Bindings bindings){
     // then commit all the transfers in the Queue
     int elementsinQueue = queueTransfers.size();
     
@@ -315,16 +318,17 @@ public class Crossbar{
       double transferTime = this.calculateTransferTime(commitTransfer);
       double startTime = (commitTransfer.getStart_time() > timeLastAction) ? commitTransfer.getStart_time() : timeLastAction;
       double endTime  = startTime + transferTime;
-
-      if(commitTransfer.getFifo().getMapping().getType() == Memory.MEMORY_TYPE.TILE_LOCAL_MEM ||
-        (commitTransfer.getFifo().getMapping().getType() == Memory.MEMORY_TYPE.LOCAL_MEM &&
-        !commitTransfer.getFifo().getMapping().getEmbeddedToProcessor().equals(commitTransfer.getActor().getMapping()))){
+      // get the mapping of the fifo
+      Memory fifoBinding = bindings.getFifoMemoryBindings().get(commitTransfer.getFifo().getId()).getTarget();
+      Processor actorBinding = bindings.getActorProcessorBindings().get(commitTransfer.getActor().getId()).getTarget();
+      if(fifoBinding.getType() == Memory.MEMORY_TYPE.TILE_LOCAL_MEM ||
+        (fifoBinding.getType() == Memory.MEMORY_TYPE.LOCAL_MEM &&
+        ! fifoBinding.getEmbeddedToProcessor().equals(actorBinding))){
         endTime = startTime + transferTime;  
       }
       else{
         endTime = startTime;
       }
-
       // update now the commit transfer
       commitTransfer.setStart_time(startTime);
       commitTransfer.setDue_time(endTime);
