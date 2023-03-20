@@ -38,29 +38,29 @@ package multitile.mapping;
 
 import java.util.HashMap;
 
-public class Binding{
+public class Binding<T>{
   private HashMap<String,Object> properties;
-  private int targetId; // id of the target object
+  private T target; // id of the target object
 
   public Binding() {
 	properties 	= new HashMap<>();
-	targetId	= -1;
+	target	    = null;
   }
 
-  public Binding(int targetId) {
+  public Binding(T target) {
 	this.properties = new HashMap<>();
-	this.targetId	=  targetId;
+	this.target	    =  target;
   }
   
   public HashMap<String,Object> getProperties(){
 	  return properties;
   }
   
-  public void setTargetId(int targetId) {
-	  this.targetId = targetId;
+  public void setTarget(T target) {
+	  this.target = target;
   }
   
-  public int getTargetId() {
-	  return targetId;
+  public T getTarget() {
+	  return target;
   }
 }
