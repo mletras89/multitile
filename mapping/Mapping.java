@@ -38,15 +38,29 @@ package multitile.mapping;
 
 import java.util.*;
 
-public class Mapping{
+public class Mapping<T>{
+  private T target;
   private HashMap<String,Object> properties;
   
-  public Mapping(){
-    properties = new HashMap<String,Object>();
+  public Mapping(T target){
+	  this.target = target;
+	  properties = new HashMap<String,Object>();
   }
 
+  public T getTarget() {
+	  return target;
+  }
+  
+  public void setTarget(T target) {
+	  this.target = target;
+  }
+  
   public HashMap<String,Object> getProperties(){
     return properties;
+  }
+  
+  public void setProperties(HashMap<String,Object> properties){
+	  this.properties = new HashMap<String,Object>(properties);
   }
 
 }
