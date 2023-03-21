@@ -72,7 +72,7 @@ public class testQuadCoreModuloScheduling {
       singleCoreScheduler.calculateModuloSchedule(bindings);
       singleCoreScheduler.printKernelBody();
       singleCoreScheduler.findSchedule();
-      singleCoreScheduler.schedule(bindings,null);
+      singleCoreScheduler.schedule(bindings,mappings);
 
       System.out.println("Single iteration delay: "+singleCoreScheduler.getDelaySingleIteration());
 
@@ -116,7 +116,7 @@ public class testQuadCoreModuloScheduling {
       dualCoreScheduler.calculateModuloSchedule(bindings);
       dualCoreScheduler.printKernelBody();
       dualCoreScheduler.findSchedule();
-      dualCoreScheduler.schedule(bindings,null);
+      dualCoreScheduler.schedule(bindings,mappings);
 
       System.out.println("Single iteration delay: "+dualCoreScheduler.getDelaySingleIteration());
       System.out.println("The MMI is: "+dualCoreScheduler.getMII());
@@ -143,6 +143,11 @@ public class testQuadCoreModuloScheduling {
       bindings.getActorTileBindings().clear();
       bindings.getFifoMemoryBindings().clear();
       
+      //clearing mappings
+      mappings.getActorProcessorMappings().clear();
+      mappings.getActorTileMappings().clear();
+      mappings.getFifoMemoryMappings().clear();
+      
       Architecture architecture = new Architecture("architecture","ModuloSchedulingQuad", 4, 1.0, 2);
       // set the memory sizes
       architecture.getTiles().get(0).getProcessors().get(0).getLocalMemory().setCapacity(1000000);
@@ -166,7 +171,7 @@ public class testQuadCoreModuloScheduling {
       scheduler.calculateModuloSchedule(bindings);
       //scheduler.printKernelBody();
       scheduler.findSchedule();
-      scheduler.schedule(bindings,null);
+      scheduler.schedule(bindings,mappings);
 
       System.out.println("Single iteration delay: "+scheduler.getDelaySingleIteration());
 
