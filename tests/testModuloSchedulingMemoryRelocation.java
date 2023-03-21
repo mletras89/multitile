@@ -41,7 +41,8 @@ import multitile.scheduler.ModuloScheduler;
 
 import multitile.architecture.Architecture;
 import multitile.architecture.Processor;
-
+import multitile.mapping.Bindings;
+import multitile.mapping.Mappings;
 import multitile.application.Application;
 import multitile.application.FifoManagement;
 import multitile.application.ApplicationManagement;
@@ -65,24 +66,27 @@ public class testModuloSchedulingMemoryRelocation {
       architecture.getTiles().get(0).getProcessors().get(1).getLocalMemory().setCapacity(1000000);
       architecture.getTiles().get(0).getProcessors().get(2).getLocalMemory().setCapacity(1000000);
       architecture.getTiles().get(0).getProcessors().get(3).getLocalMemory().setCapacity(2000000);
-
-      TestApplicationQuadCoreMemoryBound sampleApplication = new TestApplicationQuadCoreMemoryBound(architecture.getTiles().get(0));  
+      
+      Bindings bindings = new Bindings();
+      Mappings mappings = new Mappings();
+      
+      TestApplicationQuadCoreMemoryBound sampleApplication = new TestApplicationQuadCoreMemoryBound(architecture.getTiles().get(0),bindings,mappings);  
       Application app = sampleApplication.getSampleApplication();
-      ApplicationManagement.assignFifoMapping(app,architecture); 
+      ApplicationManagement.assignFifoMapping(app,architecture,bindings); 
 
       ModuloScheduler scheduler = new ModuloScheduler();
       scheduler.setApplication(app);
       scheduler.setArchitecture(architecture);
 			
       scheduler.setMaxIterations(10);
-      scheduler.calculateModuloSchedule();
+      scheduler.calculateModuloSchedule(bindings);
       //scheduler.printKernelBody();
       scheduler.findSchedule();
       ApplicationManagement.assignActorMapping(app,architecture,scheduler);
-      ApplicationManagement.assignFifoMapping(app,architecture);
+      ApplicationManagement.assignFifoMapping(app,architecture,bindings);
       app.printActors();
       app.printFifos();
-      scheduler.schedule();
+      scheduler.schedule(bindings,mappings);
       System.out.println("After scheduling and memory relocation!");
       app.printFifos();
 

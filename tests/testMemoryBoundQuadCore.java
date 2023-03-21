@@ -40,6 +40,7 @@ import multitile.scheduler.FCFS;
 
 import multitile.architecture.Architecture;
 import multitile.mapping.Bindings;
+import multitile.mapping.Mappings;
 import multitile.application.Application;
 import multitile.application.ApplicationManagement;
 
@@ -58,8 +59,8 @@ public class testMemoryBoundQuadCore {
       architecture.getTiles().get(0).getProcessors().get(3).getLocalMemory().setCapacity(2000000);
 
       Bindings bindings = new Bindings();
-      
-      TestApplicationQuadCoreMemoryBound sampleApplication = new TestApplicationQuadCoreMemoryBound(architecture.getTiles().get(0),bindings);  
+      Mappings mappings = new Mappings();
+      TestApplicationQuadCoreMemoryBound sampleApplication = new TestApplicationQuadCoreMemoryBound(architecture.getTiles().get(0),bindings,mappings);  
       Application app = sampleApplication.getSampleApplication();
       ApplicationManagement.assignFifoMapping(app,architecture,bindings); 
 

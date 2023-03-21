@@ -41,6 +41,8 @@ import multitile.scheduler.ModuloScheduler;
 
 import multitile.architecture.Architecture;
 import multitile.architecture.Tile;
+import multitile.mapping.Bindings;
+import multitile.mapping.Mappings;
 import multitile.architecture.Processor;
 
 import multitile.application.Application;
@@ -79,8 +81,11 @@ public class testModuloSchedulingWithNoC {
       architecture.getTiles().get(0).getTileLocalMemory().setCapacity(10000000);
       architecture.getTiles().get(1).getTileLocalMemory().setCapacity(10000000);
       architecture.getGlobalMemory().setCapacity(50000000);
-
-      TestApplicationQuadCoreMemoryBound sampleApplication = new TestApplicationQuadCoreMemoryBound(architecture.getTiles().get(0), architecture.getTiles().get(1),architecture.getGlobalMemory());  
+      
+      Bindings bindings = new Bindings();
+      Mappings mappings = new Mappings();
+      
+      TestApplicationQuadCoreMemoryBound sampleApplication = new TestApplicationQuadCoreMemoryBound(architecture.getTiles().get(0), architecture.getTiles().get(1),architecture.getGlobalMemory(),bindings,mappings);  
       Application app = sampleApplication.getSampleApplication();
       
       ModuloScheduler scheduler = new ModuloScheduler();
@@ -89,16 +94,16 @@ public class testModuloSchedulingWithNoC {
       scheduler.setArchitecture(architecture);
 			
       scheduler.setMaxIterations(10);
-      scheduler.calculateModuloSchedule();
+      scheduler.calculateModuloSchedule(bindings);
       //System.out.println("PRINTING KERNEL: ");
       //scheduler.printKernelBody();
       // once the kernell is done, reassign the actor Mapping and then reassing the fifoMapping
       scheduler.findSchedule();
       ApplicationManagement.assignActorMapping(app,architecture,scheduler);
-      ApplicationManagement.assignFifoMapping(app,architecture); 
+      ApplicationManagement.assignFifoMapping(app,architecture,bindings); 
       app.printFifos();
  
-      scheduler.schedule();
+      scheduler.schedule(bindings,mappings);
 
       System.out.println("Single iteration delay: "+scheduler.getDelaySingleIteration());
 
