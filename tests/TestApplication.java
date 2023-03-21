@@ -40,6 +40,8 @@ package multitile.tests;
 import multitile.architecture.Tile;
 import multitile.mapping.Binding;
 import multitile.mapping.Bindings;
+import multitile.mapping.Mapping;
+import multitile.mapping.Mappings;
 import multitile.architecture.Memory;
 import multitile.architecture.Processor;
 
@@ -53,7 +55,7 @@ public class TestApplication{
   private Application sampleApplication;
 
 
-  public TestApplication(Tile t1,Bindings bindings){
+  public TestApplication(Tile t1,Bindings bindings,Mappings mappings){
       Memory memory1 = t1.getTileLocalMemory();
       Processor cpu1 = t1.getProcessors().get(0);
 
@@ -135,6 +137,53 @@ public class TestApplication{
 
       sampleApplication.setActorsFromList(actors);
       sampleApplication.setFifos(fifoMap);
+      
+      // actor mappings
+      HashMap<Integer,Mapping<Processor>> a1Mappings = new HashMap<>();
+      a1Mappings.put(cpu1.getId(), new Mapping<Processor>( cpu1 ));
+      a1Mappings.get(cpu1.getId()).getProperties().put("runtime", 10000.0);
+      mappings.getActorProcessorMappings().put(a1.getId(), a1Mappings);
+      
+      HashMap<Integer,Mapping<Processor>> a2Mappings = new HashMap<>();
+      a2Mappings.put(cpu1.getId(), new Mapping<Processor>( cpu1));
+      a2Mappings.get(cpu1.getId()).getProperties().put("runtime", 10000.0);
+      mappings.getActorProcessorMappings().put(a2.getId(), a2Mappings);
+      
+      HashMap<Integer,Mapping<Processor>> a3Mappings = new HashMap<>();
+      a3Mappings.put(cpu1.getId(), new Mapping<Processor>(cpu1));
+      a3Mappings.get(cpu1.getId()).getProperties().put("runtime", 10000.0);
+      mappings.getActorProcessorMappings().put(a3.getId(), a3Mappings);
+      
+      HashMap<Integer,Mapping<Processor>> a4Mappings = new HashMap<>();
+      a4Mappings.put(cpu1.getId(), new Mapping<Processor>(cpu1));
+      a4Mappings.get(cpu1.getId()).getProperties().put("runtime", 10000.0);
+      mappings.getActorProcessorMappings().put(a4.getId(), a4Mappings);
+      
+      HashMap<Integer,Mapping<Processor>> a5Mappings = new HashMap<>();
+      a5Mappings.put(cpu1.getId(), new Mapping<Processor>(cpu1));
+      a5Mappings.get(cpu1.getId()).getProperties().put("runtime", 10000.0);
+      mappings.getActorProcessorMappings().put(a5.getId(), a5Mappings);
+      
+      // tile mappings
+      HashMap<Integer,Mapping<Tile>> a1TMappings = new HashMap<>();
+      a1TMappings.put(t1.getId(), new Mapping<Tile>(t1));
+      mappings.getActorTileMappings().put(a1.getId(), a1TMappings);
+      
+      HashMap<Integer,Mapping<Tile>> a2TMappings = new HashMap<>();
+      a2TMappings.put(t1.getId(), new Mapping<Tile>(t1));
+      mappings.getActorTileMappings().put(a2.getId(), a2TMappings);
+      
+      HashMap<Integer,Mapping<Tile>> a3TMappings = new HashMap<>();
+      a3TMappings.put(t1.getId(), new Mapping<Tile>(t1));
+      mappings.getActorTileMappings().put(a3.getId(), a3TMappings);
+      
+      HashMap<Integer,Mapping<Tile>> a4TMappings = new HashMap<>();
+      a4TMappings.put(t1.getId(), new Mapping<Tile>(t1));
+      mappings.getActorTileMappings().put(a4.getId(), a4TMappings);
+      
+      HashMap<Integer,Mapping<Tile>> a5TMappings = new HashMap<>();
+      a5TMappings.put(t1.getId(), new Mapping<Tile>(t1));
+      mappings.getActorTileMappings().put(a5.getId(), a5TMappings);
       
       // actor binding
       bindings.getActorProcessorBindings().put(a1.getId(), new Binding<Processor>(cpu1));

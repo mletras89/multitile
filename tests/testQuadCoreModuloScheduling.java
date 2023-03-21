@@ -40,7 +40,8 @@ import multitile.scheduler.ModuloScheduler;
 
 import multitile.architecture.Architecture;
 import multitile.architecture.Processor;
-
+import multitile.mapping.Bindings;
+import multitile.mapping.Mappings;
 import multitile.application.Application;
 
 import multitile.application.Fifo;
@@ -58,7 +59,9 @@ public class testQuadCoreModuloScheduling {
       System.out.println("Testing singlecore implementation testcase and modulo scheduling!");
 
       Architecture singleCoreArchitecture = new Architecture("architecture","ModuloSchedulingSingle", 1, 1.0, 2);
-      TestApplication testApplication = new TestApplication(singleCoreArchitecture.getTiles().get(0));  
+      Bindings bindings = new Bindings();
+      Mappings mappings = new Mappings();
+      TestApplication testApplication = new TestApplication(singleCoreArchitecture.getTiles().get(0),bindings,mappings);  
       Application singleCoreApplication = testApplication.getSampleApplication();
 
       ModuloScheduler singleCoreScheduler = new ModuloScheduler();
@@ -66,10 +69,10 @@ public class testQuadCoreModuloScheduling {
       singleCoreScheduler.setArchitecture(singleCoreArchitecture);
 
       singleCoreScheduler.setMaxIterations(5);
-      singleCoreScheduler.calculateModuloSchedule();
+      singleCoreScheduler.calculateModuloSchedule(bindings);
       singleCoreScheduler.printKernelBody();
       singleCoreScheduler.findSchedule();
-      singleCoreScheduler.schedule();
+      singleCoreScheduler.schedule(bindings,null);
 
       System.out.println("Single iteration delay: "+singleCoreScheduler.getDelaySingleIteration());
 
@@ -89,21 +92,31 @@ public class testQuadCoreModuloScheduling {
       ActorManagement.resetCounters();
       FifoManagement.resetCounters();
       ArchitectureManagement.resetCounters();
-
+      
+      //clearing bindings
+      bindings.getActorProcessorBindings().clear();
+      bindings.getActorTileBindings().clear();
+      bindings.getFifoMemoryBindings().clear();
+      
+      //clearing mappings
+      mappings.getActorProcessorMappings().clear();
+      mappings.getActorTileMappings().clear();
+      mappings.getFifoMemoryMappings().clear();
+      
       Architecture dualCoreArchitecture = new Architecture("architecture","ModuloSchedulingDual", 2, 1.0, 2);
-      TestApplicationDualCore testDualApplication = new TestApplicationDualCore(dualCoreArchitecture.getTiles().get(0));
+      TestApplicationDualCore testDualApplication = new TestApplicationDualCore(dualCoreArchitecture.getTiles().get(0),bindings);
       Application dualCoreApplication = testDualApplication.getSampleApplication();
-      ApplicationManagement.assignFifoMapping(dualCoreApplication,dualCoreArchitecture); 
+      ApplicationManagement.assignFifoMapping(dualCoreApplication,dualCoreArchitecture,bindings); 
   
       ModuloScheduler dualCoreScheduler = new ModuloScheduler();
       dualCoreScheduler.setApplication(dualCoreApplication);
       dualCoreScheduler.setArchitecture(dualCoreArchitecture);
 
       dualCoreScheduler.setMaxIterations(5);
-      dualCoreScheduler.calculateModuloSchedule();
+      dualCoreScheduler.calculateModuloSchedule(bindings);
       dualCoreScheduler.printKernelBody();
       dualCoreScheduler.findSchedule();
-      dualCoreScheduler.schedule();
+      dualCoreScheduler.schedule(bindings,null);
 
       System.out.println("Single iteration delay: "+dualCoreScheduler.getDelaySingleIteration());
       System.out.println("The MMI is: "+dualCoreScheduler.getMII());
@@ -125,6 +138,11 @@ public class testQuadCoreModuloScheduling {
       FifoManagement.resetCounters();
       ArchitectureManagement.resetCounters();
 
+      //clearing bindings
+      bindings.getActorProcessorBindings().clear();
+      bindings.getActorTileBindings().clear();
+      bindings.getFifoMemoryBindings().clear();
+      
       Architecture architecture = new Architecture("architecture","ModuloSchedulingQuad", 4, 1.0, 2);
       // set the memory sizes
       architecture.getTiles().get(0).getProcessors().get(0).getLocalMemory().setCapacity(1000000);
@@ -132,23 +150,23 @@ public class testQuadCoreModuloScheduling {
       architecture.getTiles().get(0).getProcessors().get(2).getLocalMemory().setCapacity(2000000);
       architecture.getTiles().get(0).getProcessors().get(3).getLocalMemory().setCapacity(2000000);
 
-      TestApplicationQuadCoreMemoryBound sampleApplication = new TestApplicationQuadCoreMemoryBound(architecture.getTiles().get(0));  
+      TestApplicationQuadCoreMemoryBound sampleApplication = new TestApplicationQuadCoreMemoryBound(architecture.getTiles().get(0),bindings);  
       Application app = sampleApplication.getSampleApplication();
-      ApplicationManagement.assignFifoMapping(app,architecture); 
+      ApplicationManagement.assignFifoMapping(app,architecture,bindings); 
 
-      for(Map.Entry<Integer,Fifo> f : app.getFifos().entrySet()){
-        System.out.println("Fifo "+f.getValue().getName()+" mapped to proc "+f.getValue().getMapping().getEmbeddedToProcessor().getName()+" on memory "+f.getValue().getMapping().getName());
-      }
+      //for(Map.Entry<Integer,Fifo> f : app.getFifos().entrySet()){
+      //	  System.out.println("Fifo "+f.getValue().getName()+" mapped to proc "+f.getValue().getMapping().getEmbeddedToProcessor().getName()+" on memory "+f.getValue().getMapping().getName());
+      //}
 
       ModuloScheduler scheduler = new ModuloScheduler();
       scheduler.setApplication(app);
       scheduler.setArchitecture(architecture);
 			
       scheduler.setMaxIterations(5);
-      scheduler.calculateModuloSchedule();
+      scheduler.calculateModuloSchedule(bindings);
       //scheduler.printKernelBody();
       scheduler.findSchedule();
-      scheduler.schedule();
+      scheduler.schedule(bindings,null);
 
       System.out.println("Single iteration delay: "+scheduler.getDelaySingleIteration());
 
