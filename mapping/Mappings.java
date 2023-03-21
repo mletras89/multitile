@@ -39,25 +39,29 @@ package multitile.mapping;
 
 import java.util.HashMap;
 
+import multitile.architecture.Memory;
+import multitile.architecture.Processor;
+import multitile.architecture.Tile;
+
 public class Mappings{
   // Key is the actor id
   // Annidated map
   //    -> Key is processor ID
   //    -> Value is the property mapping class
   //<IdActor, Map <processorId,ExecutionTime>
-  private HashMap<Integer,HashMap<Integer,Mapping>> actorProcessorMappings;
+  private HashMap<Integer,HashMap<Integer,Mapping<Processor>>> actorProcessorMappings;
   // Key is the actor id
   // Annidated map
   //    -> Key is tile id
   //    -> Value is the property mapping class
   //<IdActor, Map <tileId,ExecutionTime>
-  private HashMap<Integer,HashMap<Integer,Mapping>> actorTileMappings;
+  private HashMap<Integer,HashMap<Integer,Mapping<Tile>>> actorTileMappings;
   // Key is the fifo id
   // Annidated map
   //    -> Key is memory ID
   //    -> Value is the property mapping class
   //<IdFifo, Map <tileId,ExecutionTime>
-  private HashMap<Integer,HashMap<Integer,Mapping>> fifoMemoryMappings;
+  private HashMap<Integer,HashMap<Integer,Mapping<Memory>>> fifoMemoryMappings;
 
   public Mappings(){
 	this.actorProcessorMappings = new HashMap<>();
@@ -65,15 +69,15 @@ public class Mappings{
 	this.fifoMemoryMappings = new HashMap<>();
   }
 
-  public HashMap<Integer,HashMap<Integer,Mapping>> getActorProcessorMappings(){
+  public HashMap<Integer,HashMap<Integer,Mapping<Processor>>> getActorProcessorMappings(){
 	return actorProcessorMappings;
   }
 
-  public HashMap<Integer,HashMap<Integer,Mapping>> getActorTileMappings(){
+  public HashMap<Integer,HashMap<Integer,Mapping<Tile>>> getActorTileMappings(){
 	return actorTileMappings;
   }
 
-  public HashMap<Integer,HashMap<Integer,Mapping>> getFifoMemoryMappings(){
+  public HashMap<Integer,HashMap<Integer,Mapping<Memory>>> getFifoMemoryMappings(){
 	return fifoMemoryMappings;
   }
 }
