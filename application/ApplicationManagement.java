@@ -153,8 +153,8 @@ public class ApplicationManagement{
 		bindings.getFifoMemoryBindings().put(fifo.getId(), new Binding<Memory>(newBinding));
 	}
 
-  public static void assignActorMapping(Application application,Architecture architecture, ModuloScheduler scheduler){
-    /*HashMap<Integer,List<Integer>> kernel = scheduler.getKernel();
+  public static void assignActorMapping(Application application,Architecture architecture, ModuloScheduler scheduler,Bindings bindings){
+    HashMap<Integer,List<Integer>> kernel = scheduler.getKernel();
     // hashmap tile ID, list of actors ID
     HashMap<Integer,List<Integer>> tilesToActors = new HashMap<>();
     for(Map.Entry<Integer,Tile> entry : architecture.getTiles().entrySet()){
@@ -166,7 +166,7 @@ public class ApplicationManagement{
       for(Map.Entry<Integer,List<Integer>> entry: tilesToActors.entrySet())
         entry.getValue().clear();
       for(int actorId : kernel.get(step)){
-        int mapTile = application.getActors().get(actorId).getMappingToTile().getId();
+        int mapTile =  bindings.getActorTileBindings().get(actorId).getTarget().getId();   // application.getActors().get(actorId).getMappingToTile().getId();
         tilesToActors.get(mapTile).add(actorId);
       }
       // now, reasign the mapping to the actor
@@ -176,11 +176,13 @@ public class ApplicationManagement{
         int countProcessor = 0;
         for(int actorId : entry.getValue()){
           // assigning the new mapping according to the Modulo Scheduler
-          application.getActors().get(actorId).setMapping(processors.get(countProcessor));
+          Processor p = processors.get(countProcessor);
+          bindings.getActorProcessorBindings().put(actorId, new Binding<Processor>( p ));
+          //application.getActors().get(actorId).setMapping(processors.get(countProcessor));
           countProcessor++;
         }
       }
-    }*/
+    }
   }
 
   // this method assign the mapping of each fifo according the type

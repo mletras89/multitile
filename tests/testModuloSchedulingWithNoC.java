@@ -99,7 +99,7 @@ public class testModuloSchedulingWithNoC {
       //scheduler.printKernelBody();
       // once the kernell is done, reassign the actor Mapping and then reassing the fifoMapping
       scheduler.findSchedule();
-      ApplicationManagement.assignActorMapping(app,architecture,scheduler);
+      ApplicationManagement.assignActorMapping(app,architecture,scheduler,bindings);
       ApplicationManagement.assignFifoMapping(app,architecture,bindings); 
       app.printFifos();
  

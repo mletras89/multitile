@@ -82,7 +82,7 @@ public class testModuloSchedulingMemoryRelocation {
       scheduler.calculateModuloSchedule(bindings);
       //scheduler.printKernelBody();
       scheduler.findSchedule();
-      ApplicationManagement.assignActorMapping(app,architecture,scheduler);
+      ApplicationManagement.assignActorMapping(app,architecture,scheduler,bindings);
       ApplicationManagement.assignFifoMapping(app,architecture,bindings);
       app.printActors();
       app.printFifos();
