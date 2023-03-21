@@ -104,7 +104,7 @@ public class testQuadCoreModuloScheduling {
       mappings.getFifoMemoryMappings().clear();
       
       Architecture dualCoreArchitecture = new Architecture("architecture","ModuloSchedulingDual", 2, 1.0, 2);
-      TestApplicationDualCore testDualApplication = new TestApplicationDualCore(dualCoreArchitecture.getTiles().get(0),bindings);
+      TestApplicationDualCore testDualApplication = new TestApplicationDualCore(dualCoreArchitecture.getTiles().get(0),bindings,mappings);
       Application dualCoreApplication = testDualApplication.getSampleApplication();
       ApplicationManagement.assignFifoMapping(dualCoreApplication,dualCoreArchitecture,bindings); 
   
@@ -150,7 +150,7 @@ public class testQuadCoreModuloScheduling {
       architecture.getTiles().get(0).getProcessors().get(2).getLocalMemory().setCapacity(2000000);
       architecture.getTiles().get(0).getProcessors().get(3).getLocalMemory().setCapacity(2000000);
 
-      TestApplicationQuadCoreMemoryBound sampleApplication = new TestApplicationQuadCoreMemoryBound(architecture.getTiles().get(0),bindings);  
+      TestApplicationQuadCoreMemoryBound sampleApplication = new TestApplicationQuadCoreMemoryBound(architecture.getTiles().get(0),bindings,mappings);  
       Application app = sampleApplication.getSampleApplication();
       ApplicationManagement.assignFifoMapping(app,architecture,bindings); 
 
