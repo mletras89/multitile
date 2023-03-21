@@ -168,7 +168,10 @@ public class TestApplicationQuadCore{
       // memory bindings
       Memory mapMem = t1.getTileLocalMemory();
       bindings.getFifoMemoryBindings().put(c1.getId(), new Binding<Memory>(mapMem));
-      
+      bindings.getFifoMemoryBindings().put(c2.getId(), new Binding<Memory>(mapMem));
+      bindings.getFifoMemoryBindings().put(c3.getId(), new Binding<Memory>(mapMem));
+      bindings.getFifoMemoryBindings().put(c4.getId(), new Binding<Memory>(mapMem));
+      bindings.getFifoMemoryBindings().put(c5.getId(), new Binding<Memory>(mapMem));
   }
 
   public Application getSampleApplication(){
