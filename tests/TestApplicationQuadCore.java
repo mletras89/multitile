@@ -40,6 +40,7 @@ package multitile.tests;
 import multitile.architecture.Tile;
 import multitile.mapping.Binding;
 import multitile.mapping.Bindings;
+import multitile.architecture.Memory;
 import multitile.architecture.Processor;
 
 import multitile.application.Application;
@@ -163,6 +164,10 @@ public class TestApplicationQuadCore{
       bindings.getActorProcessorBindings().get(a3.getId()).getProperties().put("runtime", 10000.0);
       bindings.getActorProcessorBindings().get(a4.getId()).getProperties().put("runtime", 10000.0);
       bindings.getActorProcessorBindings().get(a5.getId()).getProperties().put("runtime", 10000.0);
+      
+      // memory bindings
+      Memory mapMem = t1.getTileLocalMemory();
+      bindings.getFifoMemoryBindings().put(c1.getId(), new Binding<Memory>(mapMem));
       
   }
 
