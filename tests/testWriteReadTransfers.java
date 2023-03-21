@@ -97,7 +97,7 @@ public class testWriteReadTransfers {
       bindings.getActorProcessorBindings().put(a1.getId(), new Binding<Processor>(cpu1));
       bindings.getActorProcessorBindings().put(a5.getId(), new Binding<Processor>(cpu1));
       bindings.getActorProcessorBindings().get(a1.getId()).getProperties().put("runtime", 10000.0);
-      bindings.getActorProcessorBindings().get(a1.getId()).getProperties().put("runtime", 10000.0);
+      bindings.getActorProcessorBindings().get(a5.getId()).getProperties().put("runtime", 10000.0);
       // memory binding
       bindings.getFifoMemoryBindings().put(c1.getId(), new Binding<Memory>(memory1));
       
