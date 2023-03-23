@@ -60,7 +60,7 @@ public class Architecture{
     tiles = new HashMap<>();	
     tiles.put(t1.getId(),t1);
     
-    globalMemory = new GlobalMemory("GlobalMemory");
+    globalMemory = new GlobalMemory("GLOBAL_MEMORY");
     noc = new NoC();
   }
 
@@ -73,7 +73,7 @@ public class Architecture{
       Tile t = new Tile("Tile"+(i+1), nProcPerTile, BWCrossbars, channelsCrossbar);
       tiles.put(t.getId(),t);  
     }
-    globalMemory = new GlobalMemory("GlobalMemory");
+    globalMemory = new GlobalMemory("GLOBAL_MEMORY");
   }
 
   public Architecture(String name, String nameTile, int nProcPerTile, double BWCrossbars, int channelsCrossbar){
@@ -84,7 +84,7 @@ public class Architecture{
     Tile t = new Tile(nameTile, nProcPerTile, BWCrossbars, channelsCrossbar);
     tiles.put(t.getId(),t);  
 
-    globalMemory = new GlobalMemory("GlobalMemory");
+    globalMemory = new GlobalMemory("GLOBAL_MEMORY");
     noc = new NoC();
   }
   
@@ -92,7 +92,7 @@ public class Architecture{
   public Architecture(String name, List<Tile> tilesL) {
 	  this.name = name;
 	  tiles = new HashMap<>();
-	  globalMemory = new GlobalMemory("GlobalMemory");
+	  globalMemory = new GlobalMemory("GLOBAL_MEMORY");
 	  noc = new NoC();
 	  for(Tile t : tilesL) {
 		  tiles.put(t.getId(), t);
