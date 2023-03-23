@@ -39,6 +39,9 @@ package multitile.application;
 
 import java.util.*;
 
+import multitile.architecture.Processor;
+import multitile.mapping.Bindings;
+
 public class Application{
   private Map<Integer,Actor> actors;
   private Map<Integer,Fifo> fifos;
@@ -94,6 +97,13 @@ public class Application{
 	}
   }
 
+  public void printActorsState(Bindings bindings){
+		for(Map.Entry<Integer,Actor> actorEntry : actors.entrySet()){   
+			Processor map = bindings.getActorProcessorBindings().get(actorEntry.getValue().getId()).getTarget();
+			System.out.println("Actor:"+actorEntry.getValue().getName()+" is multicast:"+actorEntry.getValue().isMulticastActor()+" is mergeable: "+actorEntry.getValue().isMergeMulticast()+" mapped to "+map.getName());
+		}
+	  }
+  
   public void printFifos(){
 	for(Map.Entry<Integer,Fifo> fifoEntry : fifos.entrySet()){
 	  System.out.println("Fifo:"+fifoEntry.getValue().getName()+" is composite?:"+fifoEntry.getValue().isCompositeChannel());
@@ -103,8 +113,15 @@ public class Application{
   
   public void printFifosState(){
     for(Map.Entry<Integer,Fifo> fifoEntry : fifos.entrySet()){
-      System.out.println("Fifo: "+fifoEntry.getValue().getName()+" contains tokens: "+fifoEntry.getValue().get_tokens()+" source "+fifoEntry.getValue().getSource().getName()+" destination "+fifoEntry.getValue().getDestination().getName());
-      System.out.println("\t"+fifoEntry.getValue().getTimeProducedToken());
+    	if(!fifoEntry.getValue().isCompositeChannel()) {
+    		System.out.println("Fifo: "+fifoEntry.getValue().getName()+" contains tokens: "+fifoEntry.getValue().get_tokens()+" source "+fifoEntry.getValue().getSource().getName()+" destination "+fifoEntry.getValue().getDestination().getName());
+    	}else {
+    		CompositeFifo cf = (CompositeFifo) fifoEntry.getValue();
+    		for(Actor a : cf.getDestinations()) {
+    			System.out.println("Fifo: "+fifoEntry.getValue().getName()+" contains tokens: "+fifoEntry.getValue().get_tokens()+" source "+fifoEntry.getValue().getSource().getName()+" destination "+a.getName());
+    		}
+    	}
+    	System.out.println("\t"+fifoEntry.getValue().getTimeProducedToken());
     }
   }
 
