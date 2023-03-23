@@ -63,16 +63,7 @@ public class testModuloSchedulingWithNoCMergeMulticast {
       ArchitectureManagement.resetCounters();
 
       Architecture architecture = new Architecture("architecture",2,2, 1.0, 2);
-
-      for(HashMap.Entry<Integer,Tile> t: architecture.getTiles().entrySet()){
-        System.out.println("Tile name:"+t.getValue().getName());
-        for(HashMap.Entry<Integer,Processor> p: t.getValue().getProcessors().entrySet()){
-     	  System.out.println("\tProcessor name:"+p.getValue().getName()+" with id "+p.getValue().getId());
-	  System.out.println("\tOwner tile:"+p.getValue().getOwnerTile().getName());
-     	  System.out.println("\t\tAttached to local memory:"+p.getValue().getLocalMemory().getName());
-        }			
-      }
-
+      //architecture.printArchitecture();
       // set the memory sizes
       architecture.getTiles().get(0).getProcessors().get(0).getLocalMemory().setCapacity(5000000);
       architecture.getTiles().get(0).getProcessors().get(1).getLocalMemory().setCapacity(5000000);
@@ -87,8 +78,13 @@ public class testModuloSchedulingWithNoCMergeMulticast {
       
       TestApplicationQuadCoreMemoryBound sampleApplication = new TestApplicationQuadCoreMemoryBound(architecture.getTiles().get(0), architecture.getTiles().get(1),architecture.getGlobalMemory(),bindings,mappings);  
       Application app = sampleApplication.getSampleApplication();
+      ApplicationManagement.setFifosToActors(app);
       ApplicationManagement.setAllMulticastActorsAsMergeable(app);
+      app.printActors();
+      app.printFifosState();
       ApplicationManagement.collapseMergeableMulticastActors(app,1);
+      app.printActorsState(bindings);
+      app.printFifosState();
       
       ModuloScheduler scheduler = new ModuloScheduler();
       // I need to update the actor mapping according to the modulo schedule!!!!!
@@ -103,7 +99,8 @@ public class testModuloSchedulingWithNoCMergeMulticast {
       scheduler.findSchedule();
       ApplicationManagement.assignActorMapping(app,architecture,scheduler,bindings);
       ApplicationManagement.assignFifoMapping(app,architecture,bindings); 
-      app.printFifos();
+      //app.printActors();
+      //app.printFifos();
  
       scheduler.schedule(bindings,mappings);
 
