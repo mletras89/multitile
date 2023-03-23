@@ -40,7 +40,6 @@ package multitile.application;
 
 import java.util.*;
 
-import integration.MyEntry;
 import multitile.architecture.Architecture;
 import multitile.architecture.Tile;
 import multitile.mapping.Binding;
@@ -388,7 +387,7 @@ public class ApplicationManagement{
 	    }
   }
 
-  public static MyEntry<Fifo, CompositeFifo> collapseMergeableMulticastActor(Application app, Actor multicastActor, int index){
+  public static void collapseMergeableMulticastActor(Application app, Actor multicastActor, int index){
 	  // returns the writer fifo
 	  Fifo writer=null;
 	  CompositeFifo compositeFifo = null;
@@ -423,9 +422,6 @@ public class ApplicationManagement{
         // add the new composite fifo into the app fifo map
         app.getFifos().put(compositeFifo.getId(),compositeFifo);
       }
-	  //return writer;
-	  MyEntry<Fifo, CompositeFifo> result = new MyEntry<Fifo,CompositeFifo>(writer,compositeFifo);
-	  return result;
   }
   
 }
