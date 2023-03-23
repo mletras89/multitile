@@ -82,9 +82,9 @@ public class CompositeFifo extends Fifo implements Buffer{
     }
   }
 
-//  public List<Actor> getDestinations(){
-//    return this.destinations;
-//  }
+  public List<Actor> getDestinations(){
+    return this.destinations;
+  }
 
   public boolean removeReMapping(){
     this.setNumberOfReadsReMapping(this.getNumberOfReadsReMapping()+1);
