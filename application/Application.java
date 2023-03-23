@@ -103,7 +103,7 @@ public class Application{
   
   public void printFifosState(){
     for(Map.Entry<Integer,Fifo> fifoEntry : fifos.entrySet()){
-      System.out.println("Fifo: "+fifoEntry.getValue().getName()+" contains tokens: "+fifoEntry.getValue().get_tokens());
+      System.out.println("Fifo: "+fifoEntry.getValue().getName()+" contains tokens: "+fifoEntry.getValue().get_tokens()+" source "+fifoEntry.getValue().getSource().getName()+" destination "+fifoEntry.getValue().getDestination().getName());
       System.out.println("\t"+fifoEntry.getValue().getTimeProducedToken());
     }
   }
