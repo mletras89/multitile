@@ -49,7 +49,7 @@ interface Buffer{
   public double readTimeProducedToken();
   public boolean canFlushData();
   public boolean removeReMapping();
-
+  public Actor getDestination();
   // methods for handling the writes/reads to/from memory 
   //public void fifoWriteToMemory(Transfer transfer);
   public void fifoReadFromMemory(Transfer transfer,Bindings bindings);

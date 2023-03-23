@@ -85,7 +85,12 @@ public class CompositeFifo extends Fifo implements Buffer{
   public List<Actor> getDestinations(){
     return this.destinations;
   }
-
+  
+  public Actor getDestination() {
+	  assert this.destinations.size() > 0: "ERROR HERE!";
+	  return destinations.get(0);
+  }
+  
   public boolean removeReMapping(){
     this.setNumberOfReadsReMapping(this.getNumberOfReadsReMapping()+1);
     int currentNumberOfReads = this.getNumberOfReadsReMapping();
