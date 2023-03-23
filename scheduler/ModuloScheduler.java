@@ -566,8 +566,9 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
     Set<Integer> SUCC = new HashSet<Integer>();
 		
     for(Fifo fifo: v.getOutputFifos()) {
-      Integer targetActor = fifo.getDestination().getId();
       System.out.println("Fifo "+fifo.getName()+" is composite "+fifo.isCompositeChannel());
+      Integer targetActor = fifo.getDestination().getId();
+      
       SUCC.add(targetActor);
     }
     return SUCC;
