@@ -47,6 +47,7 @@ import multitile.architecture.GlobalMemory;
 
 import multitile.application.Application;
 import multitile.application.Actor;
+import multitile.application.Actor.ACTOR_TYPE;
 import multitile.application.Fifo;
 import multitile.application.Fifo.FIFO_MAPPING_TYPE;
 
@@ -69,6 +70,7 @@ public class TestApplicationQuadCoreMemoryBound{
       
       Actor a2 = new Actor("a2");  // is a multicast actor
       a2.setId(2) ;
+      a2.setType(ACTOR_TYPE.MULTICAST);
       a2.setInputs(1);
       a2.setOutputs(2);
       
