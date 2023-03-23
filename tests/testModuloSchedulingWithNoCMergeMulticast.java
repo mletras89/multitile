@@ -88,7 +88,7 @@ public class testModuloSchedulingWithNoCMergeMulticast {
       TestApplicationQuadCoreMemoryBound sampleApplication = new TestApplicationQuadCoreMemoryBound(architecture.getTiles().get(0), architecture.getTiles().get(1),architecture.getGlobalMemory(),bindings,mappings);  
       Application app = sampleApplication.getSampleApplication();
       ApplicationManagement.setAllMulticastActorsAsMergeable(app);
-      ApplicationManagement.collapseMergeableMulticastActors(app,1);
+      ApplicationManagement.collapseMergeableMulticastActors(app,1,bindings);
       
       ModuloScheduler scheduler = new ModuloScheduler();
       // I need to update the actor mapping according to the modulo schedule!!!!!
