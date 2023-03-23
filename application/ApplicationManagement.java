@@ -188,7 +188,7 @@ public class ApplicationManagement{
   // this method assign the mapping of each fifo according the type
   public static void assignFifoMapping(Application application, Architecture architecture,Bindings bindings){
     for(Map.Entry<Integer,Fifo> f : application.getFifos().entrySet()){
-      System.out.println("Fifo: "+f.getValue().getName()+" mapping type "+f.getValue().getMappingType());
+      //System.out.println("Fifo: "+f.getValue().getName()+" mapping type "+f.getValue().getMappingType());
       Fifo.FIFO_MAPPING_TYPE type = f.getValue().getMappingType();
       int processorId, tileId, sourceActorId,destinationActorId;
       switch(type){
