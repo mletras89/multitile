@@ -38,6 +38,8 @@
 
 package multitile.architecture;
 
+import java.util.Map;
+
 import multitile.application.Application;
 import multitile.application.Fifo;
 import multitile.mapping.Bindings;
@@ -60,8 +62,25 @@ public class ArchitectureManagement{
 
   public static Architecture cloneArchitecture(Architecture arch) {
 	  Architecture clonedArchitecture = new Architecture(arch);
-	  
 	  return clonedArchitecture;
+  }
+  
+  public static Tile getTile(String processorName,Architecture architecture) {
+	  for(Map.Entry<Integer, Tile> t : architecture.getTiles().entrySet()) {
+		  for(Map.Entry<Integer, Processor> p : t.getValue().getProcessors().entrySet()) {
+			  if(p.getValue().getName().compareTo(processorName) == 0 )
+				  return t.getValue();
+		  }
+	  }
+	  return null;
+  }
+  
+  public static LocalMemory getProcessorLocalMemory(String processorName,Tile tile, Architecture architecture) {
+	  for(Map.Entry<Integer, Processor> p : tile.getProcessors().entrySet()) {
+		  if(p.getValue().getName().compareTo(processorName) == 0 )
+			  return p.getValue().getLocalMemory();
+	  }
+	  return null;
   }
   
   public static void updateLastEventInProcessor(Architecture architecture, Processor processor, double time){
