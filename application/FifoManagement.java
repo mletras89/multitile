@@ -119,6 +119,28 @@ public class FifoManagement{
 	    
 	    return compositeFifo;
   }
+  // passing as parameter the index of composite actors no bidings
+  public static CompositeFifo createCompositeChannel(Fifo writer,List<Fifo> readerFifos, Actor multicastActor,int index){
+	    // create a composite channel from a given list of fifos
+	    // a composite actor has only one writer and multiple readers
+	    //
+	    // the capacity of the composite is the addition of the capacity of the writer and the max capacity of readers
+	    int capacityWriter = writer.get_capacity();
+	    int capacityReader = 0;
+
+	    for(Fifo fifo : readerFifos){
+	      if(fifo.get_capacity() > capacityReader)
+	        capacityReader = fifo.get_capacity();
+	    }
+	    // updating fifos capacities of readers
+	    for(Fifo fifo : readerFifos){
+	      fifo.set_capacity(capacityWriter+capacityReader);
+	    }
+
+	    CompositeFifo compositeFifo = new CompositeFifo("compositeFifo_"+index,writer.get_tokens(),capacityWriter+capacityReader,writer.getTokenSize(),writer.getConsRate(),writer.getProdRate(),writer.getSource(),readerFifos,multicastActor);
+	    compositeFifo.setMappingType( writer.getMappingType() );
+	    return compositeFifo;
+  }
 
 }
 
