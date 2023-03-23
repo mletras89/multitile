@@ -212,10 +212,10 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
     int scheduled = 0;
     int step = 1;
     while(scheduled < application.getActors().size()){
-      System.out.println("Scheduling Step: "+step);
+      //System.out.println("Scheduling Step: "+step);
       for(Map.Entry<Integer,Integer> entryL : l.entrySet()){
         if(entryL.getValue() == step){
-          System.out.println("Actor: "+application.getActors().get(entryL.getKey()).getName());
+          //System.out.println("Actor: "+application.getActors().get(entryL.getKey()).getName());
           scheduled++;
         }
       }
@@ -264,13 +264,13 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
     }
 //    System.out.println("Last step:"+lastStep);
 //    // now, we print the schedule
-    for(int i=1; i <= this.lastStep;i++){
+    /*for(int i=1; i <= this.lastStep;i++){
       System.out.println("STEP: "+i);
       Collections.sort(this.kernel.get(i));
       for(int v : this.kernel.get(i)){
         System.out.println("Actor: "+application.getActors().get(v).getName());
       }
-    }
+    }*/
     // 3) we find the kernel, to calculate the throuhgput
     boolean foundKernel = false;
     for(int i=1;i<=this.lastStep-1;i++){
@@ -285,7 +285,7 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
       if (foundKernel == true)
         break;
     }
-    System.out.println("Kernel starts at: "+stepStartKernel+" and ends at: "+stepEndKernel);
+    //System.out.println("Kernel starts at: "+stepStartKernel+" and ends at: "+stepEndKernel);
     this.stepStartKernel = stepStartKernel;
     this.stepEndKernel   = stepEndKernel;
   }
@@ -340,7 +340,10 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
         Processor p = tiles.get(actionToTileId).getProcessors().get(availableProcessor);
         // setting the mapping of the actor and action
         bindings.getActorProcessorBindings().put(action.getActor().getId(), new Binding<>(p));
+        System.out.println("ACTION "+action.getActor().getName());
+        
         Mapping<Processor> mapping = mappings.getActorProcessorMappings().get(action.getActor().getId()).get(p.getId());
+        System.out.println(mapping.getTarget().getName());
         bindings.getActorProcessorBindings().get(action.getActor().getId()).setProperties(mapping.getProperties());
         //mappings.getActorProcessorMappings().get(action.getActor().getId()).get(key)
         //application.getActors().get(action.getActor().getId()).setMapping(p);
@@ -567,7 +570,7 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
     Set<Integer> SUCC = new HashSet<Integer>();
 		
     for(Fifo fifo: v.getOutputFifos()) {
-      System.out.println("Fifo "+fifo.getName()+" is composite "+fifo.isCompositeChannel());
+      //System.out.println("Fifo "+fifo.getName()+" is composite "+fifo.isCompositeChannel());
       if(fifo.isCompositeChannel()) {
     	  CompositeFifo cf = (CompositeFifo) fifo;
     	  for(Actor a : cf.getDestinations()) {
