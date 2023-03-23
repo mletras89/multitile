@@ -170,8 +170,12 @@ public class TestApplicationQuadCoreMemoryBound{
       HashMap<Integer,Mapping<Processor>> a3Mappings = new HashMap<>();
       a3Mappings.put(cpu1.getId(), new Mapping<Processor>(cpu1));
       a3Mappings.put(cpu2.getId(), new Mapping<Processor>(cpu2));
+      a3Mappings.put(cpu3.getId(), new Mapping<Processor>(cpu3));
+      a3Mappings.put(cpu4.getId(), new Mapping<Processor>(cpu4));
       a3Mappings.get(cpu1.getId()).getProperties().put("runtime", 10000.0);
       a3Mappings.get(cpu2.getId()).getProperties().put("runtime", 10000.0);
+      a3Mappings.get(cpu3.getId()).getProperties().put("runtime", 10000.0);
+      a3Mappings.get(cpu4.getId()).getProperties().put("runtime", 10000.0);
       mappings.getActorProcessorMappings().put(a3.getId(), a3Mappings);
       
       HashMap<Integer,Mapping<Processor>> a4Mappings = new HashMap<>();
