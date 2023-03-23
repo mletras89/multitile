@@ -54,6 +54,7 @@ import multitile.architecture.ArchitectureManagement;
 import multitile.architecture.Memory;
 
 import multitile.application.ApplicationManagement;
+import multitile.application.CompositeFifo;
 import multitile.application.Actor;
 import multitile.application.Fifo;
 
@@ -567,9 +568,16 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
 		
     for(Fifo fifo: v.getOutputFifos()) {
       System.out.println("Fifo "+fifo.getName()+" is composite "+fifo.isCompositeChannel());
-      Integer targetActor = fifo.getDestination().getId();
-      
-      SUCC.add(targetActor);
+      if(fifo.isCompositeChannel()) {
+    	  CompositeFifo cf = (CompositeFifo) fifo;
+    	  for(Actor a : cf.getDestinations()) {
+    		  Integer targetActor = a.getId();
+    		  SUCC.add(targetActor);
+    	  }
+      }else {
+    	  Integer targetActor = fifo.getDestination().getId();
+    	  SUCC.add(targetActor);
+      }
     }
     return SUCC;
   }
