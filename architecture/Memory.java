@@ -190,7 +190,7 @@ public class Memory{
      double lastValidValue = 0;
      //double whenlv =0.0;
      for(Map.Entry<Double,Double> m : memoryUtilization.entrySet()){
-       if(m.getKey() < when){
+       if(m.getKey() <= when){
         lastValidValue = m.getValue();
         //whenlv = m.getKey();
        }
@@ -216,10 +216,28 @@ public class Memory{
     double currentBytes = memoryUtilization.get(last_inserted_key);
     System.err.println("Reading memory "+this.getName()+ " storing "+currentBytes+" reading "+amountBytes+" at "+when);
     assert currentBytes-amountBytes >= 0;
+    if(last_inserted_key >= when){
+      double lastValidValue = 0.0;
+      for(Map.Entry<Double,Double> m : memoryUtilization.entrySet()){
+        if(m.getKey() <= when){
+          lastValidValue = m.getValue();
+        }else
+          break;
+      }
+      assert lastValidValue - amountBytes >= 0;
+      memoryUtilization.put(when,lastValidValue - amountBytes);
+      for(Map.Entry<Double,Double> m: memoryUtilization.entrySet()){
+        if(m.getKey() > when){
+          double newAmount = m.getValue() - amountBytes;
+          assert newAmount >= 0;
+          memoryUtilization.put(m.getKey(), newAmount  );
+        }
+      }
+    }else
     // I can only insert events from the last insert element, no insertions in the past
     //System.out.println("Last inserted key "+last_inserted_key);
-    assert last_inserted_key <= when: "READING IN THE PAST";
-    memoryUtilization.put(when, currentBytes-amountBytes);
+    //assert last_inserted_key <= when: "READING IN THE PAST";
+      memoryUtilization.put(when, currentBytes-amountBytes);
   }
 
   public boolean canRemoveDataFromMemory(int amountBytes){
