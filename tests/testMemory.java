@@ -7,7 +7,7 @@ import java.io.*;
 public class testMemory {
     public static void main(String[] args) throws IOException {
       System.out.println("Testing Memory class!");
-      Memory memoryTest = new Memory("Memory_1",1000);
+      Memory memoryTest = new Memory("Memory_1",Double.MAX_VALUE);
       Memory memoryTest2 = new Memory("Memory_2",2000);
       Memory memoryTest3 = new Memory("Memory_3",Double.POSITIVE_INFINITY);
      
@@ -31,8 +31,10 @@ public class testMemory {
         if (memoryTest3.canPutDataInMemory(load2))
           memoryTest3.writeDataInMemory(load3*10,i*10);
       }
-
-      memoryTest.readDataInMemory(memoryTest.getCurrentAmountofBytes(),200);
+      
+      memoryTest.writeDataInMemory(300,210);
+      memoryTest.writeDataInMemory(1000,75);
+      memoryTest.readDataInMemory(memoryTest.getCurrentAmountofBytes(),220);
       memoryTest2.readDataInMemory(memoryTest2.getCurrentAmountofBytes(),200);
       memoryTest3.readDataInMemory(memoryTest3.getCurrentAmountofBytes(),200);
 
