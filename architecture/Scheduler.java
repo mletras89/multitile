@@ -327,7 +327,7 @@ public class Scheduler{
         //System.out.println(t);
         Actor actorWriting = application.getActors().get(t.getFifo().getSource().getId());
         Processor actorBinding = bindings.getActorProcessorBindings().get(actorWriting.getId()).getTarget();
-        System.out.println("actorWriting "+actorWriting.getName()+" mapped to "+actorBinding.getName());
+        //System.out.println("actorWriting "+actorWriting.getName()+" mapped to "+actorBinding.getName());
         if(actorWriting.getInputFifos().size() == 0){
           // update the processor after reading the token
           //System.out.println("ACTOR ACTOR: "+actorWriting.getName());
@@ -366,7 +366,7 @@ public class Scheduler{
     this.lastEventinProcessor = endTime;
     // commit the Action
     this.scheduledActions.addLast(commitAction);
-    System.out.println("COMITTING:"+commitAction.getActor().getName());
+    //System.out.println("COMITTING:"+commitAction.getActor().getName());
     this.syncTimeOfSrcActors(commitAction,architecture,application,bindings);
   }
 

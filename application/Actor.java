@@ -133,7 +133,7 @@ public class Actor{
     for(Fifo fifo : outputFifos){
       fifos.get(fifo.getId()).fifoWrite();
     }                                         
-    System.out.println("Firing done!");
+    //System.out.println("Firing done!");
     return true;
   }
 

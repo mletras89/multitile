@@ -84,7 +84,7 @@ public class ArchitectureManagement{
   }
   
   public static void updateLastEventInProcessor(Architecture architecture, Processor processor, double time){
-	  System.out.println("Processor "+processor.getName());
+	//System.out.println("Processor "+processor.getName());
     double timeEvent = architecture.getTiles().get(processor.getOwnerTile().getId()).getProcessors().get(processor.getId()).getScheduler().getLastEventinProcessor(); 
     if (time>timeEvent)
       timeEvent = time;

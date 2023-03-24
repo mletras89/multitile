@@ -340,10 +340,10 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
         Processor p = tiles.get(actionToTileId).getProcessors().get(availableProcessor);
         // setting the mapping of the actor and action
         bindings.getActorProcessorBindings().put(action.getActor().getId(), new Binding<>(p));
-        System.out.println("ACTION "+action.getActor().getName());
+        //System.out.println("ACTION "+action.getActor().getName());
         
         Mapping<Processor> mapping = mappings.getActorProcessorMappings().get(action.getActor().getId()).get(p.getId());
-        System.out.println(mapping.getTarget().getName());
+        //System.out.println(mapping.getTarget().getName());
         bindings.getActorProcessorBindings().get(action.getActor().getId()).setProperties(mapping.getProperties());
         //mappings.getActorProcessorMappings().get(action.getActor().getId()).get(key)
         //application.getActors().get(action.getActor().getId()).setMapping(p);
