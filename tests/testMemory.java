@@ -34,6 +34,9 @@ public class testMemory {
       
       memoryTest.writeDataInMemory(300,210);
       memoryTest.writeDataInMemory(1000,75);
+      memoryTest.writeDataInMemory(1000,75);
+      memoryTest.writeDataInMemory(3000,210);
+      memoryTest2.readDataInMemory(1000,75);
       memoryTest.readDataInMemory(memoryTest.getCurrentAmountofBytes(),220);
       memoryTest2.readDataInMemory(memoryTest2.getCurrentAmountofBytes(),200);
       memoryTest3.readDataInMemory(memoryTest3.getCurrentAmountofBytes(),200);
