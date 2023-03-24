@@ -183,13 +183,30 @@ public class Memory{
     double last_inserted_key = listKeys.get(listKeys.size()-1);
     // get current amount of bytes
     double currentBytes = memoryUtilization.get(last_inserted_key);
-    System.err.println("Last inserted key "+last_inserted_key);
+    //System.err.println("Last inserted key "+last_inserted_key);
     System.err.println("Writing memory "+this.getName()+ " storing "+currentBytes+" writing "+amountBytes+" at "+when);
     assert this.getCapacity() >= currentBytes+amountBytes;
-    // I can only insert events from the last insert element, no insertions in the past
-    //TODO remove next line
-    assert last_inserted_key <= when;
-    memoryUtilization.put(when, currentBytes+amountBytes);
+    if(last_inserted_key >= when){
+     double lastValidValue = 0;
+     double whenlv =0.0;
+     for(Map.Entry<Double,Double> m : memoryUtilization.entrySet()){
+       if(m.getKey() < when){
+        lastValidValue = m.getValue();
+        whenlv = m.getKey();
+       }
+       else
+         break;
+     }
+     //System.out.println("lastValidValue "+lastValidValue+" at "+whenlv+" amount bytes "+amountBytes);
+     memoryUtilization.put(when,lastValidValue+amountBytes);
+     for(Map.Entry<Double,Double> m : memoryUtilization.entrySet()){
+       if(m.getKey() > when){
+          memoryUtilization.put(m.getKey(),(m.getValue()-lastValidValue)+amountBytes+lastValidValue);
+       }
+     } 
+    }else
+      //assert last_inserted_key <= when;
+      memoryUtilization.put(when, currentBytes+amountBytes);
   }
 
   public void readDataInMemory(double amountBytes, double when) {
@@ -201,7 +218,7 @@ public class Memory{
     assert currentBytes-amountBytes >= 0;
     // I can only insert events from the last insert element, no insertions in the past
     //System.out.println("Last inserted key "+last_inserted_key);
-    //assert last_inserted_key <= when; => THIS ASSERT MÌGHT BE NECESSARY
+    assert last_inserted_key <= when: "READING IN THE PAST";
     memoryUtilization.put(when, currentBytes-amountBytes);
   }
 
