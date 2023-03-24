@@ -183,6 +183,7 @@ public class Memory{
     double last_inserted_key = listKeys.get(listKeys.size()-1);
     // get current amount of bytes
     double currentBytes = memoryUtilization.get(last_inserted_key);
+    System.err.println("Last inserted key "+last_inserted_key);
     System.err.println("Writing memory "+this.getName()+ " storing "+currentBytes+" writing "+amountBytes+" at "+when);
     assert this.getCapacity() >= currentBytes+amountBytes;
     // I can only insert events from the last insert element, no insertions in the past
