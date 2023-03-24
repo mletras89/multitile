@@ -188,11 +188,11 @@ public class Memory{
     assert this.getCapacity() >= currentBytes+amountBytes;
     if(last_inserted_key >= when){
      double lastValidValue = 0;
-     double whenlv =0.0;
+     //double whenlv =0.0;
      for(Map.Entry<Double,Double> m : memoryUtilization.entrySet()){
        if(m.getKey() < when){
         lastValidValue = m.getValue();
-        whenlv = m.getKey();
+        //whenlv = m.getKey();
        }
        else
          break;
