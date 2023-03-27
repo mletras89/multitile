@@ -56,6 +56,16 @@ import multitile.application.CompositeFifo;
 import multitile.scheduler.ModuloScheduler;
 
 public class ApplicationManagement{
+	
+    public static double calculateMemoryFootprint(Application app) {
+        double memory_footprint = 0.0;
+        for (Map.Entry<Integer, Fifo> fifoEntry : app.getFifos().entrySet()) {
+                //System.out.println("fifo "+fifoEntry.getValue().getName()+ " cap "+fifoEntry.getValue().get_capacity() + "mem F " + (fifoEntry.getValue().get_capacity() * fifoEntry.getValue().getTokenSize()));
+            memory_footprint += fifoEntry.getValue().get_capacity() * fifoEntry.getValue().getTokenSize();
+        }
+        //System.err.println("TOTAL MF "+memory_footprint);
+        return memory_footprint;
+    }
 
 	public static Application cloneApplication(Application appSpec){
 		Application appImplementation = new Application();
