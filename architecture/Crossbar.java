@@ -42,7 +42,6 @@ package multitile.architecture;
 
 import multitile.Transfer;
 import multitile.application.Actor;
-import multitile.application.Application;
 import multitile.mapping.Bindings;
 import multitile.MapManagement;
 
@@ -358,7 +357,7 @@ public class Crossbar{
   // DUMPING the crossbar utilzation locally
   public void saveCrossbarUtilizationStats(String path) throws IOException{
     try{
-        File memUtilStatics = new File(path+"/crossbar-utilization-"+this.getName()+".csv");
+        File memUtilStatics = new File(path+"/"+getStatsFileName());
         if (memUtilStatics.createNewFile()) {
           System.out.println("File created: " + memUtilStatics.getName());
         } else {
@@ -370,13 +369,17 @@ public class Crossbar{
         e.printStackTrace();
     }
 
-    FileWriter myWriter = new FileWriter(path+"/crossbar-utilization-"+this.getName()+".csv"); 
+    FileWriter myWriter = new FileWriter(path+"/"+getStatsFileName()); 
     myWriter.write("Job\tStart\tFinish\tResource\n");
     saveCrossbarUtilizationStats(myWriter);
 
     myWriter.close();
   }
 
+  public String getStatsFileName() {
+	  return "crossbar-utilization-"+this.getName()+".csv";
+  }
+  
   public void saveCrossbarUtilizationStats(FileWriter myWriter) throws IOException{
     for(int i=0;i<scheduledActions.size();i++){
       for(Transfer transfer : scheduledActions.get(i)){

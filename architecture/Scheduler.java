@@ -494,7 +494,7 @@ public class Scheduler{
   // DUMPING the processor utilzation locally
   public void saveScheduleStats(String path) throws IOException{
     try{
-        File memUtilStatics = new File(path+"/processor-utilization-"+this.getName()+".csv");
+        File memUtilStatics = new File(path+"/"+getStatsFileName());
         if (memUtilStatics.createNewFile()) {
           System.out.println("File created: " + memUtilStatics.getName());
         } else {
@@ -506,13 +506,17 @@ public class Scheduler{
         e.printStackTrace();
     }
 
-    FileWriter myWriter = new FileWriter(path+"/processor-utilization-"+this.getName()+".csv"); 
+    FileWriter myWriter = new FileWriter(path+"/"+getStatsFileName()); 
     myWriter.write("Job\tStart\tFinish\tResource\n");
     saveScheduleStats(myWriter);
 
     myWriter.close();
   }
 
+  public String getStatsFileName() {
+	  return "processor-utilization-"+this.getName()+".csv";
+  }
+  
   public void saveScheduleStats(FileWriter myWriter) throws IOException{
     for(Action a : scheduledActions){
       myWriter.write(a.getActor().getName()+"\t"+a.getStart_time()+"\t"+a.getDue_time()+"\t"+this.getName()+"\n");

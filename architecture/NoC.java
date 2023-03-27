@@ -193,7 +193,7 @@ public class NoC{
   // DUMPING the NoC utilzation
   public void saveNoCUtilizationStats(String path) throws IOException{
     try{
-        File memUtilStatics = new File(path+"/NoC-utilization-"+this.getName()+".csv");
+        File memUtilStatics = new File(path+"/"+getStatsFileName());
         if (memUtilStatics.createNewFile()) {
           System.out.println("File created: " + memUtilStatics.getName());
         } else {
@@ -205,13 +205,18 @@ public class NoC{
         e.printStackTrace();
     }
 
-    FileWriter myWriter = new FileWriter(path+"/NoC-utilization-"+this.getName()+".csv"); 
+    FileWriter myWriter = new FileWriter(path+"/"+getStatsFileName()); 
     myWriter.write("Job\tStart\tFinish\tResource\n");
     saveNoCUtilizationStats(myWriter);
 
     myWriter.close();
   }
 
+  
+  public String getStatsFileName() {
+	  return "NoC-utilization-"+this.getName()+".csv";
+  }
+  
   public void saveNoCUtilizationStats(FileWriter myWriter) throws IOException{
     for(int i=0;i<channels.size();i++){
       for(Transfer transfer : channels.get(i)){

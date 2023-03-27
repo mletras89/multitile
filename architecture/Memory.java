@@ -268,7 +268,7 @@ public class Memory{
   // DUMPING the memory utilzation locally
   public void saveMemoryUtilizationStats(String path) throws IOException{
     try{
-        File memUtilStatics = new File(path+"/memory-utilization-"+this.getName()+".csv");
+        File memUtilStatics = new File(path+"/"+getStatsFileName());
         if (memUtilStatics.createNewFile()) {
           System.out.println("File created: " + memUtilStatics.getName());
         } else {
@@ -280,12 +280,16 @@ public class Memory{
         e.printStackTrace();
     }
 
-    FileWriter myWriter = new FileWriter(path+"/memory-utilization-"+this.getName()+".csv"); 
+    FileWriter myWriter = new FileWriter(path+"/"+getStatsFileName()); 
     myWriter.write("Memory\tWhen\tCapacity\n");
 
     saveMemoryUtilizationStats(myWriter);
 
     myWriter.close();
+  }
+  
+  public String getStatsFileName() {
+	  return "memory-utilization-"+this.getName()+".csv";
   }
 
   public void saveMemoryUtilizationStats(FileWriter myWriter) throws IOException{
