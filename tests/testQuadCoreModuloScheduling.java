@@ -44,7 +44,6 @@ import multitile.mapping.Bindings;
 import multitile.mapping.Mappings;
 import multitile.application.Application;
 
-import multitile.application.Fifo;
 import multitile.application.FifoManagement;
 import multitile.application.ApplicationManagement;
 import multitile.application.ActorManagement;

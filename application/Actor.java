@@ -36,8 +36,6 @@
 */
 package multitile.application;
 
-import multitile.architecture.Processor;
-import multitile.architecture.Tile;
 import java.util.*;
 
 public class Actor{
