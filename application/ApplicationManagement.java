@@ -226,7 +226,7 @@ public class ApplicationManagement{
         	break;
         case TILE_LOCAL_DESTINATION:
         	destinationActorId 	= f.getValue().getDestination().getId();
-            processorId			= bindings.getActorProcessorBindings().get(destinationActorId).getTarget().getId();  //application.getActors().get(destinationActorId).getMapping().getId();
+        	processorId			= bindings.getActorProcessorBindings().get(destinationActorId).getTarget().getId();  //application.getActors().get(destinationActorId).getMapping().getId();
             tileId  			= bindings.getActorTileBindings().get(destinationActorId).getTarget().getId();  //application.getActors().get(destinationActorId).getMappingToTile().getId();
             //application.getFifos().get(f.getKey()).setMapping( architecture.getTiles().get(tileId).getTileLocalMemory()  );
             bindings.getFifoMemoryBindings().put(f.getKey(), new Binding<Memory>( architecture.getTiles().get(tileId).getTileLocalMemory() ) );
