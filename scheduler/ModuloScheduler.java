@@ -279,23 +279,6 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
     		break;
     	count=count+MII;
     }
-    
-    /*
-    for(int i=1;i<=this.lastStep-1;i++){
-      stepStartKernel = i;  
-      for(int j=i+1;j<=this.lastStep;j++){
-        stepEndKernel = j;
-        if(this.kernel.get(stepStartKernel).equals(this.kernel.get(stepEndKernel))){
-          foundKernel = true;
-          break;
-        }
-      }
-      if (foundKernel == true) {
-    	// check valid kernel
-    	if (checkValidKernel(stepStartKernel,stepEndKernel))
-    		break;
-      }
-    }*/
     //System.out.println("Kernel starts at: "+stepStartKernel+" and ends at: "+stepEndKernel);
     this.stepStartKernel = stepStartKernel;
     this.stepEndKernel   = stepEndKernel;
