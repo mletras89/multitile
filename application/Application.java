@@ -40,6 +40,7 @@ package multitile.application;
 import java.util.*;
 
 import multitile.architecture.Processor;
+import multitile.architecture.Tile;
 import multitile.mapping.Bindings;
 
 public class Application{
@@ -104,12 +105,24 @@ public class Application{
 		}
 	  }
   
+  public void printActorsTilesState(Bindings bindings){
+	for(Map.Entry<Integer,Actor> actorEntry : actors.entrySet()){   
+			Tile map = bindings.getActorTileBindings().get(actorEntry.getKey()).getTarget();
+			System.out.println("Id "+actorEntry.getKey()+" Actor:"+actorEntry.getValue().getName()+" is multicast:"+actorEntry.getValue().isMulticastActor()+" is mergeable: "+actorEntry.getValue().isMergeMulticast()+" mapped to tile "+map.getName());
+	}
+  }
+  
   public void printFifos(){
 	for(Map.Entry<Integer,Fifo> fifoEntry : fifos.entrySet()){
 	  System.out.println("Fifo:"+fifoEntry.getValue().getName()+" is composite?:"+fifoEntry.getValue().isCompositeChannel());
 	}
   }
   
+  public void printFifosMapping() {
+	for(Map.Entry<Integer,Fifo> fifoEntry : fifos.entrySet()){
+		  System.out.println("Fifo:"+fifoEntry.getValue().getName()+" is composite?:"+fifoEntry.getValue().isCompositeChannel()+" mapping type "+fifoEntry.getValue().getMappingType());
+	}  
+  }
   
   public void printFifosState(){
     for(Map.Entry<Integer,Fifo> fifoEntry : fifos.entrySet()){
