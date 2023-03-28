@@ -97,7 +97,6 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
     return this.stepEndKernel;
   }
   
-
   public void calculateModuloSchedule(Bindings bindings){
     HashMap<Integer,Tile> tiles = architecture.getTiles();
     List<Integer> V = new ArrayList<>();
@@ -171,7 +170,6 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
     while(!V.isEmpty()) {
       List<Integer> removeV = new ArrayList<>();
       for (int v : V) {
-        //System.out.println("Trying to sched "+actors.get(v).getName());
 	/* Check whether data dependences are satisfied */
 	if (PCOUNT.get(v) == 0) {
 	  //System.out.println("TRY Scheduling "+actors.get(v).getName()+" on control step "+l.get(v)+ " on resource "+cpus.get(actors.get(v).getMapping()).getName());
@@ -200,8 +198,7 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
 	    l.put(w,maxVal);
 	  }
 	  scheduled.put(v, true);
-          //System.out.println("Actor: "+application.getActors().get(v).getName());
-	  removeV.add(v);
+      removeV.add(v);
 	}
       }
       V.removeAll(removeV);
@@ -212,10 +209,10 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
     int scheduled = 0;
     int step = 1;
     while(scheduled < application.getActors().size()){
-      //System.out.println("Scheduling Step: "+step);
+      System.out.println("Scheduling Step: "+step);
       for(Map.Entry<Integer,Integer> entryL : l.entrySet()){
         if(entryL.getValue() == step){
-          //System.out.println("Actor: "+application.getActors().get(entryL.getKey()).getName());
+          System.out.println("Actor: "+application.getActors().get(entryL.getKey()).getName());
           scheduled++;
         }
       }
@@ -266,13 +263,24 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
 //    // now, we print the schedule
     for(int i=1; i <= this.lastStep;i++){
       //System.out.println("STEP: "+i);
-      Collections.sort(this.kernel.get(i));
+      //Collections.sort(this.kernel.get(i));
       /*for(int v : this.kernel.get(i)){
         System.out.println("Actor: "+application.getActors().get(v).getName());
       }*/
     }
+    
     // 3) we find the kernel, to calculate the throuhgput
-    boolean foundKernel = false;
+    //boolean foundKernel = false;
+    int count=1;
+    while(count<=this.lastStep) {
+    	stepStartKernel = count; 
+    	stepEndKernel   = count + MII;
+    	if (checkValidKernel(stepStartKernel,stepEndKernel))
+    		break;
+    	count=count+MII;
+    }
+    
+    /*
     for(int i=1;i<=this.lastStep-1;i++){
       stepStartKernel = i;  
       for(int j=i+1;j<=this.lastStep;j++){
@@ -282,14 +290,38 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
           break;
         }
       }
-      if (foundKernel == true)
-        break;
-    }
+      if (foundKernel == true) {
+    	// check valid kernel
+    	if (checkValidKernel(stepStartKernel,stepEndKernel))
+    		break;
+      }
+    }*/
     //System.out.println("Kernel starts at: "+stepStartKernel+" and ends at: "+stepEndKernel);
     this.stepStartKernel = stepStartKernel;
     this.stepEndKernel   = stepEndKernel;
   }
 
+  public boolean checkValidKernel(int start,int end) {
+	  // map id, id actor, scheduled
+     HashMap<Integer,Boolean> scheduled = new HashMap<>();
+     
+     for(Map.Entry<Integer, Actor> a : application.getActors().entrySet()) {
+    	 scheduled.put(a.getKey(), false);
+     }
+     for(int i=start; i<=end;i++) {
+    	 List<Integer> list = kernel.get(i);
+    	 for(int e : list) {
+    		 scheduled.put(e, true);
+    	 }
+     }
+     // check
+     for(Map.Entry<Integer,Boolean> s : scheduled.entrySet()) {
+    	 if (s.getValue() == false)
+    		 return false;
+     }
+     return true;
+  }
+  
   public void schedule(Bindings bindings,Mappings mappings){
     architecture.resetArchitecture();
     application.resetApplication();
