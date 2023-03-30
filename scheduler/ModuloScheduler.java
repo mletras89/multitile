@@ -259,16 +259,6 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
         this.lastStep = i;
       }
     }
-//    System.out.println("Last step:"+lastStep);
-//    // now, we print the schedule
-    for(int i=1; i <= this.lastStep;i++){
-      //System.out.println("STEP: "+i);
-      //Collections.sort(this.kernel.get(i));
-      /*for(int v : this.kernel.get(i)){
-        System.out.println("Actor: "+application.getActors().get(v).getName());
-      }*/
-    }
-    
     // 3) we find the kernel, to calculate the throuhgput
     //boolean foundKernel = false;
     int count=1;
