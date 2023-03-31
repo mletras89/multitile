@@ -173,6 +173,8 @@ public class ApplicationManagement{
     }
     for(int step=scheduler.getStepStartKernel(); step <= scheduler.getStepEndKernel(); step++){
       // clean list
+      if (kernel.get(step) ==null)
+    	  break;
       for(Map.Entry<Integer,List<Integer>> entry: tilesToActors.entrySet())
         entry.getValue().clear();
       for(int actorId : kernel.get(step)){
