@@ -275,7 +275,16 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
   }
 
   public boolean checkValidKernel(int start,int end) {
-	  // map id, id actor, scheduled
+	  // check that start and end are the same
+	  if (kernel.get(start).size() != kernel.get(end).size())
+		  return false;
+	  else {
+		  for(int i=0; i < kernel.get(start).size();i++) {
+			  if (kernel.get(start).get(i) != kernel.get(end).get(i))
+				  return false;
+		  }
+	  }
+	// map id, id actor, scheduled 
      HashMap<Integer,Boolean> scheduled = new HashMap<>();
      
      for(Map.Entry<Integer, Actor> a : application.getActors().entrySet()) {
@@ -283,8 +292,10 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
      }
      for(int i=start; i<=end;i++) {
     	 List<Integer> list = kernel.get(i);
-    	 for(int e : list) {
-    		 scheduled.put(e, true);
+    	 if(list!=null) {
+    		 for(int e : list) {
+    			 scheduled.put(e, true);
+    		 }
     	 }
      }
      // check
@@ -556,11 +567,13 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
     // from the list of actors in Processor, check which of them can fire
     this.cleanQueue();
     List<Integer> actorsInStep = kernel.get(step);
-    for(int v : actorsInStep){
-      if (actors.get(v).canFire(fifos)){
-    	Action action = new Action(actors.get(v));
-        this.insertAction(action);
-      }
+    if (actorsInStep!=null) {
+    	for(int v : actorsInStep){
+    		if (actors.get(v).canFire(fifos)){
+    			Action action = new Action(actors.get(v));
+    			this.insertAction(action);
+    		}
+    	}
     }
   }
 
