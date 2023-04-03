@@ -60,5 +60,4 @@ public class ActorManagement{
   public static int getMulticastActorCounter(){
     return multicastActorCounter++;
   }
-
 }
