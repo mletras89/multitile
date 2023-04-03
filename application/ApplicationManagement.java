@@ -56,6 +56,18 @@ import multitile.application.CompositeFifo;
 import multitile.scheduler.ModuloScheduler;
 
 public class ApplicationManagement{
+	private static ArrayList<String> fifoNames;
+	
+	public static ArrayList<String> getFifoNames() {
+		  return fifoNames;
+	  }
+	  
+	  public static void setFifoNames(Application app) {
+		  fifoNames = new ArrayList<String>();
+		  for(Map.Entry<Integer, Fifo> f : app.getFifos().entrySet()) {
+			  fifoNames.add(f.getValue().getName());
+		  }
+	  }
 	
     public static double calculateMemoryFootprint(Application app) {
         double memory_footprint = 0.0;
