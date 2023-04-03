@@ -530,8 +530,8 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
 
   public double getDelaySingleIteration(){
     // we take into account when k=3 and K=4
-    int start  = this.MII*3+1;
-    int end = this.MII*4+1;
+    int start  = stepStartKernel; //this.MII*3+1;
+    int end = stepEndKernel; //this.MII*4+1;
 
     double startTime = Double.POSITIVE_INFINITY;
     double endTime  = -1;
@@ -548,6 +548,16 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
         endTime = a.getDue_time();
     }
     return endTime - startTime;
+  }
+  
+  public double getOverallDelay() {
+	  int lastStep = this.getScheduledStepActions().size();
+	  double delay = 0.0;
+	  for(Action a: this.getScheduledStepActions().get(lastStep-1)) {
+		  if (a.getDue_time() > delay)
+			  delay = a.getDue_time();
+	  }
+	  return delay;
   }
 
   public int getNextAvailableProcessor(HashMap<Integer,Boolean> processorUtilization){
