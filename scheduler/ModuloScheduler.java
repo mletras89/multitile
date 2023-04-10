@@ -126,14 +126,17 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
     // 		Enumerate all the recurrences in the dependence graph.
     // 		Let C be the set of all recurrences in the dependence graph. Compute len(c) \forall c \in C
     // 	Key -> the actor X id
-    // 	Val -> the distance of the shortest cycle from X -> X
+    // 	Val -> the legth of the shortest cycle from X -> X
     int RECII = 0;
-    HashMap<Integer,Integer> distances = new HashMap<>();
+    HashMap<Integer,Integer> len = new HashMap<>();
+    HashMap<Integer,Integer> del = new HashMap<>();
     for(Map.Entry<Integer,Actor> a : application.getActors().entrySet()){
-      int distance = GraphManagement.BellmanFordCycleDistance(application, a.getValue());
-      distances.put(a.getKey(), distance);
+      int lengthCycle = GraphManagement.BellmanFordCycleDistance(application, a.getValue());
+      len.put(a.getKey(), lengthCycle);
+      del.put(a.getKey(), 0);
     }
-    ArrayList<Integer> lens = new ArrayList<Integer>(distances.values());
+    ArrayList<Integer> lens = new ArrayList<Integer>(len.values());
+    // approximation of RECII in the abscense of the delay
     RECII = Collections.max(lens);
     // 	3 [Compute the lower bound of minimum initiation interval]
     // 		a) [Compute the resource-constrained initiation interval]
