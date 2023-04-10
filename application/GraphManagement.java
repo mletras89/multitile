@@ -56,7 +56,7 @@ public class GraphManagement{
 	// cycle
 	// return: the smallest cycle from src -> src
 	// if there is no cycle returns 0
-	public static int BellmanFordCycleDistance(Application application, Actor src)
+	public static HashMap<Integer,Integer> BellmanFordCycleDistance(Application application, Actor src)
 	{
 		int V = application.getActors().size();
 		int E = application.getFifos().size();
@@ -101,10 +101,10 @@ public class GraphManagement{
 	    	            && dist.get(u) + weight < dist.get(v)) {
 	    	        	System.out.println(
 	    	            	"Graph contains negative weight cycle");
-	    	        	return Integer.MIN_VALUE;
+	    	        	return null;
 	    	    	}
 	    	}
-		return dist.get(src.getId());
+		return dist;
 	}
 
 	// The main function that finds shortest distances from
@@ -159,13 +159,13 @@ public class GraphManagement{
 	    	        	return;
 	    	    	}
 	    	}
-	    	printArr(dist, application);
+	    	printArr(dist, application,src);
 	}
 	
 	// A utility function used to print the solution
-	public static void printArr(HashMap<Integer,Integer> dist, Application application)
+	public static void printArr(HashMap<Integer,Integer> dist, Application application, Actor src)
 	{
-	    	System.out.println("Vertex Distance from Source");
+	    	System.out.println("Vertex Distance from Source: "+src.getName());
 	    	//for (int i = 0; i < V; ++i)
 		for(Map.Entry<Integer,Actor> a : application.getActors().entrySet())
 			System.out.println(a.getValue().getName() + "\t\t" + dist.get(a.getKey()));
