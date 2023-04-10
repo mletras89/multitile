@@ -49,7 +49,9 @@ import multitile.application.Application;
 import multitile.application.FifoManagement;
 import multitile.application.ApplicationManagement;
 import multitile.application.ActorManagement;
+import multitile.application.Actor;
 import multitile.architecture.ArchitectureManagement;
+import multitile.application.GraphManagement;
 
 import java.io.*;
 import java.util.*;
@@ -62,21 +64,17 @@ public class testModuloSchedulingRecurrences {
       FifoManagement.resetCounters();
       ArchitectureManagement.resetCounters();
 
-      Architecture architecture = new Architecture("architecture",2,2, 1.0, 2);
+      Architecture architecture = new Architecture("architecture",1,1, 1.0, 2);
       //architecture.printArchitecture();
       // set the memory sizes
       architecture.getTiles().get(0).getProcessors().get(0).getLocalMemory().setCapacity(Integer.MAX_VALUE);
-      architecture.getTiles().get(0).getProcessors().get(1).getLocalMemory().setCapacity(Integer.MAX_VALUE);
-      architecture.getTiles().get(1).getProcessors().get(2).getLocalMemory().setCapacity(Integer.MAX_VALUE);
-      architecture.getTiles().get(1).getProcessors().get(3).getLocalMemory().setCapacity(Integer.MAX_VALUE);
       architecture.getTiles().get(0).getTileLocalMemory().setCapacity(Integer.MAX_VALUE);
-      architecture.getTiles().get(1).getTileLocalMemory().setCapacity(Integer.MAX_VALUE);
       architecture.getGlobalMemory().setCapacity(Integer.MAX_VALUE);
       
       Bindings bindings = new Bindings();
       Mappings mappings = new Mappings();
       
-      TestApplicationQuadCoreMemoryBound sampleApplication = new TestApplicationQuadCoreMemoryBound(architecture.getTiles().get(0), architecture.getTiles().get(1),architecture.getGlobalMemory(),bindings,mappings);  
+      TestApplicationWithRecurrences sampleApplication = new TestApplicationWithRecurrences(architecture.getTiles().get(0),architecture.getGlobalMemory(),bindings,mappings);  
       Application app = sampleApplication.getSampleApplication();
       ApplicationManagement.setFifosToActors(app);
       ApplicationManagement.setAllMulticastActorsAsMergeable(app);
@@ -85,6 +83,10 @@ public class testModuloSchedulingRecurrences {
       ApplicationManagement.collapseMergeableMulticastActors(app,1);
       app.printActorsState(bindings);
       app.printFifosState();
+      // chech the calculation of distances and loops
+      for(Map.Entry<Integer,Actor> a : app.getActors().entrySet()){
+        GraphManagement.BellmanFord(app,a.getValue());
+      }
       
       ModuloScheduler scheduler = new ModuloScheduler();
       // I need to update the actor mapping according to the modulo schedule!!!!!
@@ -92,19 +94,21 @@ public class testModuloSchedulingRecurrences {
       scheduler.setArchitecture(architecture);
 			
       scheduler.setMaxIterations(10);
-      scheduler.calculateModuloSchedule(bindings);
+      // comment scheduling
+      //scheduler.calculateModuloSchedule(bindings);
       //System.out.println("PRINTING KERNEL: ");
       //scheduler.printKernelBody();
       // once the kernell is done, reassign the actor Mapping and then reassing the fifoMapping
-      scheduler.findSchedule();
-      ApplicationManagement.assignActorMapping(app,architecture,scheduler,bindings);
-      ApplicationManagement.assignFifoMapping(app,architecture,bindings); 
+      
+      //scheduler.findSchedule();
+      //ApplicationManagement.assignActorMapping(app,architecture,scheduler,bindings);
+      //ApplicationManagement.assignFifoMapping(app,architecture,bindings); 
       //app.printActors();
       //app.printFifos();
  
-      scheduler.schedule(bindings,mappings);
-      System.out.println("Single iteration delay: "+scheduler.getDelaySingleIteration());
-      System.out.println("The MMI is: "+scheduler.getMII());
+      //scheduler.schedule(bindings,mappings);
+      //System.out.println("Single iteration delay: "+scheduler.getDelaySingleIteration());
+      //System.out.println("The MMI is: "+scheduler.getMII());
 
       // dumping system utilization statistics
       for(HashMap.Entry<Integer,Tile> t: architecture.getTiles().entrySet()){
