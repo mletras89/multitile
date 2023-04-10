@@ -102,15 +102,15 @@ public class GraphManagement{
 	    	        	return;
 	    	    	}
 	    	}
-	    	printArr(dist, V);
+	    	printArr(dist, application);
 	}
 	
 	// A utility function used to print the solution
-	void printArr(HashMap<Integer,Integer> dist, Application application)
+	public static void printArr(HashMap<Integer,Integer> dist, Application application)
 	{
 	    	System.out.println("Vertex Distance from Source");
 	    	//for (int i = 0; i < V; ++i)
-		for(Map.Entry<Integer,Actor> a : application.getFifos().entrySet())
+		for(Map.Entry<Integer,Actor> a : application.getActors().entrySet())
 			System.out.println(a.getValue().getName() + "\t\t" + dist.get(a.getKey()));
 	}
 
