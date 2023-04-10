@@ -54,6 +54,63 @@ public class GraphManagement{
 	// src to all other vertices using Bellman-Ford
 	// algorithm. The function also detects negative weight
 	// cycle
+	// return: the smallest cycle from src -> src
+	// if there is no cycle returns 0
+	public static int BellmanFordCycleDistance(Application application, Actor src)
+	{
+		int V = application.getActors().size();
+		int E = application.getFifos().size();
+		// key -> actor id
+		// val -> distance
+		HashMap<Integer,Integer> dist = new HashMap<>();
+
+	    	// Step 1: Initialize distances from src to all
+	    	// other vertices as INFINITE
+	    	for (Map.Entry<Integer,Actor> a : application.getActors().entrySet())
+	        	dist.put(a.getKey(), Integer.MAX_VALUE);
+	    	dist.put(src.getId(), 0);
+	
+	    	// Step 2: Relax all edges |V| - 1 times. A simple
+	    	// shortest path from src to any other vertex can
+	    	// have at-most |V| - 1 edges
+	    	//for (int i = 1; i < V; ++i) {
+		for(Map.Entry<Integer,Actor> a : application.getActors().entrySet()){
+			for(Map.Entry<Integer,Fifo> f : application.getFifos().entrySet()){
+	        	//for (int j = 0; j < E; ++j) {
+	            		int u = f.getValue().getSource().getId();
+	            		int v = f.getValue().getDestination().getId();
+				// here, I always assume 1 as weight
+	            		int weight = 1;
+	            		if (dist.get(u) != Integer.MAX_VALUE
+	                	    && dist.get(u) + weight < dist.get(v))
+	               			dist.put(v, dist.get(u) + weight);
+	        	}
+	    	}
+	
+	    	// Step 3: check for negative-weight cycles. The
+	    	// above step guarantees shortest distances if graph
+	    	// doesn't contain negative weight cycle. If we get
+	    	// a shorter path, then there is a cycle.
+	    	//for (int j = 0; j < E; ++j) {
+		for(Map.Entry<Integer,Fifo> f : application.getFifos().entrySet()){
+	    	    	int u = f.getValue().getSource().getId(); 
+	    	    	int v = f.getValue().getDestination().getId(); 
+			// here, we assume 1 as weight
+	    	    	int weight = 1;
+	    	    	if (dist.get(u) != Integer.MAX_VALUE
+	    	            && dist.get(u) + weight < dist.get(v)) {
+	    	        	System.out.println(
+	    	            	"Graph contains negative weight cycle");
+	    	        	return Integer.MIN_VALUE;
+	    	    	}
+	    	}
+		return dist.get(src.getId());
+	}
+
+	// The main function that finds shortest distances from
+	// src to all other vertices using Bellman-Ford
+	// algorithm. The function also detects negative weight
+	// cycle
 	public static void BellmanFord(Application application, Actor src)
 	{
 		int V = application.getActors().size();
