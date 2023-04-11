@@ -60,6 +60,7 @@ public class TestApplicationWithRecurrences{
   public TestApplicationWithRecurrences(Tile t1, GlobalMemory globalMemory, Bindings bindings, Mappings mappings){
       // one tile with single processor
       Processor cpu1 = t1.getProcessors().get(0);
+      Processor cpu2 = t1.getProcessors().get(1);
 
       Actor v1 = new Actor("v1");
       v1.setId(1) ;
@@ -105,6 +106,7 @@ public class TestApplicationWithRecurrences{
       Fifo c7 = new Fifo("c7",0,1,1000000,1,1,v6,v7,FIFO_MAPPING_TYPE.TILE_LOCAL_SOURCE);
       Fifo c8 = new Fifo("c8",0,1,1000000,1,1,v4,v7,FIFO_MAPPING_TYPE.TILE_LOCAL_SOURCE);
       Fifo c9 = new Fifo("c9",0,1,1000000,1,1,v7,v2,FIFO_MAPPING_TYPE.TILE_LOCAL_SOURCE);
+      c9.setIsRecurrence(true);
       
       // outputs v1
       Vector<Fifo> vec1 = new Vector<Fifo>();
@@ -196,37 +198,51 @@ public class TestApplicationWithRecurrences{
       // actor mappings
       HashMap<Integer,Mapping<Processor>> a1Mappings = new HashMap<>();
       a1Mappings.put(cpu1.getId(), new Mapping<Processor>( cpu1 ));
+      a1Mappings.put(cpu2.getId(), new Mapping<Processor>( cpu2 ));
       a1Mappings.get(cpu1.getId()).getProperties().put("runtime", 10000.0);
+      a1Mappings.get(cpu2.getId()).getProperties().put("runtime", 10000.0);
       mappings.getActorProcessorMappings().put(v1.getId(), a1Mappings);
       
       HashMap<Integer,Mapping<Processor>> a2Mappings = new HashMap<>();
       a2Mappings.put(cpu1.getId(), new Mapping<Processor>( cpu1));
+      a2Mappings.put(cpu2.getId(), new Mapping<Processor>( cpu2));
       a2Mappings.get(cpu1.getId()).getProperties().put("runtime", 10000.0);
+      a2Mappings.get(cpu2.getId()).getProperties().put("runtime", 10000.0);
       mappings.getActorProcessorMappings().put(v2.getId(), a2Mappings);
       
       HashMap<Integer,Mapping<Processor>> a3Mappings = new HashMap<>();
       a3Mappings.put(cpu1.getId(), new Mapping<Processor>(cpu1));
+      a3Mappings.put(cpu2.getId(), new Mapping<Processor>(cpu2));
       a3Mappings.get(cpu1.getId()).getProperties().put("runtime", 10000.0);
+      a3Mappings.get(cpu2.getId()).getProperties().put("runtime", 10000.0);
       mappings.getActorProcessorMappings().put(v3.getId(), a3Mappings);
       
       HashMap<Integer,Mapping<Processor>> a4Mappings = new HashMap<>();
       a4Mappings.put(cpu1.getId(), new Mapping<Processor>(cpu1));
+      a4Mappings.put(cpu2.getId(), new Mapping<Processor>(cpu2));
       a4Mappings.get(cpu1.getId()).getProperties().put("runtime", 10000.0);
+      a4Mappings.get(cpu2.getId()).getProperties().put("runtime", 10000.0);
       mappings.getActorProcessorMappings().put(v4.getId(), a4Mappings);
       
       HashMap<Integer,Mapping<Processor>> a5Mappings = new HashMap<>();
       a5Mappings.put(cpu1.getId(), new Mapping<Processor>(cpu1));
+      a5Mappings.put(cpu2.getId(), new Mapping<Processor>(cpu2));
       a5Mappings.get(cpu1.getId()).getProperties().put("runtime", 10000.0);
+      a5Mappings.get(cpu2.getId()).getProperties().put("runtime", 10000.0);
       mappings.getActorProcessorMappings().put(v5.getId(), a5Mappings);
 
       HashMap<Integer,Mapping<Processor>> a6Mappings = new HashMap<>();
       a6Mappings.put(cpu1.getId(), new Mapping<Processor>(cpu1));
+      a6Mappings.put(cpu2.getId(), new Mapping<Processor>(cpu2));
       a6Mappings.get(cpu1.getId()).getProperties().put("runtime", 10000.0);
+      a6Mappings.get(cpu2.getId()).getProperties().put("runtime", 10000.0);
       mappings.getActorProcessorMappings().put(v6.getId(), a6Mappings);
 
       HashMap<Integer,Mapping<Processor>> a7Mappings = new HashMap<>();
       a7Mappings.put(cpu1.getId(), new Mapping<Processor>(cpu1));
+      a7Mappings.put(cpu2.getId(), new Mapping<Processor>(cpu2));
       a7Mappings.get(cpu1.getId()).getProperties().put("runtime", 10000.0);
+      a7Mappings.get(cpu2.getId()).getProperties().put("runtime", 10000.0);
       mappings.getActorProcessorMappings().put(v7.getId(), a7Mappings);
       
       // tile mappings
@@ -261,11 +277,11 @@ public class TestApplicationWithRecurrences{
       // actor binding
       bindings.getActorProcessorBindings().put(v1.getId(), new Binding<Processor>(cpu1));
       bindings.getActorProcessorBindings().put(v2.getId(), new Binding<Processor>(cpu1));
-      bindings.getActorProcessorBindings().put(v3.getId(), new Binding<Processor>(cpu1));
+      bindings.getActorProcessorBindings().put(v3.getId(), new Binding<Processor>(cpu2));
       bindings.getActorProcessorBindings().put(v4.getId(), new Binding<Processor>(cpu1));
-      bindings.getActorProcessorBindings().put(v5.getId(), new Binding<Processor>(cpu1));
-      bindings.getActorProcessorBindings().put(v6.getId(), new Binding<Processor>(cpu1));
-      bindings.getActorProcessorBindings().put(v7.getId(), new Binding<Processor>(cpu1));
+      bindings.getActorProcessorBindings().put(v5.getId(), new Binding<Processor>(cpu2));
+      bindings.getActorProcessorBindings().put(v6.getId(), new Binding<Processor>(cpu2));
+      bindings.getActorProcessorBindings().put(v7.getId(), new Binding<Processor>(cpu2));
       
       bindings.getActorTileBindings().put(v1.getId(), new Binding<Tile>(t1));
       bindings.getActorTileBindings().put(v2.getId(), new Binding<Tile>(t1));
