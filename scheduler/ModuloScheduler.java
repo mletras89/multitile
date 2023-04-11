@@ -58,6 +58,8 @@ import multitile.application.CompositeFifo;
 import multitile.application.Actor;
 import multitile.application.Fifo;
 import multitile.application.GraphManagement;
+import multitile.application.Cycle;
+import multitile.application.Cycles;
 
 import java.util.List;
 import java.util.Map;
@@ -128,16 +130,13 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
     // 	Key -> the actor X id
     // 	Val -> the legth of the shortest cycle from X -> X
     int RECII = 0;
-    HashMap<Integer,Integer> len = new HashMap<>();
-    HashMap<Integer,Integer> del = new HashMap<>();
-    for(Map.Entry<Integer,Actor> a : application.getActors().entrySet()){
-      int lengthCycle = GraphManagement.BellmanFordCycleDistance(application, a.getValue());
-      len.put(a.getKey(), lengthCycle);
-      del.put(a.getKey(), 0);
-    }
-    ArrayList<Integer> lens = new ArrayList<Integer>(len.values());
-    // approximation of RECII in the abscense of the delay
-    RECII = Collections.max(lens);
+//    HashMap<Integer,Integer> len = new HashMap<>();
+//    HashMap<Integer,Integer> del = new HashMap<>();
+    // the cycles must be previously calculated 
+    Cycles cycles = new Cycles();
+    cycles.calculateCycles(application);
+    cycles.calculateRecII();
+    RECII = cycles.getRecII();
     // 	3 [Compute the lower bound of minimum initiation interval]
     // 		a) [Compute the resource-constrained initiation interval]
     List<Integer> tmpL = new ArrayList<>();
