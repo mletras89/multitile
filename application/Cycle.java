@@ -44,46 +44,77 @@ import multitile.application.GraphManagement;
 
 public class Cycle{
         private Actor src;
-        private List<Actor> cycle;
-        private boolean existsCycle;
-        
+        private List<Integer> cycle;
+	// here, dist is assumed to be 1
+	private final int dist=1; 
         public Cycle(Actor src){
                 this.src = src;
-                this.cycle = new ArrayList<Actor>();
-                this.cycle.add(src);
-                this.existsCycle = false;
+                this.cycle = new ArrayList<Integer>();
         }
+
+        @Override
+        public boolean equals(Object obj){
+                if(obj==null)
+                        return false;
+                if(obj.getClass() != this.getClass())
+                        return false;
+
+                final Cycle other = (Cycle) obj;
+                if (this.cycle.size() != other.getCycle().size())
+                        return false;
+
+                List<Integer> sortedCycle      = new ArrayList<Integer>(this.cycle);
+                List<Integer> otherSortedCycle = new ArrayList<Integer>(other.getCycle());
+                Collections.sort(sortedCycle);
+                Collections.sort(otherSortedCycle);
+                for(int i=0; i<sortedCycle.size();i++){
+                        if(sortedCycle.get(i) != otherSortedCycle.get(i))
+                              return false;
+                }
+                return true;
+        }
+
+	public int getDist(){
+		return dist;
+	}
 
         public Actor getSrc(){
                 return this.src;
         }
 
         public int getCycleLength(){
-                if (existsCycle)
-                        return cycle.size();
-                return 0;
+                return cycle.size();
         }
         
-        public void getCycle(Application app){
+        public List<Integer> getCycle(){
+                return cycle;
+        }
+
+        public boolean existsCycle(){
+                if (cycle.size() == 0)
+                        return false;
+                return true;
+        }
+
+        public void calculateCycle(Application app){
                 // has no inputs, and cannot be a cycle
                 if (src.getInputFifos().size() == 0 ){
-                        this.existsCycle = false;
                         return;
                 }
                 HashMap<Integer,Integer> dist =  GraphManagement.BellmanFordCycleDistance(app,src);
                 // has inputs, but they are not accesible to src
-                ArrayList<Integer> accesibleInputs = getAccesibleInputs(dist,app,srg.getId());
-                if(accessibleInputs.size() == 0){
-                        this.existsCycle = false;
+                ArrayList<Integer> accesibleInputs = getAccesibleInputs(dist,app,src.getId());
+                if(accesibleInputs.size() == 0){
                         return;
                 }
                 // then proceed to calculate the longest cycle path                
-                
+                int val = getNextStepCycle(dist,app,accesibleInputs);                
+                cycle.add(val);
         }
         
         public ArrayList<Integer> getAccesibleInputs(HashMap<Integer,Integer> dist, Application app, int srcId  ){
                 ArrayList<Integer> accesibleInputs = new ArrayList<>();
-              	for(Fifo f : application.getActors().get(srcId).getInputFifos()){
+              	for(Fifo f : app.getActors().get(srcId).getInputFifos()){
         		int idActor = f.getSource().getId();
         		if (dist.get(idActor) != Integer.MAX_VALUE){
                 		accesibleInputs.add(idActor);
@@ -93,8 +124,8 @@ public class Cycle{
         }
 	
 	// recursive call to do the cycle
-        public int getNextStepCycle(HashMap<Integer,Integer> dist, ArrayList<Integer> accesibleInputs){
-		if (accesibleInputs.size()==1 && accesibleInputs.get(0) == this.src.getId());
+        public int getNextStepCycle(HashMap<Integer,Integer> dist, Application app, ArrayList<Integer> accesibleInputs){
+		if (accesibleInputs.size()==1 && accesibleInputs.get(0) == this.src.getId())
 			return src.getId();
 		int maxWeight = Integer.MIN_VALUE; 
 		int maxId = 0;
@@ -104,10 +135,10 @@ public class Cycle{
 				maxId =  val;
 			}
                 }
+                // once I get the max input, then proceed to recursive call
+                ArrayList<Integer> inputs = getAccesibleInputs(dist, app, maxId);
+                int val = getNextStepCycle(dist, app, inputs);
+                cycle.add(val);
+                return maxId;
         }
-        
-
 }
-
-
-
