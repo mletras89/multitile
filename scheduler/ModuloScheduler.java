@@ -149,7 +149,7 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
     // 		   I do not have to calcualte this because there are not cycles
     // 		c) [Compute the minimum initiation interval]
     MII = ((RESII >= RECII) ? RESII : RECII);
-    int IIprime = Integer.MIN_VALUE;
+    double IIprime = Double.NEGATIVE_INFINITY;
     while(true){
       // [Modulo schedule the loop]
       // 		a) [Schedule operations in G(V, E) taking only intra-iteration dependences into account]
@@ -177,11 +177,9 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
       	PCOUNT.put(actor.getKey(), getPCOUNT(actor.getValue(), scheduled));
       	SUCC.put(actor.getKey(), getSUCC(actor.getValue()));
       }
-      
       // the number of the control step and the list is the actors scheduled in that control step
       //HashMap<Integer,List<Integer>> controlStep = new HashMap<>();
       //HashMap<Integer,List<Integer>> occHard     = new HashMap<>();
-
       while(!V.isEmpty()) {
         List<Integer> removeV = new ArrayList<>();
         for (int v : V) {
@@ -219,7 +217,7 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
         V.removeAll(removeV);
       }
       // calculate the IIprime
-      System.out.println("L -> "+l);
+      IIprime = cycles.calculateIIPrime(l);
       if(MII < IIprime)
         MII++;
       else
@@ -613,9 +611,11 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
   int getPCOUNT(Actor v, HashMap<Integer, Boolean> scheduled) {
     int pCount=0;
     for(Fifo fifo : v.getInputFifos()) {
-      int sourceActorId = fifo.getSource().getId();
-      if (scheduled.get(sourceActorId) == false)
-        pCount++;
+      if(!fifo.isFifoRecurrence()){
+        int sourceActorId = fifo.getSource().getId();
+        if (scheduled.get(sourceActorId) == false)
+          pCount++;
+      }
     }
     return pCount;
   }
@@ -629,13 +629,16 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
       //System.out.println("Fifo "+fifo.getName()+" is composite "+fifo.isCompositeChannel());
       if(fifo.isCompositeChannel()) {
     	  CompositeFifo cf = (CompositeFifo) fifo;
-    	  for(Actor a : cf.getDestinations()) {
+          if (!cf.isFifoRecurrence()){
+    	    for(Actor a : cf.getDestinations()) {
     		  Integer targetActor = a.getId();
     		  SUCC.add(targetActor);
-    	  }
+    	    }
+          }
       }else {
     	  Integer targetActor = fifo.getDestination().getId();
-    	  SUCC.add(targetActor);
+          if (!fifo.isFifoRecurrence())
+    	    SUCC.add(targetActor);
       }
     }
     return SUCC;
