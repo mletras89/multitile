@@ -99,4 +99,23 @@ public class Cycles{
 		}
 		recII =  maxVal;
 	}
+	// l
+	// key -> actor id
+	// value -> scheduled step
+	public double calculateIIPrime(HashMap<Integer,Integer> l){
+		double IIprime = 0.0;
+		if(cycles.size() == 0)
+			return Double.NEGATIVE_INFINITY;
+		double maxVal = Double.NEGATIVE_INFINITY;
+		for(Cycle c : cycles){
+			int del = c.getDel(l);
+			int dis = c.getDist();
+			double res = (double)del/(double)dis;
+			if (res>=maxVal)
+				maxVal=res;
+		}
+		IIprime = maxVal;
+		return IIprime;
+	}
+
 }
