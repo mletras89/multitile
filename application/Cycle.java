@@ -74,6 +74,19 @@ public class Cycle{
                 return true;
         }
 
+	// l
+	// key -> actor id
+	// value -> scheduled step
+	public int getDel(HashMap<Integer,Integer> l){
+		ArrayList<Integer> d = new ArrayList<Integer>();
+		for(int i=0; i < cycle.size(); i++){
+			d.add(l.get(cycle.get(i)));
+		}
+		int min = Collections.min(d);
+		int max = Collections.max(d); 
+		return max-min;
+	}
+
 	public int getDist(){
 		return dist;
 	}
