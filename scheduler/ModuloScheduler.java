@@ -195,8 +195,8 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
             //System.out.println(l);
             //System.out.println("U");
             //System.out.println(U);
-            	  //int mappingV = application.getActors().get(v).getMapping().getOwnerTile().getId();
-                int mappingV =  bindings.getActorTileBindings().get(v).getTarget().getId();   //application.getActors().get(v).getMappingToTile().getId();
+       	    //int mappingV = application.getActors().get(v).getMapping().getOwnerTile().getId();
+            int mappingV =  bindings.getActorTileBindings().get(v).getTarget().getId();   //application.getActors().get(v).getMappingToTile().getId();
             //System.out.println("BU:"+BU);
             while(BU>=tiles.get(mappingV).getProcessors().size()) {
               l.put(v, l.get(v)+1);
@@ -218,6 +218,8 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
         }
         V.removeAll(removeV);
       }
+      // calculate the IIprime
+      System.out.println("L -> "+l);
       if(MII < IIprime)
         MII++;
       else
