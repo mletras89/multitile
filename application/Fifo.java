@@ -66,6 +66,8 @@ public class Fifo implements Buffer{
 
   private Vector<Integer> memory_footprint;
 
+  private boolean isRecurrence;
+
   public static enum FIFO_MAPPING_TYPE {
     SOURCE,
     DESTINATION,
@@ -91,6 +93,7 @@ public class Fifo implements Buffer{
     this.numberOfReads = 0;
     this.ReMapping = new LinkedList<>();
     this.setNumberOfReadsReMapping(0);
+    this.isRecurrence = false;
   }
   
   public Fifo(String name, int tokens, int capacity, int tokenSize,int consRate, int prodRate, Actor src, Actor dst,FIFO_MAPPING_TYPE mappingType){
@@ -111,6 +114,7 @@ public class Fifo implements Buffer{
     this.numberOfReads = 0;
     this.ReMapping = new LinkedList<>();
     this.setNumberOfReadsReMapping(0);
+    this.isRecurrence = false;
   }
 
   public Fifo(String name, int tokens, int capacity, int tokenSize,int consRate, int prodRate){
@@ -130,6 +134,7 @@ public class Fifo implements Buffer{
 
     this.ReMapping = new LinkedList<>();
     this.setNumberOfReadsReMapping(0);
+    this.isRecurrence = false;
   }
 
   public Fifo(String name, int tokens, int capacity, int tokenSize,int consRate, int prodRate,FIFO_MAPPING_TYPE mappingType){
@@ -149,6 +154,7 @@ public class Fifo implements Buffer{
 
     this.ReMapping = new LinkedList<>();
     this.setNumberOfReadsReMapping(0);
+    this.isRecurrence = false;
   }
 
   public Fifo(Fifo another){
@@ -170,7 +176,15 @@ public class Fifo implements Buffer{
     this.numberOfReads = 0;
     this.setNumberOfReadsReMapping(another.getNumberOfReadsReMapping());
     this.ReMapping = new LinkedList<>();
+    this.setIsRecurrence(another.isFifoRecurrence());
+  }
 
+  public void setIsRecurrence(boolean val){
+    this.isRecurrence = val;
+  }
+
+  public boolean isFifoRecurrence(){
+    return isRecurrence;
   }
 
   public Queue<Transfer> getTimeProducedToken(){
