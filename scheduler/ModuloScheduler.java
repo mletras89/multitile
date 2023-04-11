@@ -149,72 +149,79 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
     // 		   I do not have to calcualte this because there are not cycles
     // 		c) [Compute the minimum initiation interval]
     MII = ((RESII >= RECII) ? RESII : RECII);
-    // [Modulo schedule the loop]
-    // 		a) [Schedule operations in G(V, E) taking only intra-iteration dependences into account]
-    // 		   Let U(i, j) denote the usage of the i-th resource class in control step j
-    //             In this implementation, U(i, j) denote the usage of the i-th tile class in control step j
-    //             i and j are stored in a list which serves as key in a map
-    Map<ArrayList<Integer>, Integer> U = new HashMap<>();
-    for(HashMap.Entry<Integer,Tile> t: tiles.entrySet()) {
-      for (int i=0; i<application.getActors().size()*2;i++) {
-        ArrayList<Integer> p = new ArrayList<>();
-        p.add(t.getKey());
-        p.add(i);
-        U.put(p, 0);
+    int IIprime = Integer.MIN_VALUE;
+    while(true){
+      // [Modulo schedule the loop]
+      // 		a) [Schedule operations in G(V, E) taking only intra-iteration dependences into account]
+      // 		   Let U(i, j) denote the usage of the i-th resource class in control step j
+      //             In this implementation, U(i, j) denote the usage of the i-th tile class in control step j
+      //             i and j are stored in a list which serves as key in a map
+      Map<ArrayList<Integer>, Integer> U = new HashMap<>();
+      for(HashMap.Entry<Integer,Tile> t: tiles.entrySet()) {
+        for (int i=0; i<application.getActors().size()*2;i++) {
+          ArrayList<Integer> p = new ArrayList<>();
+          p.add(t.getKey());
+          p.add(i);
+          U.put(p, 0);
+        }
       }
-    }
-    // compute PCOUNT and SUCC
-    // PCOUNT: is the number of immediate predecessors of v not yet scheduled  
-    // SUCC: is the set of all immediate successors of v
-    // Map<ActorId, Value>
-    l 		                        = new HashMap<>();
-    HashMap<Integer,Integer> PCOUNT	= new HashMap<>();
-    HashMap<Integer,Set<Integer>> SUCC 	= new HashMap<>();
-    for(Map.Entry<Integer, Actor> actor : application.getActors().entrySet()) {
-    	l.put(actor.getKey(), 1);
-    	PCOUNT.put(actor.getKey(), getPCOUNT(actor.getValue(), scheduled));
-    	SUCC.put(actor.getKey(), getSUCC(actor.getValue()));
-    }
-    
-    // the number of the control step and the list is the actors scheduled in that control step
-    //HashMap<Integer,List<Integer>> controlStep = new HashMap<>();
-    //HashMap<Integer,List<Integer>> occHard     = new HashMap<>();
+      // compute PCOUNT and SUCC
+      // PCOUNT: is the number of immediate predecessors of v not yet scheduled  
+      // SUCC: is the set of all immediate successors of v
+      // Map<ActorId, Value>
+      l 		                        = new HashMap<>();
+      HashMap<Integer,Integer> PCOUNT	= new HashMap<>();
+      HashMap<Integer,Set<Integer>> SUCC 	= new HashMap<>();
+      for(Map.Entry<Integer, Actor> actor : application.getActors().entrySet()) {
+      	l.put(actor.getKey(), 1);
+      	PCOUNT.put(actor.getKey(), getPCOUNT(actor.getValue(), scheduled));
+      	SUCC.put(actor.getKey(), getSUCC(actor.getValue()));
+      }
+      
+      // the number of the control step and the list is the actors scheduled in that control step
+      //HashMap<Integer,List<Integer>> controlStep = new HashMap<>();
+      //HashMap<Integer,List<Integer>> occHard     = new HashMap<>();
 
-    while(!V.isEmpty()) {
-      List<Integer> removeV = new ArrayList<>();
-      for (int v : V) {
-	/* Check whether data dependences are satisfied */
-	if (PCOUNT.get(v) == 0) {
-	  //System.out.println("TRY Scheduling "+actors.get(v).getName()+" on control step "+l.get(v)+ " on resource "+cpus.get(actors.get(v).getMapping()).getName());
-	  /* Check that no more than num(r(v)) operations are scheduled on the
-             resources corresponding to *R(r(v)) at the same time modulo MII */
-	  int BU = calcU(l,MII,U,v,bindings);
-          //System.out.println("l:");
-          //System.out.println(l);
-          //System.out.println("U");
-          //System.out.println(U);
-	  	  //int mappingV = application.getActors().get(v).getMapping().getOwnerTile().getId();
-	      int mappingV =  bindings.getActorTileBindings().get(v).getTarget().getId();   //application.getActors().get(v).getMappingToTile().getId();
-          //System.out.println("BU:"+BU);
-	  while(BU>=tiles.get(mappingV).getProcessors().size()) {
-	    l.put(v, l.get(v)+1);
-	    BU = calcU(l,MII,U,v,bindings);  
-	  }
-          ArrayList<Integer> pair = new ArrayList<>();
-          pair.add(mappingV);
-          pair.add(l.get(v));
-          U.put(pair, U.get(pair) + 1);
-          //System.out.println(U);
-	  for (int w : SUCC.get(v)) {
-	    PCOUNT.put(w, PCOUNT.get(w) -1 );
-	    int maxVal = l.get(w) > l.get(v)+1 ? l.get(w) : l.get(v)+1;
-	    l.put(w,maxVal);
-	  }
-	  scheduled.put(v, true);
-      removeV.add(v);
-	}
+      while(!V.isEmpty()) {
+        List<Integer> removeV = new ArrayList<>();
+        for (int v : V) {
+          /* Check whether data dependences are satisfied */
+          if (PCOUNT.get(v) == 0) {
+            //System.out.println("TRY Scheduling "+actors.get(v).getName()+" on control step "+l.get(v)+ " on resource "+cpus.get(actors.get(v).getMapping()).getName());
+            /* Check that no more than num(r(v)) operations are scheduled on the
+               resources corresponding to *R(r(v)) at the same time modulo MII */
+            int BU = calcU(l,MII,U,v,bindings);
+            //System.out.println("l:");
+            //System.out.println(l);
+            //System.out.println("U");
+            //System.out.println(U);
+            	  //int mappingV = application.getActors().get(v).getMapping().getOwnerTile().getId();
+                int mappingV =  bindings.getActorTileBindings().get(v).getTarget().getId();   //application.getActors().get(v).getMappingToTile().getId();
+            //System.out.println("BU:"+BU);
+            while(BU>=tiles.get(mappingV).getProcessors().size()) {
+              l.put(v, l.get(v)+1);
+              BU = calcU(l,MII,U,v,bindings);  
+            }
+            ArrayList<Integer> pair = new ArrayList<>();
+            pair.add(mappingV);
+            pair.add(l.get(v));
+            U.put(pair, U.get(pair) + 1);
+            //System.out.println(U);
+            for (int w : SUCC.get(v)) {
+              PCOUNT.put(w, PCOUNT.get(w) -1 );
+              int maxVal = l.get(w) > l.get(v)+1 ? l.get(w) : l.get(v)+1;
+              l.put(w,maxVal);
+            }
+            scheduled.put(v, true);
+        removeV.add(v);
+          }
+        }
+        V.removeAll(removeV);
       }
-      V.removeAll(removeV);
+      if(MII < IIprime)
+        MII++;
+      else
+        break;
     }
   }
  

@@ -88,8 +88,9 @@ public class testModuloSchedulingRecurrences {
       // chech the calculation of distances and loops
       Cycles cycles = new Cycles();
       cycles.calculateCycles(app);
-
-      System.out.println("Cycles");
+      cycles.calculateRecII();
+	
+      System.out.println("Cycles and RecII="+cycles.getRecII());
       for(Cycle c : cycles.getCycles()){
 	System.out.println("cycle "+c.getCycle());
       }
