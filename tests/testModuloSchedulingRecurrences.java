@@ -52,6 +52,8 @@ import multitile.application.ActorManagement;
 import multitile.application.Actor;
 import multitile.architecture.ArchitectureManagement;
 import multitile.application.GraphManagement;
+import multitile.application.Cycle;
+import multitile.application.Cycles;
 
 import java.io.*;
 import java.util.*;
@@ -78,14 +80,18 @@ public class testModuloSchedulingRecurrences {
       Application app = sampleApplication.getSampleApplication();
       ApplicationManagement.setFifosToActors(app);
       ApplicationManagement.setAllMulticastActorsAsMergeable(app);
-      app.printActors();
-      app.printFifosState();
+      //app.printActors();
+      //app.printFifosState();
       ApplicationManagement.collapseMergeableMulticastActors(app,1);
-      app.printActorsState(bindings);
-      app.printFifosState();
+      //app.printActorsState(bindings);
+      //app.printFifosState();
       // chech the calculation of distances and loops
-      for(Map.Entry<Integer,Actor> a : app.getActors().entrySet()){
-        GraphManagement.BellmanFord(app,a.getValue());
+      Cycles cycles = new Cycles();
+      cycles.calculateCycles(app);
+
+      System.out.println("Cycles");
+      for(Cycle c : cycles.getCycles()){
+	System.out.println("cycle "+c.getCycle());
       }
       
       ModuloScheduler scheduler = new ModuloScheduler();
@@ -94,6 +100,12 @@ public class testModuloSchedulingRecurrences {
       scheduler.setArchitecture(architecture);
 			
       scheduler.setMaxIterations(10);
+
+      // test the cycle
+
+
+
+
       // comment scheduling
       //scheduler.calculateModuloSchedule(bindings);
       //System.out.println("PRINTING KERNEL: ");
