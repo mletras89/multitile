@@ -105,7 +105,7 @@ public class TestApplicationWithRecurrences{
       Fifo c6 = new Fifo("c6",0,1,1000000,1,1,v5,v6,FIFO_MAPPING_TYPE.TILE_LOCAL_SOURCE);
       Fifo c7 = new Fifo("c7",0,1,1000000,1,1,v6,v7,FIFO_MAPPING_TYPE.TILE_LOCAL_SOURCE);
       Fifo c8 = new Fifo("c8",0,1,1000000,1,1,v4,v7,FIFO_MAPPING_TYPE.TILE_LOCAL_SOURCE);
-      Fifo c9 = new Fifo("c9",0,1,1000000,1,1,v7,v2,FIFO_MAPPING_TYPE.TILE_LOCAL_SOURCE);
+      Fifo c9 = new Fifo("c9",1,1,1000000,1,1,v7,v2,FIFO_MAPPING_TYPE.TILE_LOCAL_SOURCE);
       c9.setIsRecurrence(true);
       
       // outputs v1
