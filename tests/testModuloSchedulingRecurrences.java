@@ -66,7 +66,7 @@ public class testModuloSchedulingRecurrences {
       FifoManagement.resetCounters();
       ArchitectureManagement.resetCounters();
 
-      Architecture architecture = new Architecture("architecture",1,1, 1.0, 2);
+      Architecture architecture = new Architecture("architecture",1,2, 1.0, 2);
       //architecture.printArchitecture();
       // set the memory sizes
       architecture.getTiles().get(0).getProcessors().get(0).getLocalMemory().setCapacity(Integer.MAX_VALUE);
@@ -101,27 +101,21 @@ public class testModuloSchedulingRecurrences {
       scheduler.setArchitecture(architecture);
 			
       scheduler.setMaxIterations(10);
+      scheduler.calculateModuloSchedule(bindings);
+      scheduler.findSchedule();
+      System.out.println("The MMI is: "+scheduler.getMII());
+      ApplicationManagement.assignActorMapping(app,architecture,scheduler,bindings);
+      ApplicationManagement.assignFifoMapping(app,architecture,bindings); 
 
-      // test the cycle
-
-
-
-
-      // comment scheduling
-      //scheduler.calculateModuloSchedule(bindings);
       //System.out.println("PRINTING KERNEL: ");
       //scheduler.printKernelBody();
       // once the kernell is done, reassign the actor Mapping and then reassing the fifoMapping
-      
-      //scheduler.findSchedule();
-      //ApplicationManagement.assignActorMapping(app,architecture,scheduler,bindings);
-      //ApplicationManagement.assignFifoMapping(app,architecture,bindings); 
       //app.printActors();
       //app.printFifos();
  
       //scheduler.schedule(bindings,mappings);
       //System.out.println("Single iteration delay: "+scheduler.getDelaySingleIteration());
-      //System.out.println("The MMI is: "+scheduler.getMII());
+
 
       // dumping system utilization statistics
       for(HashMap.Entry<Integer,Tile> t: architecture.getTiles().entrySet()){
