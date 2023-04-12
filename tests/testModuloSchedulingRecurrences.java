@@ -79,10 +79,7 @@ public class testModuloSchedulingRecurrences {
       TestApplicationWithRecurrences sampleApplication = new TestApplicationWithRecurrences(architecture.getTiles().get(0),architecture.getGlobalMemory(),bindings,mappings);  
       Application app = sampleApplication.getSampleApplication();
       ApplicationManagement.setFifosToActors(app);
-      ApplicationManagement.setAllMulticastActorsAsMergeable(app);
-      //app.printActors();
-      //app.printFifosState();
-      ApplicationManagement.collapseMergeableMulticastActors(app,1);
+      
       //app.printActorsState(bindings);
       //app.printFifosState();
       // chech the calculation of distances and loops
@@ -107,15 +104,10 @@ public class testModuloSchedulingRecurrences {
       ApplicationManagement.assignActorMapping(app,architecture,scheduler,bindings);
       ApplicationManagement.assignFifoMapping(app,architecture,bindings); 
 
-      //System.out.println("PRINTING KERNEL: ");
-      //scheduler.printKernelBody();
-      // once the kernell is done, reassign the actor Mapping and then reassing the fifoMapping
-      //app.printActors();
-      //app.printFifos();
- 
-      //scheduler.schedule(bindings,mappings);
-      //System.out.println("Single iteration delay: "+scheduler.getDelaySingleIteration());
-
+      System.out.println("PRINTING KERNEL: ");
+      scheduler.printKernelBody();
+      scheduler.schedule(bindings,mappings);
+      System.out.println("Single iteration delay: "+scheduler.getDelaySingleIteration());
 
       // dumping system utilization statistics
       for(HashMap.Entry<Integer,Tile> t: architecture.getTiles().entrySet()){
