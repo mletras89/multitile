@@ -40,6 +40,9 @@ package multitile.application;
 import multitile.mapping.Bindings;
 import multitile.Transfer;
 import multitile.architecture.Memory;
+import multitile.architecture.Architecture;
+import multitile.architecture.ArchitectureManagement;
+import multitile.mapping.Bindings;
 import java.util.*;
 
 public class Fifo implements Buffer{
@@ -325,10 +328,39 @@ public class Fifo implements Buffer{
     status = this.ReMapping.remove();
     return status;
   }
+
+  public void resetFifo(Architecture architecture, Bindings bindings, Application application){
+    this.tokens = this.initial_tokens;
+    this.timeProducedToken.clear();
+    // and put the initial tokens in the fifo produced at time 0.0
+    for(int i=0; i < this.initial_tokens; i++){
+        Transfer t = new Transfer(source,this);
+        t.setDue_time(0.0);
+	while(!this.canFifoWriteToMemory(bindings)){
+		// do the remap and return false
+		Memory reMappingMemory = ArchitectureManagement.getMemoryToBeRelocated(this,architecture,application,bindings);
+		ApplicationManagement.remapFifo(this, reMappingMemory,bindings);
+		System.out.println("Stuck here!");
+	}
+	this.fifoWriteToMemory(t,bindings);
+        this.timeProducedToken.add(t); 
+    }
+    this.numberOfReads = 0;
+    this.numberOfReadsTimeProduced = 0;
+    this.numberOfReadsReMapping = 0;
+    this.ReMapping.clear();
+  }
+
   
   public void resetFifo(){
     this.tokens = this.initial_tokens;
     this.timeProducedToken.clear();
+    // and put the initial tokens in the fifo produced at time 0.0
+    for(int i=0; i < this.initial_tokens; i++){
+        Transfer t = new Transfer(source,this);
+        t.setDue_time(0.0);
+        this.timeProducedToken.add(t); 
+    }
     this.numberOfReads = 0;
     this.numberOfReadsTimeProduced = 0;
     this.numberOfReadsReMapping = 0;
