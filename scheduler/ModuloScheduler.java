@@ -218,11 +218,19 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
       }
       // calculate the IIprime
       IIprime = cycles.calculateIIPrime(l);
-      if(MII < IIprime)
+      if(MII < IIprime){
         MII++;
+        // fill again V
+        for(Map.Entry<Integer,Actor> v : application.getActors().entrySet()){
+          V.add(v.getKey());
+          scheduled.put(v.getKey(),false);
+        }
+      }
       else
         break;
+    System.out.println("L-> "+l);
     }
+
   }
  
   public void printKernelBody(){
