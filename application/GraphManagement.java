@@ -43,10 +43,6 @@ import java.util.*;
 import multitile.application.Actor;
 import multitile.application.Application;
 import multitile.application.Fifo;
-import multitile.application.Fifo.FIFO_MAPPING_TYPE;
-import multitile.application.CompositeFifo;
-
-
 
 public class GraphManagement{
 
@@ -59,7 +55,6 @@ public class GraphManagement{
 	public static HashMap<Integer,Integer> BellmanFordCycleDistance(Application application, Actor src)
 	{
 		int V = application.getActors().size();
-		int E = application.getFifos().size();
 		// key -> actor id
 		// val -> distance
 		HashMap<Integer,Integer> dist = new HashMap<>();
@@ -74,8 +69,8 @@ public class GraphManagement{
 	    	// shortest path from src to any other vertex can
 	    	// have at-most |V| - 1 edges
 	    	//for (int i = 1; i < V; ++i) {
-		for(Map.Entry<Integer,Actor> a : application.getActors().entrySet()){
-			for(Map.Entry<Integer,Fifo> f : application.getFifos().entrySet()){
+	    	for(int i=0; i<V; i++){
+	    		for(Map.Entry<Integer,Fifo> f : application.getFifos().entrySet()){
 	        	//for (int j = 0; j < E; ++j) {
 	            		int u = f.getValue().getSource().getId();
 	            		int v = f.getValue().getDestination().getId();
@@ -114,7 +109,6 @@ public class GraphManagement{
 	public static void BellmanFord(Application application, Actor src)
 	{
 		int V = application.getActors().size();
-		int E = application.getFifos().size();
 		// key -> actor id
 		// val -> distance
 		HashMap<Integer,Integer> dist = new HashMap<>();
@@ -129,8 +123,8 @@ public class GraphManagement{
 	    	// shortest path from src to any other vertex can
 	    	// have at-most |V| - 1 edges
 	    	//for (int i = 1; i < V; ++i) {
-		for(Map.Entry<Integer,Actor> a : application.getActors().entrySet()){
-			for(Map.Entry<Integer,Fifo> f : application.getFifos().entrySet()){
+	    	for(int i=0; i<V; i++){
+	    		for(Map.Entry<Integer,Fifo> f : application.getFifos().entrySet()){
 	        	//for (int j = 0; j < E; ++j) {
 	            		int u = f.getValue().getSource().getId();
 	            		int v = f.getValue().getDestination().getId();
