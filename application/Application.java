@@ -43,7 +43,6 @@ import multitile.architecture.Processor;
 import multitile.architecture.Tile;
 import multitile.mapping.Bindings;
 import multitile.architecture.Architecture;
-import multitile.mapping.Bindings;
 
 public class Application{
   private Map<Integer,Actor> actors;

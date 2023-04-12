@@ -49,9 +49,7 @@ import multitile.application.Application;
 import multitile.application.FifoManagement;
 import multitile.application.ApplicationManagement;
 import multitile.application.ActorManagement;
-import multitile.application.Actor;
 import multitile.architecture.ArchitectureManagement;
-import multitile.application.GraphManagement;
 import multitile.application.Cycle;
 import multitile.application.Cycles;
 
@@ -113,7 +111,7 @@ public class testModuloSchedulingRecurrences {
       for(HashMap.Entry<Integer,Tile> t: architecture.getTiles().entrySet()){
         for(HashMap.Entry<Integer,Processor> p: t.getValue().getProcessors().entrySet()){
           p.getValue().getScheduler().saveScheduleStats(".");
-	  p.getValue().getLocalMemory().saveMemoryUtilizationStats(".");
+          p.getValue().getLocalMemory().saveMemoryUtilizationStats(".");
         }
         t.getValue().getCrossbar().saveCrossbarUtilizationStats(".");
         t.getValue().getTileLocalMemory().saveMemoryUtilizationStats(".");

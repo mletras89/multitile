@@ -37,7 +37,6 @@
 
 package multitile.tests;
 
-import multitile.architecture.Architecture;
 import multitile.architecture.Tile;
 import multitile.mapping.Binding;
 import multitile.mapping.Bindings;
@@ -48,7 +47,6 @@ import multitile.architecture.GlobalMemory;
 
 import multitile.application.Application;
 import multitile.application.Actor;
-import multitile.application.Actor.ACTOR_TYPE;
 import multitile.application.Fifo;
 import multitile.application.Fifo.FIFO_MAPPING_TYPE;
 

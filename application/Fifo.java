@@ -42,7 +42,6 @@ import multitile.Transfer;
 import multitile.architecture.Memory;
 import multitile.architecture.Architecture;
 import multitile.architecture.ArchitectureManagement;
-import multitile.mapping.Bindings;
 import java.util.*;
 
 public class Fifo implements Buffer{

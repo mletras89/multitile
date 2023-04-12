@@ -39,9 +39,7 @@ package multitile.application;
 
 import java.util.*;
 import multitile.application.Actor;
-import multitile.application.Fifo;
 import multitile.application.Application;
-import multitile.application.GraphManagement;
 
 public class Cycles{
         private ArrayList<Cycle> cycles; 

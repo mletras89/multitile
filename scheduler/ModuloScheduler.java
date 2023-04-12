@@ -57,8 +57,6 @@ import multitile.application.ApplicationManagement;
 import multitile.application.CompositeFifo;
 import multitile.application.Actor;
 import multitile.application.Fifo;
-import multitile.application.GraphManagement;
-import multitile.application.Cycle;
 import multitile.application.Cycles;
 
 import java.util.List;
