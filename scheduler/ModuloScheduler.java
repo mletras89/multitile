@@ -298,6 +298,7 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
     	count=count+MII;
     }
     //System.out.println("Kernel starts at: "+stepStartKernel+" and ends at: "+stepEndKernel);
+    //System.out.println("Kernel -> "+kernel);
     this.stepStartKernel = stepStartKernel;
     this.stepEndKernel   = stepEndKernel;
   }
@@ -336,7 +337,7 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
   
   public void schedule(Bindings bindings,Mappings mappings){
     architecture.resetArchitecture();
-    application.resetApplication();
+    application.resetApplication(architecture, bindings, application);
     while(!scheduleModulo(bindings,mappings)){
       architecture.resetArchitecture();
       application.resetApplication();
@@ -436,12 +437,12 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
         				  scheduledTransfer.setDue_time(scheduledTransfer.getStart_time());
         			  }
         			  if(!scheduledTransfer.getFifo().canFifoReadFromMemory(bindings)){
-        				  // do the remap and return false
-        		          Memory reMappingMemory = ArchitectureManagement.getMemoryToBeRelocated(scheduledTransfer.getFifo(),architecture,application,bindings);
+        			      // do the remap and return false
+        		              Memory reMappingMemory = ArchitectureManagement.getMemoryToBeRelocated(scheduledTransfer.getFifo(),architecture,application,bindings);
         		  	      ApplicationManagement.remapFifo(scheduledTransfer.getFifo(), reMappingMemory,bindings);
-        		          return false;
-        		      }
-        		      scheduledTransfer.getFifo().fifoReadFromMemory(scheduledTransfer,bindings);
+        		              return false;
+        		          }
+        		          scheduledTransfer.getFifo().fifoReadFromMemory(scheduledTransfer,bindings);
         			  listSchedTransfers.add(scheduledTransfer);
         		  }
         		  processorReadTransfers.put(action.getActor(),listSchedTransfers);
@@ -550,7 +551,6 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
       }
       resourceOcupation.put(i,currentTilesOccupation);
       i++;
-      
       transfersToMemory.clear();
     }
     return true;
