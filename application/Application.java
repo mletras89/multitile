@@ -42,6 +42,8 @@ import java.util.*;
 import multitile.architecture.Processor;
 import multitile.architecture.Tile;
 import multitile.mapping.Bindings;
+import multitile.architecture.Architecture;
+import multitile.mapping.Bindings;
 
 public class Application{
   private Map<Integer,Actor> actors;
@@ -55,6 +57,12 @@ public class Application{
   public void resetApplication(){
     for(Map.Entry<Integer,Fifo> fifo : fifos.entrySet()){
       fifo.getValue().resetFifo();
+    }
+  }
+
+  public void resetApplication(Architecture architecture, Bindings bindings, Application application){
+    for(Map.Entry<Integer,Fifo> fifo : fifos.entrySet()){
+      fifo.getValue().resetFifo(architecture, bindings, application);
     }
   }
 
