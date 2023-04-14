@@ -585,11 +585,15 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
   }
   
   public double getOverallDelay() {
-	  int lastStep = this.getScheduledStepActions().size();
-	  double delay = 0.0;
-	  for(Action a: this.getScheduledStepActions().get(lastStep-1)) {
-		  if (a.getDue_time() > delay)
-			  delay = a.getDue_time();
+	  double delay = Double.MIN_VALUE;
+	  for(Map.Entry<Integer, Tile> t : architecture.getTiles().entrySet()) {
+		  for(Map.Entry<Integer, Processor> p :t.getValue().getProcessors().entrySet()) {
+			  if (p.getValue().getScheduler().getScheduledActions().size() > 0) {
+				  Action a = p.getValue().getScheduler().getScheduledActions().getLast();
+				  if (a.getDue_time() > delay)
+					  delay = a.getDue_time();
+			  }
+		  }
 	  }
 	  return delay;
   }
