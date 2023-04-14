@@ -87,7 +87,7 @@ public class testModuloSchedulingRecurrences {
 	
       System.out.println("Cycles and RecII="+cycles.getRecII());
       for(Cycle c : cycles.getCycles()){
-	System.out.println("cycle "+c.getCycle());
+    	  System.out.println("cycle "+c.getCycle());
       }
       
       ModuloScheduler scheduler = new ModuloScheduler();
