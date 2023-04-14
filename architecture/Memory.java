@@ -297,7 +297,7 @@ public class Memory{
     List<Double> listKeys = new ArrayList<>(memoryUtilization.keySet());
     
     for (double element : listKeys) {
-      myWriter.write(this.getName()+"\t"+element+"\t"+memoryUtilization.get(element)+"\n");
+      myWriter.write(this.getName()+"\t"+ String.format("%.12f", element)+"\t"+memoryUtilization.get(element)+"\n");
     }
   }
 

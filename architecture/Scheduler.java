@@ -519,7 +519,7 @@ public class Scheduler{
   
   public void saveScheduleStats(FileWriter myWriter) throws IOException{
     for(Action a : scheduledActions){
-      myWriter.write(a.getActor().getName()+"\t"+a.getStart_time()+"\t"+a.getDue_time()+"\t"+this.getName()+"\n");
+      myWriter.write(a.getActor().getName()+"\t"+ String.format("%.12f", a.getStart_time())+"\t"+String.format("%.12f", a.getDue_time())+"\t"+this.getName()+"\n");
     }
   }
 

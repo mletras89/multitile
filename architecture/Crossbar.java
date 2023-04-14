@@ -386,7 +386,7 @@ public class Crossbar{
         String operation = "reading_crossbar";
         if (transfer.getType() == Transfer.TRANSFER_TYPE.WRITE) 
           operation = "writing_crossbar";
-        myWriter.write(operation+"\t"+ transfer.getStart_time()+"\t"+transfer.getDue_time()+"\t"+this.getName()+"_"+i+"\n");
+        myWriter.write(operation+"\t"+ String.format("%.12f", transfer.getStart_time()) +"\t"+ String.format("%.12f", transfer.getDue_time())+"\t"+this.getName()+"_"+i+"\n");
       }
     }
   }
