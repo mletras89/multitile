@@ -81,9 +81,7 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
   public ModuloScheduler(){
     super();
     this.l = new HashMap<>();
-
     this.resourceOcupation = new HashMap<>();
-    this.setMaxIterations(3);
   }
 
   public HashMap<Integer,List<Integer>> getKernel(){
@@ -272,15 +270,15 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
     
     // 2) Generate a schedule up to maxIterations iterations and put them in kernel
     this.lastStep = 0;
-    for(int k=1; k<this.getMaxIterations();k++){
-      for(int i = MII*k+1; i < MII*k+singleIteration.size()+1; i++ ){
-        if(this.kernel.containsKey(i)){
+    for(int k=1; k<this.getMaxIterations()+1;k++){
+      for(int i = (MII*k)+1; i < (MII*k)+singleIteration.size()+1; i++ ){
+    	if(this.kernel.containsKey(i)){
           List<Integer> actors = new ArrayList<>(this.kernel.get(i));
       	  actors.addAll(new ArrayList<>(singleIteration.get(i-(MII*k)-1)));
       	  this.kernel.put(i, actors);
         }
         else{
-          this.kernel.put(i, new ArrayList<>(singleIteration.get(i-MII*k-1)));
+          this.kernel.put(i, new ArrayList<>(singleIteration.get(i-(MII*k)-1)));
         }
         this.lastStep = i;
       }
@@ -295,8 +293,10 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
     		break;
     	count=count+MII;
     }
+    //System.out.println("L->"+l);
     //System.out.println("Kernel starts at: "+stepStartKernel+" and ends at: "+stepEndKernel);
     //System.out.println("Kernel -> "+kernel);
+    //System.out.println("Last step "+this.lastStep);
     this.stepStartKernel = stepStartKernel;
     this.stepEndKernel   = stepEndKernel;
   }
@@ -364,6 +364,7 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
     int i = 1;
     List<Transfer> transfersToMemory = new ArrayList<>();
     while(i<=this.lastStep){
+      //System.out.println("scheduling step="+i);
       this.cleanQueue();
       this.getSchedulableActors(application.getActors(),application.getFifos(),i,this.kernel);
       //LinkedList<Action> stepScheduledActions = new LinkedList<Action>();
@@ -567,9 +568,16 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
       if(a.getStart_time() < startTime)
         startTime = a.getStart_time();
     }
-    //System.out.println("End iteration "+end);
+    //System.out.println("MMI: "+MII+" start iteration "+start+" End iteration "+end);
+    //System.out.println("this.getScheduledStepActions() "+this.getScheduledStepActions());
+    //System.out.println("iterations "+this.getMaxIterations());
+    for(int i=0; i < 5; i++)
+    	if (this.getScheduledStepActions().get(end) == null) 
+    		end = end + MII;
+    	else
+    		break;
+    
     for(Action a : this.getScheduledStepActions().get(end)){
-      //System.out.println("ACTION:"+a.getActor().getName());
       if(a.getDue_time() > endTime)
         endTime = a.getDue_time();
     }
@@ -668,6 +676,21 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
             BU += U.get(pair);
     }
     return BU;
+  }
+  
+  public int getNumberOfIterationsFromSchedule() {
+	  int iterations = 0;
+	  ArrayList<Integer> key = new ArrayList<>( application.getActors().keySet());
+	  Actor actor = application.getActors().get(key.get(0));
+	  for(Map.Entry<Integer, Tile> t : architecture.getTiles().entrySet()) {
+		  for(Map.Entry<Integer, Processor> p :t.getValue().getProcessors().entrySet()) {
+			  for(Action a : p.getValue().getScheduler().getScheduledActions()) {
+				  if (a.getActor().getId() == actor.getId())
+					  iterations++;
+			  }
+		  }
+	  }
+	  return iterations;
   }
 
   public int getMII(){
