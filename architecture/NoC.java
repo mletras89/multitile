@@ -259,7 +259,7 @@ public class NoC{
   
   public double calculateTransferTime(Transfer transfer){
     int numberofBytes = transfer.getBytes();
-    double processingTime = ((( BytesToGigabytes(numberofBytes) / this.bandwidthPerChannel))*1000000); // 8 bits in a byte, 100 000 to convert from secs to microseconds
+    double processingTime = ((( BytesToGigabytes(numberofBytes) / this.bandwidthPerChannel))); // 8 bits in a byte, 100 000 to convert from secs to microseconds
     return processingTime;
   }
 
