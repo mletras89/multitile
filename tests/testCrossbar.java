@@ -28,28 +28,28 @@ public class testCrossbar {
       actor1.setId(1);
       Fifo fifo1 = new Fifo("fifo1",0,2,1000000,1,1,actor1,actor1);
       Transfer  t1 = new Transfer(actor1,fifo1);
-      t1.setStart_time(100);
+      t1.setStart_time(100/100000);
       t1.setType(Transfer.TRANSFER_TYPE.WRITE);
 
       Actor actor2 = new Actor("actor2");
       actor2.setId(2);
       Fifo fifo2 = new Fifo("fifo2",0,2,1000000,1,1,actor1,actor1);
       Transfer  t2 = new Transfer(actor2,fifo2);
-      t2.setStart_time(100);
+      t2.setStart_time(100/100000);
       t2.setType(Transfer.TRANSFER_TYPE.WRITE);
 
       Actor actor3 = new Actor("actor3");
       actor3.setId(3);
       Fifo fifo3 = new Fifo("fifo3",0,2,1000000,1,1,actor1,actor1);
       Transfer  t3 = new Transfer(actor3,fifo3);
-      t3.setStart_time(100);
+      t3.setStart_time(100/100000);
       t3.setType(Transfer.TRANSFER_TYPE.WRITE);
 
       Actor actor4 = new Actor("actor4");
       actor4.setId(4);
       Fifo fifo4 = new Fifo("fifo4",0,2,1000000,1,1,actor1,actor1);
       Transfer  t4 = new Transfer(actor4,fifo4);
-      t4.setStart_time(100);
+      t4.setStart_time(100/100000);
       t4.setType(Transfer.TRANSFER_TYPE.READ);
 
       Actor actor5 = new Actor("actor5");
@@ -86,12 +86,12 @@ public class testCrossbar {
       crossbar1.insertTransfer(t4);
 
       Transfer  t5 = new Transfer(actor1,fifo1);
-      t5.setStart_time(100);
+      t5.setStart_time(100/100000);
       t5.setType(Transfer.TRANSFER_TYPE.WRITE);
       crossbar1.insertTransfer(t5);
-      t4.setStart_time(4000);
+      t4.setStart_time(4000/100000);
       crossbar1.insertTransfer(t4);
-      t4.setStart_time(5000); 
+      t4.setStart_time(5000/100000); 
       crossbar1.insertTransfer(t4);
       crossbar1.insertTransfer(t4);
 

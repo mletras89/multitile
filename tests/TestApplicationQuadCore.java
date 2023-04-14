@@ -159,11 +159,11 @@ public class TestApplicationQuadCore{
       bindings.getActorTileBindings().put(a4.getId(), new Binding<Tile>(t1));
       bindings.getActorTileBindings().put(a5.getId(), new Binding<Tile>(t1));
       
-      bindings.getActorProcessorBindings().get(a1.getId()).getProperties().put("runtime", 10000.0);
-      bindings.getActorProcessorBindings().get(a2.getId()).getProperties().put("runtime", 10000.0);
-      bindings.getActorProcessorBindings().get(a3.getId()).getProperties().put("runtime", 10000.0);
-      bindings.getActorProcessorBindings().get(a4.getId()).getProperties().put("runtime", 10000.0);
-      bindings.getActorProcessorBindings().get(a5.getId()).getProperties().put("runtime", 10000.0);
+      bindings.getActorProcessorBindings().get(a1.getId()).getProperties().put("runtime", 10000.0/1000000);
+      bindings.getActorProcessorBindings().get(a2.getId()).getProperties().put("runtime", 10000.0/1000000);
+      bindings.getActorProcessorBindings().get(a3.getId()).getProperties().put("runtime", 10000.0/1000000);
+      bindings.getActorProcessorBindings().get(a4.getId()).getProperties().put("runtime", 10000.0/1000000);
+      bindings.getActorProcessorBindings().get(a5.getId()).getProperties().put("runtime", 10000.0/1000000);
       
       // memory bindings
       Memory mapMem = t1.getTileLocalMemory();

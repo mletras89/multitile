@@ -150,10 +150,10 @@ public class TestApplicationQuadCoreMemoryBound{
       a1Mappings.put(cpu2.getId(), new Mapping<Processor>( cpu2 ));
       a1Mappings.put(cpu3.getId(), new Mapping<Processor>( cpu3 ));
       a1Mappings.put(cpu4.getId(), new Mapping<Processor>( cpu4 ));
-      a1Mappings.get(cpu1.getId()).getProperties().put("runtime", 10000.0);
-      a1Mappings.get(cpu2.getId()).getProperties().put("runtime", 10000.0);
-      a1Mappings.get(cpu3.getId()).getProperties().put("runtime", 10000.0);
-      a1Mappings.get(cpu4.getId()).getProperties().put("runtime", 10000.0);
+      a1Mappings.get(cpu1.getId()).getProperties().put("runtime", 10000.0/1000000);
+      a1Mappings.get(cpu2.getId()).getProperties().put("runtime", 10000.0/1000000);
+      a1Mappings.get(cpu3.getId()).getProperties().put("runtime", 10000.0/1000000);
+      a1Mappings.get(cpu4.getId()).getProperties().put("runtime", 10000.0/1000000);
       mappings.getActorProcessorMappings().put(a1.getId(), a1Mappings);
       
       HashMap<Integer,Mapping<Processor>> a2Mappings = new HashMap<>();
@@ -161,10 +161,10 @@ public class TestApplicationQuadCoreMemoryBound{
       a2Mappings.put(cpu2.getId(), new Mapping<Processor>( cpu2));
       a2Mappings.put(cpu3.getId(), new Mapping<Processor>( cpu3));
       a2Mappings.put(cpu4.getId(), new Mapping<Processor>( cpu4));
-      a2Mappings.get(cpu1.getId()).getProperties().put("runtime", 10000.0);
-      a2Mappings.get(cpu2.getId()).getProperties().put("runtime", 10000.0);
-      a2Mappings.get(cpu3.getId()).getProperties().put("runtime", 10000.0);
-      a2Mappings.get(cpu4.getId()).getProperties().put("runtime", 10000.0);
+      a2Mappings.get(cpu1.getId()).getProperties().put("runtime", 10000.0/1000000);
+      a2Mappings.get(cpu2.getId()).getProperties().put("runtime", 10000.0/1000000);
+      a2Mappings.get(cpu3.getId()).getProperties().put("runtime", 10000.0/1000000);
+      a2Mappings.get(cpu4.getId()).getProperties().put("runtime", 10000.0/1000000);
       mappings.getActorProcessorMappings().put(a2.getId(), a2Mappings);
       
       HashMap<Integer,Mapping<Processor>> a3Mappings = new HashMap<>();
@@ -172,10 +172,10 @@ public class TestApplicationQuadCoreMemoryBound{
       a3Mappings.put(cpu2.getId(), new Mapping<Processor>(cpu2));
       a3Mappings.put(cpu3.getId(), new Mapping<Processor>(cpu3));
       a3Mappings.put(cpu4.getId(), new Mapping<Processor>(cpu4));
-      a3Mappings.get(cpu1.getId()).getProperties().put("runtime", 10000.0);
-      a3Mappings.get(cpu2.getId()).getProperties().put("runtime", 10000.0);
-      a3Mappings.get(cpu3.getId()).getProperties().put("runtime", 10000.0);
-      a3Mappings.get(cpu4.getId()).getProperties().put("runtime", 10000.0);
+      a3Mappings.get(cpu1.getId()).getProperties().put("runtime", 10000.0/1000000);
+      a3Mappings.get(cpu2.getId()).getProperties().put("runtime", 10000.0/1000000);
+      a3Mappings.get(cpu3.getId()).getProperties().put("runtime", 10000.0/1000000);
+      a3Mappings.get(cpu4.getId()).getProperties().put("runtime", 10000.0/1000000);
       mappings.getActorProcessorMappings().put(a3.getId(), a3Mappings);
       
       HashMap<Integer,Mapping<Processor>> a4Mappings = new HashMap<>();
@@ -183,10 +183,10 @@ public class TestApplicationQuadCoreMemoryBound{
       a4Mappings.put(cpu2.getId(), new Mapping<Processor>(cpu2));
       a4Mappings.put(cpu3.getId(), new Mapping<Processor>(cpu3));
       a4Mappings.put(cpu4.getId(), new Mapping<Processor>(cpu4));
-      a4Mappings.get(cpu1.getId()).getProperties().put("runtime", 10000.0);
-      a4Mappings.get(cpu2.getId()).getProperties().put("runtime", 10000.0);
-      a4Mappings.get(cpu3.getId()).getProperties().put("runtime", 10000.0);
-      a4Mappings.get(cpu4.getId()).getProperties().put("runtime", 10000.0);
+      a4Mappings.get(cpu1.getId()).getProperties().put("runtime", 10000.0/1000000);
+      a4Mappings.get(cpu2.getId()).getProperties().put("runtime", 10000.0/1000000);
+      a4Mappings.get(cpu3.getId()).getProperties().put("runtime", 10000.0/1000000);
+      a4Mappings.get(cpu4.getId()).getProperties().put("runtime", 10000.0/1000000);
       mappings.getActorProcessorMappings().put(a4.getId(), a4Mappings);
       
       HashMap<Integer,Mapping<Processor>> a5Mappings = new HashMap<>();
@@ -194,10 +194,10 @@ public class TestApplicationQuadCoreMemoryBound{
       a5Mappings.put(cpu2.getId(), new Mapping<Processor>(cpu2));
       a5Mappings.put(cpu3.getId(), new Mapping<Processor>(cpu3));
       a5Mappings.put(cpu4.getId(), new Mapping<Processor>(cpu4));
-      a5Mappings.get(cpu1.getId()).getProperties().put("runtime", 10000.0);
-      a5Mappings.get(cpu2.getId()).getProperties().put("runtime", 10000.0);
-      a5Mappings.get(cpu3.getId()).getProperties().put("runtime", 10000.0);
-      a5Mappings.get(cpu4.getId()).getProperties().put("runtime", 10000.0);
+      a5Mappings.get(cpu1.getId()).getProperties().put("runtime", 10000.0/1000000);
+      a5Mappings.get(cpu2.getId()).getProperties().put("runtime", 10000.0/1000000);
+      a5Mappings.get(cpu3.getId()).getProperties().put("runtime", 10000.0/1000000);
+      a5Mappings.get(cpu4.getId()).getProperties().put("runtime", 10000.0/1000000);
       mappings.getActorProcessorMappings().put(a5.getId(), a5Mappings);
       
       // tile mappings
@@ -239,11 +239,11 @@ public class TestApplicationQuadCoreMemoryBound{
       bindings.getActorTileBindings().put(a4.getId(), new Binding<Tile>(t2));
       bindings.getActorTileBindings().put(a5.getId(), new Binding<Tile>(t2));
       
-      bindings.getActorProcessorBindings().get(a1.getId()).getProperties().put("runtime", 10000.0);
-      bindings.getActorProcessorBindings().get(a2.getId()).getProperties().put("runtime", 10000.0);
-      bindings.getActorProcessorBindings().get(a3.getId()).getProperties().put("runtime", 10000.0);
-      bindings.getActorProcessorBindings().get(a4.getId()).getProperties().put("runtime", 10000.0);
-      bindings.getActorProcessorBindings().get(a5.getId()).getProperties().put("runtime", 10000.0);
+      bindings.getActorProcessorBindings().get(a1.getId()).getProperties().put("runtime", 10000.0/1000000);
+      bindings.getActorProcessorBindings().get(a2.getId()).getProperties().put("runtime", 10000.0/1000000);
+      bindings.getActorProcessorBindings().get(a3.getId()).getProperties().put("runtime", 10000.0/1000000);
+      bindings.getActorProcessorBindings().get(a4.getId()).getProperties().put("runtime", 10000.0/1000000);
+      bindings.getActorProcessorBindings().get(a5.getId()).getProperties().put("runtime", 10000.0/1000000);
       
   }
 
@@ -340,10 +340,10 @@ public class TestApplicationQuadCoreMemoryBound{
       a1Mappings.put(cpu2.getId(), new Mapping<Processor>( cpu2 ));
       a1Mappings.put(cpu3.getId(), new Mapping<Processor>( cpu3 ));
       a1Mappings.put(cpu4.getId(), new Mapping<Processor>( cpu4 ));
-      a1Mappings.get(cpu1.getId()).getProperties().put("runtime", 10000.0);
-      a1Mappings.get(cpu2.getId()).getProperties().put("runtime", 10000.0);
-      a1Mappings.get(cpu3.getId()).getProperties().put("runtime", 10000.0);
-      a1Mappings.get(cpu4.getId()).getProperties().put("runtime", 10000.0);
+      a1Mappings.get(cpu1.getId()).getProperties().put("runtime", 10000.0/1000000);
+      a1Mappings.get(cpu2.getId()).getProperties().put("runtime", 10000.0/1000000);
+      a1Mappings.get(cpu3.getId()).getProperties().put("runtime", 10000.0/1000000);
+      a1Mappings.get(cpu4.getId()).getProperties().put("runtime", 10000.0/1000000);
       mappings.getActorProcessorMappings().put(a1.getId(), a1Mappings);
       
       HashMap<Integer,Mapping<Processor>> a2Mappings = new HashMap<>();
@@ -351,17 +351,17 @@ public class TestApplicationQuadCoreMemoryBound{
       a2Mappings.put(cpu2.getId(), new Mapping<Processor>( cpu2));
       a2Mappings.put(cpu3.getId(), new Mapping<Processor>( cpu3));
       a2Mappings.put(cpu4.getId(), new Mapping<Processor>( cpu4));
-      a2Mappings.get(cpu1.getId()).getProperties().put("runtime", 10000.0);
-      a2Mappings.get(cpu2.getId()).getProperties().put("runtime", 10000.0);
-      a2Mappings.get(cpu3.getId()).getProperties().put("runtime", 10000.0);
-      a2Mappings.get(cpu4.getId()).getProperties().put("runtime", 10000.0);
+      a2Mappings.get(cpu1.getId()).getProperties().put("runtime", 10000.0/1000000);
+      a2Mappings.get(cpu2.getId()).getProperties().put("runtime", 10000.0/1000000);
+      a2Mappings.get(cpu3.getId()).getProperties().put("runtime", 10000.0/1000000);
+      a2Mappings.get(cpu4.getId()).getProperties().put("runtime", 10000.0/1000000);
       mappings.getActorProcessorMappings().put(a2.getId(), a2Mappings);
       
       HashMap<Integer,Mapping<Processor>> a3Mappings = new HashMap<>();
       a3Mappings.put(cpu1.getId(), new Mapping<Processor>(cpu1));
       a3Mappings.put(cpu2.getId(), new Mapping<Processor>(cpu2));
-      a3Mappings.get(cpu1.getId()).getProperties().put("runtime", 10000.0);
-      a3Mappings.get(cpu2.getId()).getProperties().put("runtime", 10000.0);
+      a3Mappings.get(cpu1.getId()).getProperties().put("runtime", 10000.0/1000000);
+      a3Mappings.get(cpu2.getId()).getProperties().put("runtime", 10000.0/1000000);
       mappings.getActorProcessorMappings().put(a3.getId(), a3Mappings);
       
       HashMap<Integer,Mapping<Processor>> a4Mappings = new HashMap<>();
@@ -369,10 +369,10 @@ public class TestApplicationQuadCoreMemoryBound{
       a4Mappings.put(cpu2.getId(), new Mapping<Processor>(cpu2));
       a4Mappings.put(cpu3.getId(), new Mapping<Processor>(cpu3));
       a4Mappings.put(cpu4.getId(), new Mapping<Processor>(cpu4));
-      a4Mappings.get(cpu1.getId()).getProperties().put("runtime", 10000.0);
-      a4Mappings.get(cpu2.getId()).getProperties().put("runtime", 10000.0);
-      a4Mappings.get(cpu3.getId()).getProperties().put("runtime", 10000.0);
-      a4Mappings.get(cpu4.getId()).getProperties().put("runtime", 10000.0);
+      a4Mappings.get(cpu1.getId()).getProperties().put("runtime", 10000.0/1000000);
+      a4Mappings.get(cpu2.getId()).getProperties().put("runtime", 10000.0/1000000);
+      a4Mappings.get(cpu3.getId()).getProperties().put("runtime", 10000.0/1000000);
+      a4Mappings.get(cpu4.getId()).getProperties().put("runtime", 10000.0/1000000);
       mappings.getActorProcessorMappings().put(a4.getId(), a4Mappings);
       
       HashMap<Integer,Mapping<Processor>> a5Mappings = new HashMap<>();
@@ -380,10 +380,10 @@ public class TestApplicationQuadCoreMemoryBound{
       a5Mappings.put(cpu2.getId(), new Mapping<Processor>(cpu2));
       a5Mappings.put(cpu3.getId(), new Mapping<Processor>(cpu3));
       a5Mappings.put(cpu4.getId(), new Mapping<Processor>(cpu4));
-      a5Mappings.get(cpu1.getId()).getProperties().put("runtime", 10000.0);
-      a5Mappings.get(cpu2.getId()).getProperties().put("runtime", 10000.0);
-      a5Mappings.get(cpu3.getId()).getProperties().put("runtime", 10000.0);
-      a5Mappings.get(cpu4.getId()).getProperties().put("runtime", 10000.0);
+      a5Mappings.get(cpu1.getId()).getProperties().put("runtime", 10000.0/1000000);
+      a5Mappings.get(cpu2.getId()).getProperties().put("runtime", 10000.0/1000000);
+      a5Mappings.get(cpu3.getId()).getProperties().put("runtime", 10000.0/1000000);
+      a5Mappings.get(cpu4.getId()).getProperties().put("runtime", 10000.0/1000000);
       mappings.getActorProcessorMappings().put(a5.getId(), a5Mappings);
       
       // tile mappings
@@ -420,11 +420,11 @@ public class TestApplicationQuadCoreMemoryBound{
       bindings.getActorTileBindings().put(a4.getId(), new Binding<Tile>(t1));
       bindings.getActorTileBindings().put(a5.getId(), new Binding<Tile>(t1));
       
-      bindings.getActorProcessorBindings().get(a1.getId()).getProperties().put("runtime", 10000.0);
-      bindings.getActorProcessorBindings().get(a2.getId()).getProperties().put("runtime", 10000.0);
-      bindings.getActorProcessorBindings().get(a3.getId()).getProperties().put("runtime", 10000.0);
-      bindings.getActorProcessorBindings().get(a4.getId()).getProperties().put("runtime", 10000.0);
-      bindings.getActorProcessorBindings().get(a5.getId()).getProperties().put("runtime", 10000.0);
+      bindings.getActorProcessorBindings().get(a1.getId()).getProperties().put("runtime", 10000.0/1000000);
+      bindings.getActorProcessorBindings().get(a2.getId()).getProperties().put("runtime", 10000.0/1000000);
+      bindings.getActorProcessorBindings().get(a3.getId()).getProperties().put("runtime", 10000.0/1000000);
+      bindings.getActorProcessorBindings().get(a4.getId()).getProperties().put("runtime", 10000.0/1000000);
+      bindings.getActorProcessorBindings().get(a5.getId()).getProperties().put("runtime", 10000.0/1000000);
   }
 
   public Application getSampleApplication(){
