@@ -39,9 +39,12 @@ package multitile.application;
 
 import java.util.*;
 
+import integration.MyEntry;
 import multitile.architecture.Processor;
 import multitile.architecture.Tile;
 import multitile.mapping.Bindings;
+import net.sf.opendse.model.Task;
+import multitile.application.Fifo.FIFO_MAPPING_TYPE;
 import multitile.architecture.Architecture;
 
 public class Application{
@@ -52,6 +55,20 @@ public class Application{
     this.actors = new HashMap<>();
     this.fifos  = new HashMap<>();
   }
+  public Application(Application appSpec){
+		actors = new HashMap<>();
+		fifos =  new HashMap<>();
+		for(Map.Entry<Integer, Actor> actor : appSpec.getActors().entrySet()) {
+			Actor clonedActor = new Actor(actor.getValue());
+			actors.put(clonedActor.getId(), clonedActor);
+		}
+		// cloning the fifos
+		for(Map.Entry<Integer, Fifo> fifo: appSpec.getFifos().entrySet()) {
+			Fifo clonedFifo = new Fifo(fifo.getValue());
+		        fifos.put(clonedFifo.getId(), clonedFifo);
+		}
+  }
+
 
   public void resetApplication(){
     for(Map.Entry<Integer,Fifo> fifo : fifos.entrySet()){
@@ -145,7 +162,190 @@ public class Application{
     }
   }
 
+	public void setFifosToActors() {
+		for(Map.Entry<Integer, Actor> actor : actors.entrySet()) {
+			Vector<Fifo> inputs= new Vector<Fifo>();
+			Vector<Fifo> outputs = new Vector<Fifo>();
+			for(Map.Entry<Integer, Fifo> fifo : fifos.entrySet()) {
+				if (fifo.getValue().getSource().equals(actor.getValue())){
+					outputs.add(fifo.getValue());
+				}
+				if (fifo.getValue().getDestination().equals(actor.getValue())) {
+					inputs.add(fifo.getValue());
+				}
+			}
+			actors.get(actor.getKey()).setInputFifos(inputs);
+			actors.get(actor.getKey()).setOutputFifos(outputs);
+		}
+	}
+	
+	
+	public void setAllFifosToSource() {
+		for(Map.Entry<Integer, Fifo> fifo: fifos.entrySet()) {
+			fifo.getValue().setMappingType(FIFO_MAPPING_TYPE.SOURCE);
+		}
+	}
+	
+	public void setAllFifosToDestination() {
+		for(Map.Entry<Integer, Fifo> fifo: fifos.entrySet()) {
+			fifo.getValue().setMappingType(FIFO_MAPPING_TYPE.DESTINATION);
+		}
+	}
+	
+	public void setAllFifosToTileLocalMemory(FIFO_MAPPING_TYPE type) {
+		for(Map.Entry<Integer, Fifo> fifo: fifos.entrySet()) {
+			fifo.getValue().setMappingType(type);
+		}
+	}
+	
+	public void setAllFifosToGlobalMemory() {
+		for(Map.Entry<Integer, Fifo> fifo: fifos.entrySet()) {
+			fifo.getValue().setMappingType(FIFO_MAPPING_TYPE.GLOBAL);
+		}
+	}
+	
+	public void setFifosToDecision(ArrayList<Integer> decision) {
+		//System.out.println("Decision size "+decision.size());
+		//System.out.println("number fifos "+app.getFifos().size());
+		assert fifos.size() == decision.size() : "SOMETHING WRONG SIZE OF fifos AND decision MUST BE THE SAME";
+		int counter = 0;
+        for(Map.Entry<Integer, Fifo> fifo : fifos.entrySet()) {
+        	int fifoMapping = decision.get(counter);
+        	switch(fifoMapping) {
+        		case 0:
+        			// fifo mapped to produced
+        			fifo.getValue().setMappingType(FIFO_MAPPING_TYPE.SOURCE);
+        			break;
+        		case 1:
+        			// fifo mapped to consumer
+        			fifo.getValue().setMappingType(FIFO_MAPPING_TYPE.DESTINATION);
+        			break;
+        		case 2:
+        			fifo.getValue().setMappingType(FIFO_MAPPING_TYPE.TILE_LOCAL_SOURCE);
+        			// fifo mapped to tile local memory
+        			break;
+        		case 3:
+        			fifo.getValue().setMappingType(FIFO_MAPPING_TYPE.TILE_LOCAL_DESTINATION);
+        			// fifo mapped to tile local memory
+        			break;
+        		default:
+        			// fifo mapped to global memory
+        			fifo.getValue().setMappingType(FIFO_MAPPING_TYPE.GLOBAL);
+        	}
+        	counter++;
+        }
+	}
+	
+	public Map<Integer,Actor> getMulticastActors(){
+	    //System.out.println("getMulticastActors");
+	    Map<Integer,Actor> multicastActors = new HashMap<>();
+	    for(Map.Entry<Integer,Actor> actor : actors.entrySet()){
+	      //System.out.println("Name: "+actor.getValue().getName());
+	      //System.out.println("\tType: "+actor.getValue().getType());
+	      if (actor.getValue().isMulticastActor() == true){
+	        //System.out.println("IS Multicast actor "+actor.getValue().getName());
+	        multicastActors.put(actor.getKey(),actor.getValue());
+	      }
+	    }
+	    return multicastActors;
+	  }
 
+	  // this method set to true all the multicast actors in the application
+	  public void setAllMulticastActorsAsMergeable(){
+	    //System.out.println("setAllMulticastActorsAsMergeable");
+	    // get all the multicast actors
+	    Map<Integer,Actor> multicastActors = getMulticastActors();
+	    
+	    for(Map.Entry<Integer,Actor> multicastActor : multicastActors.entrySet()){
+	      Actor selectedActor = multicastActor.getValue();
+	      //System.out.println("Setting: "+selectedActor.getName());
+	      actors.get(selectedActor.getId()).setMergeMulticast(true);
+	    }
+	  }
+	  
+	  public void setAllMulticastActorsAsNotMergeable(){
+		    //System.out.println("setAllMulticastActorsAsMergeable");
+		    // get all the multicast actors
+		    Map<Integer,Actor> multicastActors = getMulticastActors();
+		    
+		    for(Map.Entry<Integer,Actor> multicastActor : multicastActors.entrySet()){
+		      Actor selectedActor = multicastActor.getValue();
+		      //System.out.println("Setting: "+selectedActor.getName());
+		      actors.get(selectedActor.getId()).setMergeMulticast(false);
+		    }
+	  }
+	  
+	  // this method selectively set multicast actors as mergeable
+	  public void setMulticastActorsAsMergeable(ArrayList<Boolean> mergeable) {
+		// get all the multicast actors
+		Map<Integer,Actor> multicastActors = getMulticastActors();
+		assert multicastActors.size() == mergeable.size() : "SOMETHING WRONG SIZE OF multicastActors AND mergeable MUST BE THE SAME";
+		int count = 0;
+		for(Map.Entry<Integer,Actor> multicastActor : multicastActors.entrySet()){
+		      Actor selectedActor = multicastActor.getValue();
+		      actors.get(selectedActor.getId()).setMergeMulticast(mergeable.get(count));
+		      count++;
+		}
+	  }
+
+	  public MyEntry<Fifo, CompositeFifo> collapseMergeableMulticastActorDSE(Actor multicastActor, int index){
+		  // returns the writer fifo
+		  Fifo writer=null;
+		  CompositeFifo compositeFifo = null;
+		  if(multicastActor.isMergeMulticast() == true){
+	        // if the actor is mergeable, we remove it and replace it by a composite channel
+	        Vector<Fifo> inputFifos  = multicastActor.getInputFifos(); // it should be only one writer
+	        Vector<Fifo> outputFifos = multicastActor.getOutputFifos(); // it might be multiple readers, more that one
+	        writer = inputFifos.get(0);
+	        List<Fifo>  readerFifos = new ArrayList<Fifo>(outputFifos);
+
+	        compositeFifo = FifoManagement.createCompositeChannel(writer,readerFifos,multicastActor,index); 
+	        // once created the compositefifo, we have to connected into the application
+	        int idWriterActor = writer.getSource().getId();
+	        actors.get(idWriterActor).removeOutputFifo(writer.getId());
+	        // connecting the input of the composite fifo
+	        actors.get(idWriterActor).getOutputFifos().add(compositeFifo);
+
+	        // now connect the readers to the composite fifo
+	        for(Fifo dstFifo : readerFifos){
+	          int idReaderActor = dstFifo.getDestination().getId();
+	          actors.get(idReaderActor).removeInputFifo(dstFifo.getId());
+	          // connectinf the outputs of the composite fifo
+	          actors.get(idReaderActor).getInputFifos().add(compositeFifo);
+	        }
+	        // remove the fifos
+	        fifos.remove(writer.getId());
+	        for(Fifo dstFifo : readerFifos) {
+	        	fifos.remove(dstFifo.getId());
+	        }
+	        // remove the merged multicast actor from the map of actors
+	        actors.remove(multicastActor.getId());
+	        // add the new composite fifo into the app fifo map
+	        fifos.put(compositeFifo.getId(),compositeFifo);
+	      }
+		  //return writer;
+		  MyEntry<Fifo, CompositeFifo> result = new MyEntry<Fifo,CompositeFifo>(writer,compositeFifo);
+		  return result;
+	  }
+	  
+		public void collapseMergeableMulticastActorsDSE(int startIndex,HashMap<String,Task> mapOfFifos){
+		    // get all the multicast actors
+		    Map<Integer,Actor> multicastActors = getMulticastActors();
+		    
+		    for(Map.Entry<Integer,Actor> multicastActor : multicastActors.entrySet()){
+		      Actor selectedActor = multicastActor.getValue();
+		      if(selectedActor.isMergeMulticast() == true){
+			      MyEntry<Fifo, CompositeFifo> result = collapseMergeableMulticastActorDSE(selectedActor,startIndex++);
+			      Fifo writer = result.getKey();
+			      CompositeFifo cf = result.getValue();
+			      assert cf != null: "THIS MUST NOT HAPPEN!";
+			      assert writer !=null : "THIS MUST NOT HAPPEN!";
+			      Task r = mapOfFifos.get(writer.getName());
+			      mapOfFifos.put(cf.getName(), r);
+		      }
+		    }
+		}
+	  
 }
 
 
