@@ -78,11 +78,11 @@ public class BaseScheduler{
   }
 
   public void setApplication(Application application){
-    this.application = application;
+    this.application = new Application(application);
   }
 
   public void setArchitecture(Architecture architecture){
-    this.architecture = architecture;
+    this.architecture = new Architecture(architecture);
   }
   public void insertAction(Action a){
     queueActions.add(new Action(a));
