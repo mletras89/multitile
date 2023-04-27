@@ -60,13 +60,10 @@ public class Fifo implements Buffer{
   private Actor source; // source actor
   private Actor destination; // destination actor
 
-  private Queue<Boolean> ReMapping; 
-  private int numberOfReadsReMapping; 
-
   public int numberOfReadsTimeProduced;
   public int numberOfReads;
 
-  private Vector<Integer> memory_footprint;
+  //private Vector<Integer> memory_footprint;
 
   private boolean isRecurrence;
 
@@ -93,8 +90,8 @@ public class Fifo implements Buffer{
     this.setNumberOfReadsTimeProduced(0);
     this.timeProducedToken = new LinkedList<>();
     this.numberOfReads = 0;
-    this.ReMapping = new LinkedList<>();
-    this.setNumberOfReadsReMapping(0);
+    //this.ReMapping = new LinkedList<>();
+    //this.setNumberOfReadsReMapping(0);
     this.isRecurrence = false;
   }
   
@@ -114,8 +111,8 @@ public class Fifo implements Buffer{
     this.setNumberOfReadsTimeProduced(0);
     this.timeProducedToken = new LinkedList<>();
     this.numberOfReads = 0;
-    this.ReMapping = new LinkedList<>();
-    this.setNumberOfReadsReMapping(0);
+    //this.ReMapping = new LinkedList<>();
+    //this.setNumberOfReadsReMapping(0);
     this.isRecurrence = false;
   }
 
@@ -134,8 +131,8 @@ public class Fifo implements Buffer{
     this.timeProducedToken = new LinkedList<>();
     this.numberOfReads = 0;
 
-    this.ReMapping = new LinkedList<>();
-    this.setNumberOfReadsReMapping(0);
+    //this.ReMapping = new LinkedList<>();
+    //this.setNumberOfReadsReMapping(0);
     this.isRecurrence = false;
   }
 
@@ -154,8 +151,8 @@ public class Fifo implements Buffer{
     this.timeProducedToken = new LinkedList<>();
     this.numberOfReads = 0;
 
-    this.ReMapping = new LinkedList<>();
-    this.setNumberOfReadsReMapping(0);
+    //this.ReMapping = new LinkedList<>();
+    //this.setNumberOfReadsReMapping(0);
     this.isRecurrence = false;
   }
 
@@ -176,11 +173,19 @@ public class Fifo implements Buffer{
     this.timeProducedToken = new LinkedList<>();
     this.setNumberOfReadsTimeProduced(another.getNumberOfReadsTimeProduced());
     this.numberOfReads = 0;
-    this.setNumberOfReadsReMapping(another.getNumberOfReadsReMapping());
-    this.ReMapping = new LinkedList<>();
+    //this.setNumberOfReadsReMapping(another.getNumberOfReadsReMapping());
+    //this.ReMapping = new LinkedList<>();
     this.setIsRecurrence(another.isFifoRecurrence());
   }
 
+  
+  public void insertTimeProducedToken(Transfer transfer) {
+	    this.timeProducedToken.add(new Transfer(transfer));
+  }  
+  
+  
+  
+  
   public void setIsRecurrence(boolean val){
     this.isRecurrence = val;
   }
@@ -189,6 +194,8 @@ public class Fifo implements Buffer{
     return isRecurrence;
   }
 
+  
+  
   public Queue<Transfer> getTimeProducedToken(){
     return this.timeProducedToken;
   }
@@ -209,35 +216,39 @@ public class Fifo implements Buffer{
     this.initial_tokens = initial_tokens;
   }
 
-  public void setNumberOfReadsReMapping(int numberOfReads) {
-    this.numberOfReadsReMapping = numberOfReads;
-  }
+  //public void setNumberOfReadsReMapping(int numberOfReads) {
+  //  this.numberOfReadsReMapping = numberOfReads;
+  //}
 
- public int getNumberOfReadsReMapping(){
-    return this.numberOfReadsReMapping;
- }
+ //public int getNumberOfReadsReMapping(){
+ //   return this.numberOfReadsReMapping;
+ //}
 
-  public void insertReMapping(boolean value) {
-    this.ReMapping.add(value);
-  }
+  //public void insertReMapping(boolean value) {
+  //  this.ReMapping.add(value);
+  //}
 
-  public boolean peekReMapping(){
-    return this.ReMapping.peek();
-  }
+  //public boolean peekReMapping(){
+  //  return this.ReMapping.peek();
+  //}
 
 
   public Transfer removeTimeProducedToken(){
+    assert this.timeProducedToken.size() > 0;
     return this.timeProducedToken.remove();
   }
 
-  public Transfer peekTimeProducedToken(){
+  /*public Transfer peekTimeProducedToken(){
+	assert this.timeProducedToken.size() > 0;
     return this.timeProducedToken.peek();
-  }
+  }*/
 
   public boolean equals(Fifo fifo){
     return this.getId()==fifo.getId() && this.getName().equals(fifo.getName());
   }
 
+  // fifo to memory functions, used to write or read to memory
+  
   public boolean canFifoWriteToMemory(Bindings bindings){
 	Memory mapping = bindings.getFifoMemoryBindings().get(this.getId()).getTarget();
     return mapping.canPutDataInMemory(this.prodRate*this.tokenSize);
@@ -263,6 +274,9 @@ public class Fifo implements Buffer{
 	  mapping.readDataInMemory(this.consRate*this.tokenSize,time);  
   }
 
+  
+  // functions to update the count of tokens in the fifo
+  
   public void fifoWrite(){
     this.set_tokens(this.get_tokens()+this.getProdRate()); 
     assert (this.get_tokens()<= this.get_capacity()): "Error in writing!!!";
@@ -274,6 +288,8 @@ public class Fifo implements Buffer{
     assert (this.get_tokens()>=0) :  "Error in reading!!!";
   }
 
+  // functions to check the guards of the fifo
+  
   public boolean fifoCanBeWritten(){
     //System.out.println("Checking regular fifo");
     if(this.get_capacity() < this.get_tokens() + this.getProdRate())
@@ -288,11 +304,13 @@ public class Fifo implements Buffer{
     return true;
   }
 
-  public void insertTimeProducedToken(Transfer transfer) {
-    this.timeProducedToken.add(new Transfer(transfer));
-  }
+
+  // functions to read the time of n produced tokens
  
-  public double readTimeProducedToken(int n){
+  public double readTimeProducedToken(int n, int idWhoIsReading){
+	assert idWhoIsReading == this.getDestination().getId(): "Error "+this.getName();
+	  
+	  	
     // this method reads n tokens from the fifo and returns the one with
     // the max delay
     List<Double> reads = new ArrayList<>();
@@ -306,11 +324,13 @@ public class Fifo implements Buffer{
     Transfer status;
     //System.out.println("FIFOS: "+this.getName());
     this.numberOfReadsTimeProduced++;
+    assert timeProducedToken.size() > 0: "Error here "+this.getName();
     status = this.timeProducedToken.remove();
     return status.getDue_time();
   }
   
  
+  
   public boolean canFlushData() {
     return true;
   }
@@ -319,6 +339,7 @@ public class Fifo implements Buffer{
     this.numberOfReads++;
   }
   
+  /*
   public boolean removeReMapping() {
     this.numberOfReadsReMapping++;
     //int currentNumberOfReads = this.numberOfReadsReMapping;
@@ -326,8 +347,11 @@ public class Fifo implements Buffer{
 	  
     status = this.ReMapping.remove();
     return status;
+  }*/
+  public void reset(Architecture architecture, Bindings bindings, Application application){
+	  resetFifo(architecture,bindings, application);
   }
-
+  
   public void resetFifo(Architecture architecture, Bindings bindings, Application application){
     this.tokens = this.initial_tokens;
     this.timeProducedToken.clear();
@@ -335,21 +359,25 @@ public class Fifo implements Buffer{
     for(int i=0; i < this.initial_tokens; i++){
         Transfer t = new Transfer(source,this);
         t.setDue_time(0.0);
-	while(!this.canFifoWriteToMemory(bindings)){
-		// do the remap and return false
-		Memory reMappingMemory = ArchitectureManagement.getMemoryToBeRelocated(this,architecture,application,bindings);
-		ApplicationManagement.remapFifo(this, reMappingMemory,bindings);
-		System.out.println("Stuck here!");
-	}
-	this.fifoWriteToMemory(t,bindings);
+        while(!this.canFifoWriteToMemory(bindings)){
+        	// do the remap and return false
+        	Memory reMappingMemory = ArchitectureManagement.getMemoryToBeRelocated(this,architecture,application,bindings);
+        	ApplicationManagement.remapFifo(this, reMappingMemory,bindings);
+        	System.out.println("Stuck here!");
+        }
+        this.fifoWriteToMemory(t,bindings);
         this.timeProducedToken.add(t); 
     }
     this.numberOfReads = 0;
     this.numberOfReadsTimeProduced = 0;
-    this.numberOfReadsReMapping = 0;
-    this.ReMapping.clear();
+    //this.numberOfReadsReMapping = 0;
+    //this.ReMapping.clear();
   }
 
+  
+  public void reset() {
+	  resetFifo();
+  }
   
   public void resetFifo(){
     this.tokens = this.initial_tokens;
@@ -362,13 +390,15 @@ public class Fifo implements Buffer{
     }
     this.numberOfReads = 0;
     this.numberOfReadsTimeProduced = 0;
-    this.numberOfReadsReMapping = 0;
-    this.ReMapping.clear();
+    //this.numberOfReadsReMapping = 0;
+    //this.ReMapping.clear();
   }
 
-  public void update_memory_footprint(){
+  /*public void update_memory_footprint(){
     this.memory_footprint.add(tokens);
-  }
+  }*/
+  
+  
   
   public String getName() {
     return this.name;
@@ -438,13 +468,13 @@ public class Fifo implements Buffer{
     this.destination = destination;
   }
 
-  public Queue<Boolean> getReMapping() {
+/*  public Queue<Boolean> getReMapping() {
     return ReMapping;
   }
 
   public void setReMapping(Queue<Boolean> reMapping) {
     ReMapping = reMapping;
-  }
+  }*/
 
   public int getNumberOfReadsTimeProduced() {
     return numberOfReadsTimeProduced;
