@@ -99,6 +99,17 @@ public class Architecture{
 	  }
   }
   
+  
+  public void setMemoryVerboseDebug(boolean val) {
+	  for(Map.Entry<Integer, Tile> t : this.tiles.entrySet()) {
+		  t.getValue().getTileLocalMemory().setVerboseDebug(val);
+		  for(Map.Entry<Integer, Processor> p :  t.getValue().getProcessors().entrySet()) {
+			  p.getValue().getLocalMemory().setVerboseDebug(val);
+		  }
+	  }
+	  this.globalMemory.setVerboseDebug(val);
+  }
+ 
   // clone architecture from another architecture
   public Architecture(Architecture another) {
 	  this.name = another.getName();
