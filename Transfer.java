@@ -93,6 +93,7 @@ public class Transfer {
     this.setFifo(other.getFifo());
     this.setType(other.getType());
     this.setStep(other.getStep());
+    this.setEndOverall(other.getEndOverall());
   }
 
   public double getEndOverall(){
