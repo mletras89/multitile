@@ -39,7 +39,6 @@ package multitile.application;
 
 import java.util.*;
 
-import integration.MyEntry;
 import multitile.architecture.Processor;
 import multitile.architecture.Tile;
 import multitile.mapping.Bindings;
@@ -337,6 +336,7 @@ public class Application{
 	          // connectinf the outputs of the composite fifo
 	          actors.get(idReaderActor).getInputFifos().add(compositeFifo);
 	        }
+	        
 	        // remove the fifos
 	        fifos.remove(writer.getId());
 	        for(Fifo dstFifo : readerFifos) {
