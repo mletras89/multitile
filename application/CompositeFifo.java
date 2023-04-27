@@ -50,12 +50,14 @@ public class CompositeFifo extends Fifo {
   private Map<Integer,Fifo> readers; // the key is the id of the actor reading the fifo
   private List<Actor> destinations;
   private Actor multicastActor;
-
+  private int readsMRB;
+  
   public CompositeFifo(String name, int tokens, int capacity, int tokenSize,int consRate, int prodRate, Actor src, List<Fifo> destinationFifos,Actor multicastActor){
     super(name,tokens,capacity,tokenSize,consRate,prodRate);
     this.setSource(src);
     this.setDestinations(destinationFifos);
     this.setMulticastActor(multicastActor);
+    readsMRB = 0;
   }
 
   public void setDestinations(List<Fifo> destinationFifos){
@@ -78,6 +80,7 @@ public class CompositeFifo extends Fifo {
 	    for(Map.Entry<Integer,Fifo> fifo : this.readers.entrySet()) {
 	    	fifo.getValue().resetFifo();
 	    }
+	    readsMRB = 0;
   }
   
   @Override
@@ -86,6 +89,7 @@ public class CompositeFifo extends Fifo {
 	  for(Map.Entry<Integer, Fifo> fifo: this.readers.entrySet()) {
 		  fifo.getValue().resetFifo(architecture,bindings, application);
 	  }
+	  readsMRB = 0;
   }
   
   @Override
@@ -97,11 +101,14 @@ public class CompositeFifo extends Fifo {
   @Override
   public void fifoWrite(){
 	
+	this.set_tokens(this.get_tokens()+this.getProdRate());  
+	assert this.get_tokens() <= this.get_capacity()  : "Error in writing composite fifo!!!";
+	/*
     for(Map.Entry<Integer,Fifo> fifo : this.readers.entrySet()) {
       int new_tokens = fifo.getValue().get_tokens()+fifo.getValue().getProdRate();
       fifo.getValue().set_tokens(new_tokens);
       assert (fifo.getValue().get_tokens()<=fifo.getValue().get_capacity()): "Error in writing composite fifo!!!";
-    }
+    }*/
   }
   @Override
   public boolean canFifoReadFromMemory(Bindings bindings){
@@ -119,10 +126,21 @@ public class CompositeFifo extends Fifo {
   
   @Override
   public void fifoRead(int idActorReader){
-    Fifo fifo = readers.get(idActorReader);
+	
+	Fifo fifo = readers.get(idActorReader);
+    int consTokens = fifo.getConsRate();
+    
+    for(int i=0; i < consTokens; i++) {
+    	this.readsMRB++;
+    	if(this.readsMRB % readers.size() == 0) {
+    		this.set_tokens(this.get_tokens() - 1);
+    		assert this.get_tokens() >= 0 :  "Error reading composite Fifo!!!"; 
+        }
+    }
+    /*Fifo fifo = readers.get(idActorReader);
     int new_tokens = fifo.get_tokens() - fifo.getConsRate();
     fifo.set_tokens(new_tokens);
-    assert (fifo.get_tokens()>=0) :  "Error reading composite Fifo!!!";
+    assert (fifo.get_tokens()>=0) :  "Error reading composite Fifo!!!";*/
   }
   
   
@@ -137,20 +155,27 @@ public class CompositeFifo extends Fifo {
   public boolean fifoCanBeRead(int idWhoIsReading){
     // first get the FIFO
     Fifo fifo = readers.get(idWhoIsReading);
-    return fifo.fifoCanBeRead(idWhoIsReading);
-    //if(fifo.get_tokens() - fifo.getConsRate() < 0)
-    //  return false; 
-    //return true;
+    /*if(fifo.get_tokens() - fifo.getConsRate() < 0)
+      return false; 
+    return true;*/
+    if (this.get_tokens() - fifo.getConsRate() < 0)
+    	return false;
+    return true;
+    		
   }
   
   @Override
   public boolean fifoCanBeWritten(){
     //System.out.println("Checking composite fifo");
+	if (this.get_capacity() < this.get_tokens()+this.getProdRate())
+		return false;
+	return true;
+	/*
     for(Map.Entry<Integer,Fifo> reader : readers.entrySet()){
       if(reader.getValue().get_capacity() < reader.getValue().get_tokens() + reader.getValue().getProdRate())
         return false;
     }
-    return true;
+    return true;*/
   }
   
   @Override
