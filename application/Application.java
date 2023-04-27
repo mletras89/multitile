@@ -72,13 +72,13 @@ public class Application{
 
   public void resetApplication(){
     for(Map.Entry<Integer,Fifo> fifo : fifos.entrySet()){
-      fifo.getValue().resetFifo();
+      fifo.getValue().reset();
     }
   }
 
   public void resetApplication(Architecture architecture, Bindings bindings, Application application){
     for(Map.Entry<Integer,Fifo> fifo : fifos.entrySet()){
-      fifo.getValue().resetFifo(architecture, bindings, application);
+      fifo.getValue().reset(architecture, bindings, application);
     }
   }
 
@@ -287,6 +287,30 @@ public class Application{
 		      count++;
 		}
 	  }
+	  
+	  // passing as parameter the index of composite actors no bidings
+	  public CompositeFifo createCompositeChannel(Fifo writer,List<Fifo> readerFifos, Actor multicastActor,int index){
+		    // create a composite channel from a given list of fifos
+		    // a composite actor has only one writer and multiple readers
+		    //
+		    // the capacity of the composite is the addition of the capacity of the writer and the max capacity of readers
+		    int capacityWriter = writer.get_capacity();
+		    int capacityReader = 0;
+
+		    for(Fifo fifo : readerFifos){
+		      if(fifo.get_capacity() > capacityReader)
+		        capacityReader = fifo.get_capacity();
+		    }
+		    // updating fifos capacities of readers
+		    for(Fifo fifo : readerFifos){
+		      fifo.set_capacity(capacityWriter+capacityReader);
+		    }
+
+		    CompositeFifo compositeFifo = new CompositeFifo("compositeFifo_"+index,writer.get_tokens(),capacityWriter+capacityReader,writer.getTokenSize(),writer.getConsRate(),writer.getProdRate(),writer.getSource(),readerFifos,multicastActor);
+		    compositeFifo.setMappingType( writer.getMappingType() );
+		    return compositeFifo;
+	  }
+	  
 
 	  public MyEntry<Fifo, CompositeFifo> collapseMergeableMulticastActorDSE(Actor multicastActor, int index){
 		  // returns the writer fifo
@@ -299,7 +323,7 @@ public class Application{
 	        writer = inputFifos.get(0);
 	        List<Fifo>  readerFifos = new ArrayList<Fifo>(outputFifos);
 
-	        compositeFifo = FifoManagement.createCompositeChannel(writer,readerFifos,multicastActor,index); 
+	        compositeFifo = createCompositeChannel(writer,readerFifos,multicastActor,index); 
 	        // once created the compositefifo, we have to connected into the application
 	        int idWriterActor = writer.getSource().getId();
 	        actors.get(idWriterActor).removeOutputFifo(writer.getId());
