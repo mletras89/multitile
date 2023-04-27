@@ -37,6 +37,7 @@
 package multitile.application;
 
 import multitile.Transfer;
+import multitile.architecture.Architecture;
 import multitile.mapping.Bindings;
 
 interface Buffer{
@@ -46,13 +47,25 @@ interface Buffer{
   public boolean fifoCanBeWritten();
   public void fifoWrite();
   public void fifoRead(int idActorReader);
-  public double readTimeProducedToken();
+  
+  public void reset();
+  public void reset(Architecture architecture, Bindings bindings, Application application);
+	
   public boolean canFlushData();
-  public boolean removeReMapping();
+  //public boolean removeReMapping();
   public Actor getDestination();
   // methods for handling the writes/reads to/from memory 
   //public void fifoWriteToMemory(Transfer transfer);
   public void fifoReadFromMemory(Transfer transfer,Bindings bindings);
   public boolean canFifoReadFromMemory(Bindings bindings);
+  
+  
+  public void insertTimeProducedToken(Transfer transfer) ;
+  
+  public double readTimeProducedToken();
+  public double readTimeProducedToken(int n, int idWhoIsReading);
+  
+  
+  
 }
 
