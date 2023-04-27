@@ -116,8 +116,10 @@ public class Tile{
   
   public double averageProcessorUtilization(double endTime){
     double processorUtilization = 0.0;
-    double nProcs=0;
+    double nProcs=0.0;
     double tempVal;
+    
+    
     for(Map.Entry<Integer,Processor> entry : processors.entrySet()){
       tempVal = entry.getValue().calculateOverallProcessorUtilization(endTime);
       if(tempVal > 0){
@@ -125,7 +127,10 @@ public class Tile{
         processorUtilization += tempVal;
       }
     }
-    return processorUtilization/nProcs;
+    if (nProcs == 0)
+    	return 0.0;
+    //return processorUtilization/nProcs;
+    return processorUtilization/processors.entrySet().size();
   }
 
   public void setName(String name){
