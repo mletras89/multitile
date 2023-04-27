@@ -95,6 +95,12 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
   public int getStepEndKernel(){
     return this.stepEndKernel;
   }
+
+  public void assingActorFifoMapping(Bindings bindings) {
+	  ApplicationManagement.assignActorMapping(application,architecture,this,bindings);
+      ApplicationManagement.assignFifoMapping(application,architecture,bindings);
+  }
+  
   
   public void calculateModuloSchedule(Bindings bindings){
     HashMap<Integer,Tile> tiles = architecture.getTiles();
@@ -408,7 +414,7 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
           for(Action action : actions){
         	  // first schedule the reads
         	  // 1) get the reads from the processor
-        	  p.getValue().getScheduler().commitReadsToCrossbar(action,application.getFifos());
+        	  p.getValue().getScheduler().commitReads(action,application.getFifos(),application);
         	  Map<Actor,List<Transfer>> readTransfers = p.getValue().getScheduler().getReadTransfers();
         	  // 2) for each read transfer calculate the path that has to travel, might be comming from the tile local crossbar,
         	  //    or the transfer has to travel across several interconnect elements, a read comming from NoC has to travel 
@@ -438,10 +444,10 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
         			  if(!scheduledTransfer.getFifo().canFifoReadFromMemory(bindings)){
         			      // do the remap and return false
         		              Memory reMappingMemory = ArchitectureManagement.getMemoryToBeRelocated(scheduledTransfer.getFifo(),architecture,application,bindings);
-        		  	      ApplicationManagement.remapFifo(scheduledTransfer.getFifo(), reMappingMemory,bindings);
+        		              ApplicationManagement.remapFifo(scheduledTransfer.getFifo(), reMappingMemory,bindings);
         		              return false;
-        		          }
-        		          scheduledTransfer.getFifo().fifoReadFromMemory(scheduledTransfer,bindings);
+        		      }
+        		      scheduledTransfer.getFifo().fifoReadFromMemory(scheduledTransfer,bindings);
         			  listSchedTransfers.add(scheduledTransfer);
         		  }
         		  processorReadTransfers.put(action.getActor(),listSchedTransfers);
@@ -459,9 +465,9 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
           Map<Actor,List<Transfer>> processorWriteTransfers = new HashMap<>();
           for(Action action : actions){
             // schedule the action
-            p.getValue().getScheduler().commitSingleAction(action,architecture,application,bindings); // modificar este
+            p.getValue().getScheduler().commitSingleAction(action,architecture,application,bindings); 
             // finally, schedule the write of tokens
-            p.getValue().getScheduler().commitWritesToCrossbar(action);
+            p.getValue().getScheduler().commitWrites(action,application);
             // put writing transfers to crossbar(s) or NoC
             // get write transfers from the scheduler
             Map<Actor,List<Transfer>> writeTransfers = p.getValue().getScheduler().getWriteTransfers();
