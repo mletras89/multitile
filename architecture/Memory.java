@@ -58,7 +58,9 @@ public class Memory{
   private Map<Double,Double> memoryUtilization = new TreeMap<Double, Double>();
   private MEMORY_TYPE type;
   private Processor embeddedToProcessor;
-
+  
+  private boolean verboseDebug;
+  
   public static enum MEMORY_TYPE {
     LOCAL_MEM,
     TILE_LOCAL_MEM,
@@ -74,6 +76,7 @@ public class Memory{
     this.resetMemoryUtilization();
     // assume infinite size of memories if not specificed
     this.setCapacity(Double.POSITIVE_INFINITY);
+    this.verboseDebug = true;
   }
    // cloning memory
   public Memory(Memory other) {
@@ -83,6 +86,7 @@ public class Memory{
     this.resetMemoryUtilization();
     this.setType(other.getType());
     this.setEmbeddedToProcessor(other.getEmbeddedToProcessor());
+    this.setVerboseDebug(other.getVerboseDebug());
   }
   // creating memory from given parameters
   public Memory(String name, double capacity){
@@ -90,6 +94,7 @@ public class Memory{
     this.id       = ArchitectureManagement.getMemoryId();
     this.resetMemoryUtilization();
     this.capacity = capacity;
+    this.verboseDebug = true;
   }
 
   // creating memory from given parameters
@@ -98,6 +103,15 @@ public class Memory{
     this.id       = ArchitectureManagement.getMemoryId();
     this.resetMemoryUtilization();
     this.capacity = Double.POSITIVE_INFINITY;
+    this.verboseDebug = true;
+  }
+  
+  public boolean getVerboseDebug() {
+	  return this.verboseDebug;
+  }
+  
+  public void setVerboseDebug(boolean val) {
+	  this.verboseDebug = val;
   }
   
   public boolean equals(Memory memory){
@@ -184,7 +198,8 @@ public class Memory{
     // get current amount of bytes
     double currentBytes = memoryUtilization.get(last_inserted_key);
     //System.err.println("Last inserted key "+last_inserted_key);
-    System.err.println("Writing memory "+this.getName()+ " storing "+currentBytes+" writing "+amountBytes+" at "+when);
+    if (this.verboseDebug)
+    	System.err.println("Writing memory "+this.getName()+ " storing "+currentBytes+" writing "+amountBytes+" at "+when);
     assert this.getCapacity() >= currentBytes+amountBytes;
     if(last_inserted_key >= when){
      double lastValidValue = 0;
@@ -214,7 +229,8 @@ public class Memory{
     double last_inserted_key = listKeys.get(listKeys.size()-1);
     // get current amount of bytes
     double currentBytes = memoryUtilization.get(last_inserted_key);
-    System.err.println("Reading memory "+this.getName()+ " storing "+currentBytes+" reading "+amountBytes+" at "+when);
+    if (this.verboseDebug)
+    	System.err.println("Reading memory "+this.getName()+ " storing "+currentBytes+" reading "+amountBytes+" at "+when);
     assert currentBytes-amountBytes >= 0;
     if(last_inserted_key >= when){
       double lastValidValue = 0.0;
