@@ -307,7 +307,7 @@ public class Scheduler{
     if(MapManagement.isActorIdinMap(writeTransfers.keySet(),commitAction.getActor().getId())){
       List<Transfer> writes = writeTransfers.get(commitAction.getActor());
       for(Transfer transfer: writes){
-        fifoMap.get(transfer.getFifo().getId()).insertTimeProducedToken(transfer);
+    	fifoMap.get(transfer.getFifo().getId()).insertTimeProducedToken(transfer);
       }
     }
   }
@@ -396,7 +396,7 @@ public class Scheduler{
     for(Fifo fifo : commitAction.getActor().getInputFifos()){
       int cons      = fifo.getProdRate();
       //System.out.println("1)Actor: "+commitAction.getActor().getName()+" reading from "+fifo.getName());
-      double timeLastReadToken = fifos.get(fifo.getId()).readTimeProducedToken(cons);
+      double timeLastReadToken = fifos.get(fifo.getId()).readTimeProducedToken(cons,commitAction.getActor().getId());
       // I scheduled read of data by token reads
       for(int n = 0 ; n<cons;n++) {
 //        if(fifo.getMapping().getType() == Memory.MEMORY_TYPE.TILE_LOCAL_MEM ||
@@ -412,13 +412,29 @@ public class Scheduler{
     readTransfers.put(commitAction.getActor(),reads);
   }
 
+  public void commitReads(Action commitAction,Map<Integer,Fifo> fifos,Application app){
+	    List<Transfer> reads = new ArrayList<>();
+	    //System.out.println("Actor "+commitAction.getActor().getName());
+	    for(Fifo fifo : app.getActors().get(commitAction.getActor().getId()).getInputFifos()){
+	      int cons      = fifo.getProdRate();
+	      double timeLastReadToken = fifos.get(fifo.getId()).readTimeProducedToken(cons,commitAction.getActor().getId());
+	      // I scheduled read of data by token reads
+	      for(int n = 0 ; n<cons;n++) {
+	          Transfer readTransfer = new Transfer(commitAction.getActor(),fifo,Collections.max(Arrays.asList(this.lastEventinProcessor,timeLastReadToken)),Transfer.TRANSFER_TYPE.READ);
+	          reads.add(readTransfer);
+	      }
+	    }
+	    readTransfers.put(commitAction.getActor(),reads);
+  }
+
+  
   public void commitReadsToCrossbar(Map<Integer,Fifo> fifos){
     for(Action commitAction : this.queueActions){
       List<Transfer> reads = new ArrayList<>();
       for(Fifo fifo : commitAction.getActor().getInputFifos()){
         //System.out.println("1)Actor: "+commitAction.getActor().getName()+" reading from "+fifo.getName());
         int cons      = fifo.getProdRate();
-        double timeLastReadToken = fifos.get(fifo.getId()).readTimeProducedToken(cons);
+        double timeLastReadToken = fifos.get(fifo.getId()).readTimeProducedToken(cons,commitAction.getActor().getId());
         // I scheduled read of data by token reads
         for(int n = 0 ; n<cons;n++) {
 //          if(fifo.getMapping().getType() == Memory.MEMORY_TYPE.TILE_LOCAL_MEM ||
@@ -479,6 +495,21 @@ public class Scheduler{
     writeTransfers.put(commitAction.getActor(),writes);
   }
 
+  public void commitWrites(Action commitAction, Application app){
+	    List<Transfer> writes = new ArrayList<>();
+	    for(Fifo fifo : app.getActors().get(commitAction.getActor().getId()).getOutputFifos()){
+	      //System.out.println("1)Actor: "+commitAction.getActor().getName()+" writing to "+fifo.getName());
+	      int prod    = fifo.getProdRate();
+	      for(int n=0; n<prod; n++){
+	          Transfer writeTransfer = new Transfer(commitAction.getActor(),fifo,this.lastEventinProcessor,Transfer.TRANSFER_TYPE.WRITE);
+	          writes.add(writeTransfer);
+	      }
+	    }
+	    writeTransfers.put(commitAction.getActor(),writes);
+	  }
+  
+  
+  
   public void fireCommitedActions(Map<Integer,Fifo> fifos){
     // update the fifos after the firing of the action
     int elementsinQueue = this.queueActions.size();
