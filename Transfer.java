@@ -45,6 +45,8 @@ package multitile;
 
 import multitile.application.Actor;
 import multitile.application.Fifo;
+import multitile.architecture.Processor;
+import multitile.architecture.Memory;
 
 public class Transfer {
   private double start_time;
@@ -53,6 +55,9 @@ public class Transfer {
   // in a transfer, an actor and a Fifo are involved
   private Actor actor;
   private Fifo fifo;
+  private Processor processor;
+  private Memory  memory;
+
   // depending on the type of the operation: {READ, WRITE}
   private TRANSFER_TYPE type;
 
@@ -95,6 +100,23 @@ public class Transfer {
     this.setStep(other.getStep());
     this.setEndOverall(other.getEndOverall());
   }
+
+  public void setProcessor(Processor p){
+    processor = p;
+  }
+
+  public void setMemory(Memory m){
+    memory = m;
+  }
+
+  public Processor getProcessor(){
+     return processor;
+  }
+
+  public Memory setMemory(){
+    return memory;
+  }
+
 
   public double getEndOverall(){
     return this.endOverall;
