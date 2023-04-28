@@ -250,6 +250,15 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
     }
   }
 
+  public void printPipelinedSteps(){
+    for(Map.Entry<Integer,List<Integer>> k : kernel.entrySet()  ){
+      System.out.println("Step: "+k.getKey());
+      for(Integer actorId :k.getValue()){
+        System.out.println("\t"+application.getActors().get(actorId).getName());
+      }
+    }
+  }
+
   public void findSchedule(){
     // at least 3 iterations
     List<List<Integer>>	singleIteration     = new ArrayList<>();
@@ -273,10 +282,13 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
       singleIteration.add(new ArrayList<>(stepList));
       step++;
     }
-    
+
+    if (this.getMaxIterations() == 1 )
+      this.lastStep = step;
+    else
     // 2) Generate a schedule up to maxIterations iterations and put them in kernel
-    this.lastStep = 0;
-    for(int k=1; k<this.getMaxIterations()+1;k++){
+      this.lastStep = 0;
+    for(int k=1; k<this.getMaxIterations();k++){
       for(int i = (MII*k)+1; i < (MII*k)+singleIteration.size()+1; i++ ){
     	if(this.kernel.containsKey(i)){
           List<Integer> actors = new ArrayList<>(this.kernel.get(i));
@@ -291,6 +303,7 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
     }
     // 3) we find the kernel, to calculate the throuhgput
     //boolean foundKernel = false;
+    if(getMaxIterations()>4){
     int count=1;
     while(count<=this.lastStep) {
     	stepStartKernel = count; 
@@ -298,7 +311,7 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
     	if (checkValidKernel(stepStartKernel,stepEndKernel))
     		break;
     	count=count+MII;
-    }
+    }}
     //System.out.println("L->"+l);
     //System.out.println("Kernel starts at: "+stepStartKernel+" and ends at: "+stepEndKernel);
     //System.out.println("Kernel -> "+kernel);
@@ -369,7 +382,9 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
     // 5) now, we schedule the actions in the first tree iterations
     int i = 1;
     List<Transfer> transfersToMemory = new ArrayList<>();
+    System.out.println("last step"+this.lastStep);
     while(i<=this.lastStep){
+      System.out.println("step "+i);
       //System.out.println("scheduling step="+i);
       this.cleanQueue();
       this.getSchedulableActors(application.getActors(),application.getFifos(),i,this.kernel);
@@ -385,9 +400,11 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
         int actionToTileId = bindings.getActorTileBindings().get(action.getActor().getId()).getTarget().getId(); //    action.getActor().getMappingToTile().getId();
         // get the mapping 
         HashMap<Integer,Boolean> processorUtilization = currentTilesOccupation.get(actionToTileId);
+
         int availableProcessor = getNextAvailableProcessor(processorUtilization);
         assert availableProcessor != -1;
         Processor p = tiles.get(actionToTileId).getProcessors().get(availableProcessor);
+        System.out.println("actor "+action.getActor().getName()+ " mapped to "+p.getName());
         // setting the mapping of the actor and action
         bindings.getActorProcessorBindings().put(action.getActor().getId(), new Binding<>(p));
         //System.out.println("ACTION "+action.getActor().getName());
@@ -408,13 +425,16 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
       // iterate tiles and the processors to perform the simulation of the application
       for(HashMap.Entry<Integer,Tile> t: tiles.entrySet()){
         for(HashMap.Entry<Integer,Processor> p : t.getValue().getProcessors().entrySet()){
+          System.out.println("Scheduling procesosr "+p.getValue().getName());
           Queue<Action> actions = p.getValue().getScheduler().getQueueActions();
           // scheduled transfers in processor p
           Map<Actor,List<Transfer>> processorReadTransfers = new HashMap<>();
           for(Action action : actions){
+                  System.out.println("\tScheduling action "+action.getActor().getName());
         	  // first schedule the reads
         	  // 1) get the reads from the processor
-        	  p.getValue().getScheduler().commitReads(action,application.getFifos(),application);
+        	  p.getValue().getScheduler().commitReads(action,application.getFifos(),application,bindings);
+        	  
         	  Map<Actor,List<Transfer>> readTransfers = p.getValue().getScheduler().getReadTransfers();
         	  // 2) for each read transfer calculate the path that has to travel, might be comming from the tile local crossbar,
         	  //    or the transfer has to travel across several interconnect elements, a read comming from NoC has to travel 
@@ -452,6 +472,7 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
         		  }
         		  processorReadTransfers.put(action.getActor(),listSchedTransfers);
         	  }
+        	  
         	  // commit the action in the processor
         	  p.getValue().getScheduler().setReadTransfers(processorReadTransfers);
         	  p.getValue().getScheduler().setReadTransfersToMemory();
@@ -465,7 +486,7 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
           Map<Actor,List<Transfer>> processorWriteTransfers = new HashMap<>();
           for(Action action : actions){
             // schedule the action
-            p.getValue().getScheduler().commitSingleAction(action,architecture,application,bindings); 
+            p.getValue().getScheduler().commitSingleAction(action,architecture,application, bindings, i ); 
             // finally, schedule the write of tokens
             p.getValue().getScheduler().commitWrites(action,application);
             // put writing transfers to crossbar(s) or NoC
@@ -522,6 +543,7 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
           }
         }
       }
+      
       // commit all the writes to memory
       /*SchedulerManagement.sort(transfersToMemory);
       Transfer ReMapTransfer = null;
@@ -558,6 +580,10 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
       i++;
       transfersToMemory.clear();
     }
+    //for(Map.Entry<Integer,Binding<Processor>> b : bindings.getActorProcessorBindings().entrySet() ){
+    //  System.out.println("Actor "+application.getActors().get(b.getKey()).getName()+" -> "+b.getValue().getTarget().getName());
+    //}
+
     return true;
   }
 
@@ -623,10 +649,10 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
     List<Integer> actorsInStep = kernel.get(step);
     if (actorsInStep!=null) {
     	for(int v : actorsInStep){
-    		if (actors.get(v).canFire(fifos)){
+    		//if (actors.get(v).canFire(fifos)){
     			Action action = new Action(actors.get(v));
     			this.insertAction(action);
-    		}
+    		//}
     	}
     }
   }

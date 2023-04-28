@@ -319,14 +319,14 @@ public class Scheduler{
       this.lastEventinProcessor = lastWrite;
   }
 
-  public void syncTimeOfSrcActors(Action commitAction, Architecture architecture, Application application, Bindings bindings){
+  public void syncTimeOfSrcActors(Action commitAction, Architecture architecture, Application application,Bindings bindings){
     List<Transfer>  transfers = this.readTransfers.get(commitAction.getActor());
     if(transfers != null){
       //System.out.println("Number of read transfers: "+transfers.size());
       for(Transfer t: transfers){
         //System.out.println(t);
         Actor actorWriting = application.getActors().get(t.getFifo().getSource().getId());
-        Processor actorBinding = bindings.getActorProcessorBindings().get(actorWriting.getId()).getTarget();
+        Processor actorBinding = bindings.getActorProcessorBindings().get(actorWriting.getId()).getTarget();       // architecture.getTiles().get(t.getProcessor().getTile().getId()).getProcessors().get(t.getProcessor().getId());   //bindings.getActorProcessorBindings().get(actorWriting.getId()).getTarget();
         //System.out.println("actorWriting "+actorWriting.getName()+" mapped to "+actorBinding.getName());
         if(actorWriting.getInputFifos().size() == 0){
           // update the processor after reading the token
@@ -354,10 +354,19 @@ public class Scheduler{
     //System.out.println("\tScheduling actor "+commitAction.getActor().getName()+ " start time "+commitAction.getStart_time()+" due time "+commitAction.getDue_time());
   }
 
-  public void commitSingleAction(Action commitAction,Architecture architecture,Application application,Bindings bindings){
+
+
+
+  public void commitSingleAction(Action commitAction,Architecture architecture,Application application,Bindings bindings,int step){
+    //this.syncTimeOfSrcActors(commitAction,architecture,application,bindings);
     // proceed to schedule the Action
     double ActionTime = commitAction.getProcessingTime();
-    double startTime = Collections.max(Arrays.asList(this.lastEventinProcessor,commitAction.getStart_time(),this.getTimeLastReadofActor(commitAction.getActor())));
+
+    double startTime;
+    if (commitAction.getActor().getInputFifos().size() > 0)
+      startTime= Collections.max(Arrays.asList(this.lastEventinProcessor,commitAction.getStart_time(),this.getTimeLastReadofActor(commitAction.getActor())));
+    else
+      startTime= Collections.max(Arrays.asList(this.lastEventinProcessor,commitAction.getStart_time(),this.getTimeLastReadofActor(commitAction.getActor()),ArchitectureManagement.getMaxPreviousStepScheduledAction(architecture,step)  ));
     double endTime = startTime + ActionTime;
     // update now the commit Action
     commitAction.setStart_time(startTime);
@@ -367,8 +376,14 @@ public class Scheduler{
     // commit the Action
     this.scheduledActions.addLast(commitAction);
     //System.out.println("COMITTING:"+commitAction.getActor().getName());
-    this.syncTimeOfSrcActors(commitAction,architecture,application,bindings);
+
   }
+
+
+
+
+
+
 
 
   public void commitActionsinQueue(){
@@ -412,7 +427,7 @@ public class Scheduler{
     readTransfers.put(commitAction.getActor(),reads);
   }
 
-  public void commitReads(Action commitAction,Map<Integer,Fifo> fifos,Application app){
+  public void commitReads(Action commitAction,Map<Integer,Fifo> fifos,Application app,Bindings bindings){
 	    List<Transfer> reads = new ArrayList<>();
 	    //System.out.println("Actor "+commitAction.getActor().getName());
 	    for(Fifo fifo : app.getActors().get(commitAction.getActor().getId()).getInputFifos()){
@@ -425,6 +440,8 @@ public class Scheduler{
 	      }
 	    }
 	    readTransfers.put(commitAction.getActor(),reads);
+            // I have to specify the source and the target
+            
   }
 
   
@@ -505,6 +522,7 @@ public class Scheduler{
 	          writes.add(writeTransfer);
 	      }
 	    }
+
 	    writeTransfers.put(commitAction.getActor(),writes);
 	  }
   

@@ -43,7 +43,7 @@ import java.util.Map;
 import multitile.application.Application;
 import multitile.application.Fifo;
 import multitile.mapping.Bindings;
-
+import multitile.Action;
 
 public class ArchitectureManagement{
   private static int processorIdCounter;
@@ -90,6 +90,23 @@ public class ArchitectureManagement{
       timeEvent = time;
     architecture.getTiles().get(processor.getOwnerTile().getId()).getProcessors().get(processor.getId()).getScheduler().setLastEventinProcessor(timeEvent);
   }
+
+  public static double getMaxPreviousStepScheduledAction(Architecture architecture,int step){
+    if (step == 1)
+      return 0.0;
+    double MaxTime = 0.0;
+    for(Map.Entry<Integer,Tile> t : architecture.getTiles().entrySet()){
+      for(Map.Entry<Integer,Processor> p : t.getValue().getProcessors().entrySet()){
+        Processor proc = p.getValue();
+        for(Action a : proc.getScheduler().getScheduledActions()){
+          if(a.getStep() == step-1 && a.getDue_time() > MaxTime)
+            MaxTime = a.getDue_time();
+        }
+      }
+    }
+    return MaxTime;
+  }
+
 
   public static Memory getMemoryToBeRelocated(Fifo fifo,Architecture architecture,Application application,Bindings bindings){
     Memory mappedMemory = bindings.getFifoMemoryBindings().get(fifo.getId()).getTarget();
