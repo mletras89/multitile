@@ -153,7 +153,7 @@ public class testQuadCoreModuloScheduling {
       architecture.getTiles().get(0).getProcessors().get(1).getLocalMemory().setCapacity(2000000);
       architecture.getTiles().get(0).getProcessors().get(2).getLocalMemory().setCapacity(2000000);
       architecture.getTiles().get(0).getProcessors().get(3).getLocalMemory().setCapacity(2000000);
-
+      architecture.setMemoryVerboseDebug(false);
       TestApplicationQuadCoreMemoryBound sampleApplication = new TestApplicationQuadCoreMemoryBound(architecture.getTiles().get(0),bindings,mappings);  
       Application app = sampleApplication.getSampleApplication();
       ApplicationManagement.assignFifoMapping(app,architecture,bindings); 
@@ -166,13 +166,13 @@ public class testQuadCoreModuloScheduling {
       scheduler.setApplication(app);
       scheduler.setArchitecture(architecture);
 			
-      scheduler.setMaxIterations(5);
+      scheduler.setMaxIterations(6);
       scheduler.calculateModuloSchedule(bindings);
       //scheduler.printKernelBody();
       scheduler.findSchedule();
       scheduler.schedule(bindings,mappings);
 
-      System.out.println("Single iteration delay: "+scheduler.getDelaySingleIteration());
+      //System.out.println("Single iteration delay: "+scheduler.getDelaySingleIteration());
 
       System.out.println("The MMI is: "+scheduler.getMII());
       
