@@ -50,7 +50,7 @@ public class Architecture{
   private HashMap<Integer,Tile> tiles;
   private NoC noc;
   private GlobalMemory globalMemory;
-  private boolean isMultitile = true;
+  
   public Architecture(String name){
     this.name = name;
     // creaate one tile in the architecture
@@ -98,7 +98,6 @@ public class Architecture{
 	  }
   }
   
-  
   public void setMemoryVerboseDebug(boolean val) {
 	  for(Map.Entry<Integer, Tile> t : this.tiles.entrySet()) {
 		  t.getValue().getTileLocalMemory().setVerboseDebug(val);
@@ -131,12 +130,9 @@ public class Architecture{
 		  Tile clonedTile = new Tile(another.getTiles().get(tileId));
 		  tiles.put(clonedTile.getId(), clonedTile);
 	  }
-	  if(mappedTiles.size() > 1) {
-		  this.noc = new NoC(another.getNoC());
-		  this.globalMemory = new GlobalMemory(another.getGlobalMemory());
-	  }else {
-		  isMultitile = false;
-	  }
+	  
+	  this.noc = new NoC(another.getNoC());
+	  this.globalMemory = new GlobalMemory(another.getGlobalMemory());
   }
   
   
@@ -194,12 +190,10 @@ public class Architecture{
     for(HashMap.Entry<Integer,Tile> t: tiles.entrySet()){
       t.getValue().resetTile();
     }
-    if(isMultitile) {
     // refresh the global memory
     this.globalMemory.resetMemoryUtilization();
     // reset the NoC
     this.noc.restartNoC();
-    }
   }
 
   public void printArchitectureState(){

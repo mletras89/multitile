@@ -406,7 +406,6 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
     this.getKernelActions();
     // 5) now, we schedule the actions
     int i = 1;
-    List<Transfer> transfersToMemory = new ArrayList<>();
     //System.out.println("last step"+this.lastStep);
     while(i<=this.lastStep){
       //System.out.println("step "+i);
@@ -472,7 +471,36 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
     // assign fifo to memory binding
     ApplicationManagement.assignFifoMapping(application, architecture, bindings);
     // check memory footprint and pass to next step if valid
-
+    // key -> memory id
+    // count of bytes
+    HashMap<Integer,Double> bytesMemory    = new HashMap<>();
+    HashMap<Integer,Double> memoryCapacity = new HashMap<>();
+    for(Map.Entry<Integer, Tile> t : architecture.getTiles().entrySet()) {
+    	for(Map.Entry<Integer, Processor> p : t.getValue().getProcessors().entrySet()) {
+    		bytesMemory.put( p.getValue().getLocalMemory().getId() , 0.0);
+    		memoryCapacity.put( p.getValue().getLocalMemory().getId() , p.getValue().getLocalMemory().getCapacity());
+    	}
+    	bytesMemory.put( t.getValue().getTileLocalMemory().getId(), 0.0);
+    	memoryCapacity.put( t.getValue().getTileLocalMemory().getId(),t.getValue().getTileLocalMemory().getCapacity());
+    }
+    bytesMemory.put( architecture.getGlobalMemory().getId(), 0.0);
+	memoryCapacity.put( architecture.getGlobalMemory().getId(), architecture.getGlobalMemory().getCapacity());
+    
+    
+    for(Map.Entry<Integer, Fifo> fifo : application.getFifos().entrySet()) {
+    	int memoryId = bindings.getFifoMemoryBindings().get(fifo.getKey()).getTarget().getId();
+    	double fifoBytes = fifo.getValue().get_capacity()*fifo.getValue().getTokenSize();
+    	// do the remap of memory in case
+    	while(!(bytesMemory.get(memoryId) + fifoBytes <= memoryCapacity.get(memoryId))) {
+    		Memory reMappingMemory = ArchitectureManagement.getMemoryToBeRelocated(fifo.getValue(),architecture,application,bindings);
+    		ApplicationManagement.remapFifo(fifo.getValue(), reMappingMemory,bindings);
+    		memoryId = reMappingMemory.getId();
+    	}
+    	// put bytes in memory
+    	bytesMemory.put(memoryId, bytesMemory.get(memoryId) + fifoBytes);
+    }
+    // I reach this point, I can continue, no memory bounds are violated
+    
     // proceed to schedule the kernel
     for(int j =this.stepStartKernel; j<this.stepEndKernel; j++){  // this.stepEndKernel;j++){
       System.out.println("Step "+j);
