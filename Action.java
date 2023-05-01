@@ -72,6 +72,8 @@ public class Action {
     this.setActor(other.getActor());
     this.setStep(other.getStep());
     this.processingTime = other.getProcessingTime();
+    this.processor = other.getProcessor();
+    this.tile = other.getTile();
   }
   
   public void setProcessor(Processor p){
