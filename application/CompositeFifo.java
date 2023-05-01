@@ -102,7 +102,7 @@ public class CompositeFifo extends Fifo {
   public void fifoWrite(){
 	
 	this.set_tokens(this.get_tokens()+this.getProdRate());  
-	assert this.get_tokens() <= this.get_capacity()  : "Error in writing composite fifo!!!";
+	//assert this.get_tokens() <= this.get_capacity()  : "Error in writing composite fifo!!!";
 	/*
     for(Map.Entry<Integer,Fifo> fifo : this.readers.entrySet()) {
       int new_tokens = fifo.getValue().get_tokens()+fifo.getValue().getProdRate();

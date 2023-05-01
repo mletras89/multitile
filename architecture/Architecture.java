@@ -42,8 +42,9 @@ package multitile.architecture;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Map;
 import java.util.*;
+
+import org.opt4j.core.genotype.IntegerGenotype;
 
 public class Architecture{
   // the key is the id
@@ -51,7 +52,7 @@ public class Architecture{
   private HashMap<Integer,Tile> tiles;
   private NoC noc;
   private GlobalMemory globalMemory;
-  
+  private boolean isMultitile = true;
   public Architecture(String name){
     this.name = name;
     // creaate one tile in the architecture
@@ -122,6 +123,25 @@ public class Architecture{
 	  this.globalMemory = new GlobalMemory(another.getGlobalMemory()); 
   }
   
+  // clone the architecture but only a subset of the given architecture
+  public Architecture(Architecture another,HashMap<Integer,Integer> tileIndexToId, ArrayList<Integer> taskMapping) {
+	  HashSet<Integer> mappedTiles = new HashSet<Integer>(taskMapping);
+	  this.name = another.getName();
+	  this.tiles = new HashMap<>();
+	  for(Integer mappedTile : mappedTiles) {
+		  int tileId = tileIndexToId.get(mappedTile);
+		  Tile clonedTile = new Tile(another.getTiles().get(tileId));
+		  tiles.put(clonedTile.getId(), clonedTile);
+	  }
+	  if(mappedTiles.size() > 1) {
+		  this.noc = new NoC(another.getNoC());
+		  this.globalMemory = new GlobalMemory(another.getGlobalMemory());
+	  }else {
+		  isMultitile = false;
+	  }
+  }
+  
+  
   public double getEndTime(){
     double endTime = 0.0;
     for(Map.Entry<Integer,Tile> t : tiles.entrySet()){
@@ -176,10 +196,12 @@ public class Architecture{
     for(HashMap.Entry<Integer,Tile> t: tiles.entrySet()){
       t.getValue().resetTile();
     }
+    if(isMultitile) {
     // refresh the global memory
     this.globalMemory.resetMemoryUtilization();
     // reset the NoC
     this.noc.restartNoC();
+    }
   }
 
   public void printArchitectureState(){

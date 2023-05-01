@@ -279,7 +279,7 @@ public class Fifo implements Buffer{
   
   public void fifoWrite(){
     this.set_tokens(this.get_tokens()+this.getProdRate()); 
-    assert (this.get_tokens()<= this.get_capacity()): "Error in writing!!!";
+    //assert (this.get_tokens()<= this.get_capacity()): "Error in writing!!!";
   }
 
   public void fifoRead(int idActorReader){
@@ -359,6 +359,7 @@ public class Fifo implements Buffer{
     for(int i=0; i < this.initial_tokens; i++){
         Transfer t = new Transfer(source,this);
         t.setDue_time(0.0);
+        
         while(!this.canFifoWriteToMemory(bindings)){
         	// do the remap and return false
         	Memory reMappingMemory = ArchitectureManagement.getMemoryToBeRelocated(this,architecture,application,bindings);

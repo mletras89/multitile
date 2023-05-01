@@ -427,7 +427,7 @@ public class Scheduler{
     readTransfers.put(commitAction.getActor(),reads);
   }
 
-  public void commitReads(Action commitAction,Map<Integer,Fifo> fifos,Application app,Bindings bindings){
+  public void commitReads(Action commitAction,Map<Integer,Fifo> fifos,Application app){
 	    List<Transfer> reads = new ArrayList<>();
 	    //System.out.println("Actor "+commitAction.getActor().getName());
 	    for(Fifo fifo : app.getActors().get(commitAction.getActor().getId()).getInputFifos()){

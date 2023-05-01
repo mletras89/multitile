@@ -354,7 +354,8 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
   
   public void schedule(Bindings bindings,Mappings mappings){
     architecture.resetArchitecture();
-    application.resetApplication(architecture, bindings, application);
+    //application.resetApplication(architecture, bindings, application);
+    application.resetApplication();
     while(!scheduleModulo(bindings,mappings)){
       architecture.resetArchitecture();
       application.resetApplication();
@@ -382,9 +383,9 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
     // 5) now, we schedule the actions in the first tree iterations
     int i = 1;
     List<Transfer> transfersToMemory = new ArrayList<>();
-    System.out.println("last step"+this.lastStep);
+    //System.out.println("last step"+this.lastStep);
     while(i<=this.lastStep){
-      System.out.println("step "+i);
+      //System.out.println("step "+i);
       //System.out.println("scheduling step="+i);
       this.cleanQueue();
       this.getSchedulableActors(application.getActors(),application.getFifos(),i,this.kernel);
@@ -404,7 +405,7 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
         int availableProcessor = getNextAvailableProcessor(processorUtilization);
         assert availableProcessor != -1;
         Processor p = tiles.get(actionToTileId).getProcessors().get(availableProcessor);
-        System.out.println("actor "+action.getActor().getName()+ " mapped to "+p.getName());
+        //System.out.println("actor "+action.getActor().getName()+ " mapped to "+p.getName());
         // setting the mapping of the actor and action
         bindings.getActorProcessorBindings().put(action.getActor().getId(), new Binding<>(p));
         //System.out.println("ACTION "+action.getActor().getName());
@@ -425,12 +426,12 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
       // iterate tiles and the processors to perform the simulation of the application
       for(HashMap.Entry<Integer,Tile> t: tiles.entrySet()){
         for(HashMap.Entry<Integer,Processor> p : t.getValue().getProcessors().entrySet()){
-          System.out.println("Scheduling procesosr "+p.getValue().getName());
+          //System.out.println("Scheduling procesosr "+p.getValue().getName());
           Queue<Action> actions = p.getValue().getScheduler().getQueueActions();
           // scheduled transfers in processor p
           Map<Actor,List<Transfer>> processorReadTransfers = new HashMap<>();
           for(Action action : actions){
-                  System.out.println("\tScheduling action "+action.getActor().getName());
+                  //System.out.println("\tScheduling action "+action.getActor().getName());
         	  // first schedule the reads
         	  // 1) get the reads from the processor
         	  p.getValue().getScheduler().commitReads(action,application.getFifos(),application,bindings);
