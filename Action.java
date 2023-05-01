@@ -37,6 +37,8 @@
 package multitile;
 
 import multitile.application.Actor;
+import multitile.architecture.Tile;
+import multitile.architecture.Processor;
 
 public class Action {
   private double start_time;
@@ -44,6 +46,8 @@ public class Action {
   private Actor actor;
   private int step;
   private double processingTime;
+  private Tile tile;
+  private Processor processor;
 
   public Action(Actor actor) {
       this.setStart_time(0.0);
@@ -70,6 +74,22 @@ public class Action {
     this.processingTime = other.getProcessingTime();
   }
   
+  public void setProcessor(Processor p){
+    this.processor = p;
+  }
+
+  public void setTile(Tile t){
+    this.tile = t;
+  }
+
+  public Processor getProcessor(){
+    return processor;
+  }
+  
+  public Tile getTile(){
+    return tile;
+  }
+
   public void setProcessingTime(double processingTime) {
 	  this.processingTime = processingTime;
   }
