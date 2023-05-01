@@ -65,12 +65,13 @@ public class testPentaCoreModuloScheduling {
       architecture.printArchitecture();
       architecture.setMemoryVerboseDebug(false);
  
-      architecture.getTiles().get(0).getProcessors().get(0).getLocalMemory().setCapacity(Double.MAX_VALUE);
-      architecture.getTiles().get(0).getProcessors().get(1).getLocalMemory().setCapacity(Double.MAX_VALUE);
-      architecture.getTiles().get(0).getProcessors().get(2).getLocalMemory().setCapacity(Double.MAX_VALUE);
-      architecture.getTiles().get(0).getProcessors().get(3).getLocalMemory().setCapacity(Double.MAX_VALUE);
-      architecture.getTiles().get(0).getProcessors().get(4).getLocalMemory().setCapacity(Double.MAX_VALUE);
-      
+      architecture.getTiles().get(0).getProcessors().get(0).getLocalMemory().setCapacity(1000000);
+      architecture.getTiles().get(0).getProcessors().get(1).getLocalMemory().setCapacity(500000);
+      architecture.getTiles().get(0).getProcessors().get(2).getLocalMemory().setCapacity(500000);
+      architecture.getTiles().get(0).getProcessors().get(3).getLocalMemory().setCapacity(500000);
+      architecture.getTiles().get(0).getProcessors().get(4).getLocalMemory().setCapacity(1000000);
+      architecture.getTiles().get(0).getTileLocalMemory().setCapacity(Double.MAX_VALUE);
+
       TestApplicationPenta sampleApplication = new TestApplicationPenta(architecture.getTiles().get(0),bindings,mappings);  
       Application app = sampleApplication.getSampleApplication();
       ApplicationManagement.assignFifoMapping(app,architecture,bindings); 
@@ -89,7 +90,7 @@ public class testPentaCoreModuloScheduling {
 //      System.out.println("Single iteration delay: "+scheduler.getDelaySingleIteration());
 
       System.out.println("The MMI is: "+scheduler.getMII());
-      
+      architecture.printArchitecture(); 
       for(HashMap.Entry<Integer,Processor> p: architecture.getTiles().get(0).getProcessors().entrySet()){
         p.getValue().getScheduler().saveScheduleStats(".");
       }
