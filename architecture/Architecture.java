@@ -44,8 +44,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 
-import org.opt4j.core.genotype.IntegerGenotype;
-
 public class Architecture{
   // the key is the id
   private String name;

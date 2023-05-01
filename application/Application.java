@@ -42,7 +42,7 @@ import java.util.*;
 import multitile.architecture.Processor;
 import multitile.architecture.Tile;
 import multitile.mapping.Bindings;
-import net.sf.opendse.model.Task;
+//import net.sf.opendse.model.Task;
 import multitile.application.Fifo.FIFO_MAPPING_TYPE;
 import multitile.architecture.Architecture;
 
@@ -352,7 +352,7 @@ public class Application{
 		  return result;
 	  }
 	  
-		public void collapseMergeableMulticastActorsDSE(int startIndex,HashMap<String,Task> mapOfFifos){
+/*		public void collapseMergeableMulticastActorsDSE(int startIndex,HashMap<String,Task> mapOfFifos){
 		    // get all the multicast actors
 		    Map<Integer,Actor> multicastActors = getMulticastActors();
 		    
@@ -368,7 +368,7 @@ public class Application{
 			      mapOfFifos.put(cf.getName(), r);
 		      }
 		    }
-		}
+		}*/
 	  
 }
 

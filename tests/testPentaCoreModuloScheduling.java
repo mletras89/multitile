@@ -84,7 +84,7 @@ public class testPentaCoreModuloScheduling {
       scheduler.printKernelBody();
       scheduler.findSchedule();
       scheduler.printPipelinedSteps();
-      scheduler.schedule(bindings,mappings);
+      scheduler.scheduleSim(bindings,mappings);
 
 //      System.out.println("Single iteration delay: "+scheduler.getDelaySingleIteration());
 
