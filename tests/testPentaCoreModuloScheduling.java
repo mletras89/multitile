@@ -66,9 +66,9 @@ public class testPentaCoreModuloScheduling {
       architecture.setMemoryVerboseDebug(false);
  
       architecture.getTiles().get(0).getProcessors().get(0).getLocalMemory().setCapacity(1000000);
-      architecture.getTiles().get(0).getProcessors().get(1).getLocalMemory().setCapacity(500000);
-      architecture.getTiles().get(0).getProcessors().get(2).getLocalMemory().setCapacity(500000);
-      architecture.getTiles().get(0).getProcessors().get(3).getLocalMemory().setCapacity(500000);
+      architecture.getTiles().get(0).getProcessors().get(1).getLocalMemory().setCapacity(1000000);
+      architecture.getTiles().get(0).getProcessors().get(2).getLocalMemory().setCapacity(1000000);
+      architecture.getTiles().get(0).getProcessors().get(3).getLocalMemory().setCapacity(1000000);
       architecture.getTiles().get(0).getProcessors().get(4).getLocalMemory().setCapacity(1000000);
       architecture.getTiles().get(0).getTileLocalMemory().setCapacity(Double.MAX_VALUE);
 
@@ -86,8 +86,7 @@ public class testPentaCoreModuloScheduling {
       scheduler.findSchedule();
       scheduler.printPipelinedSteps();
       scheduler.scheduleSingleIteration(bindings,mappings);
-	//scheduler.schedule(bindings,mappings);
-//      System.out.println("Single iteration delay: "+scheduler.getDelaySingleIteration());
+      app.printFifosMapping(bindings);
 
       System.out.println("The MMI is: "+scheduler.getMII());
       architecture.printArchitecture(); 

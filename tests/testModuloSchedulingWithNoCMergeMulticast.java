@@ -93,20 +93,25 @@ public class testModuloSchedulingWithNoCMergeMulticast {
 			
       scheduler.setMaxIterations(10);
       scheduler.calculateModuloSchedule(bindings);
-      //System.out.println("PRINTING KERNEL: ");
-      //scheduler.printKernelBody();
-      // once the kernell is done, reassign the actor Mapping and then reassing the fifoMapping
-      scheduler.findSchedule();
-      ApplicationManagement.assignActorMapping(app,architecture,scheduler,bindings);
-      ApplicationManagement.assignFifoMapping(app,architecture,bindings); 
+      boolean found = scheduler.findSchedule();
+      scheduler.printPipelinedSteps();
+      
+      if (found)
+      scheduler.scheduleSingleIteration(bindings,mappings);
+
+      //ApplicationManagement.assignActorMapping(app,architecture,scheduler,bindings);
+      //ApplicationManagement.assignFifoMapping(app,architecture,bindings); 
       //app.printActors();
       //app.printFifos();
  
-      scheduler.schedule(bindings,mappings);
+      //scheduler.schedule(bindings,mappings);
 
-      System.out.println("Single iteration delay: "+scheduler.getDelaySingleIteration());
-
+      //System.out.println("Single iteration delay: "+scheduler.getDelaySingleIteration());
+      app.printFifosMapping(bindings);
       System.out.println("The MMI is: "+scheduler.getMII());
+      
+      architecture.printArchitecture();
+
 
       // dumping system utilization statistics
       for(HashMap.Entry<Integer,Tile> t: architecture.getTiles().entrySet()){
