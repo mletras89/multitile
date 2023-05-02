@@ -40,6 +40,7 @@ package multitile.application;
 import java.util.*;
 
 import multitile.architecture.Processor;
+import multitile.architecture.Memory;
 import multitile.architecture.Tile;
 import multitile.mapping.Bindings;
 //import net.sf.opendse.model.Task;
@@ -146,7 +147,16 @@ public class Application{
 		  System.out.println("Fifo:"+fifoEntry.getValue().getName()+" is composite?:"+fifoEntry.getValue().isCompositeChannel()+" mapping type "+fifoEntry.getValue().getMappingType());
 	}  
   }
-  
+
+  public void printFifosMapping(Bindings bindings) {
+    for(Map.Entry<Integer,Fifo> fifoEntry : fifos.entrySet()){
+      Memory memory = bindings.getFifoMemoryBindings().get(fifoEntry.getKey()).getTarget();
+      System.out.println("Fifo:"+fifoEntry.getValue().getName()+" is composite?:"+fifoEntry.getValue().isCompositeChannel()+" bound to "+memory.getName());
+    }  
+  }
+
+
+
   public void printFifosState(){
     for(Map.Entry<Integer,Fifo> fifoEntry : fifos.entrySet()){
     	if(!fifoEntry.getValue().isCompositeChannel()) {
