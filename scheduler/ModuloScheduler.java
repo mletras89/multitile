@@ -273,8 +273,7 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
     }
   }
 
-  public void findSchedule(){
-    // at least 3 iterations
+  public boolean findSchedule(){
     List<List<Integer>>	singleIteration     = new ArrayList<>();
     this.kernel  = new HashMap<>();
     int scheduled = 0;
@@ -315,23 +314,27 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
         this.lastStep = i;
       }
     }
+
     // 3) we find the kernel, to calculate the throuhgput
     //boolean foundKernel = false;
     if(getMaxIterations()>4){
-    int count=1;
-    while(count<=this.lastStep) {
+      int count=1;
+      while(count<=this.lastStep) {
     	stepStartKernel = count; 
     	stepEndKernel   = count + MII;
     	if (checkValidKernel(stepStartKernel,stepEndKernel))
     		break;
     	count=count+MII;
-    }}
+      }
+      this.stepStartKernel = stepStartKernel;
+      this.stepEndKernel   = stepEndKernel;
+      return true;
+    }
+    return false;
     //System.out.println("L->"+l);
     //System.out.println("Kernel starts at: "+stepStartKernel+" and ends at: "+stepEndKernel);
     //System.out.println("Kernel -> "+kernel);
     //System.out.println("Last step "+this.lastStep);
-    this.stepStartKernel = stepStartKernel;
-    this.stepEndKernel   = stepEndKernel;
   }
 
   public boolean checkValidKernel(int start,int end) {
@@ -380,10 +383,6 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
     architecture.resetArchitecture();
     application.resetApplication(architecture, bindings, application);
     scheduleModuloSingleIteration(bindings,mappings);
-    //while(!scheduleModuloSim(bindings,mappings)){
-    //  architecture.resetArchitecture();
-    //  application.resetApplication();
-    //}
   }
 
   boolean scheduleModuloSingleIteration(Bindings bindings, Mappings mappings){
@@ -444,14 +443,6 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
       kernelActions.put(i,mappedAction);
       i++;
     }
-    // print schedule
-    for(Map.Entry<Integer,List<Action>> k : kernelActions.entrySet()){
-      System.out.println("Step "+k.getKey());
-      for(Action a : k.getValue()){
-        System.out.println("\tActor "+a.getActor().getName()+" -> "+a.getProcessor().getName()+" to tile -> "+a.getTile().getId());
-      }
-    }
-
     // fill the tokens to be read in FIFOs
     for(Action a : kernelActions.get(this.stepStartKernel-1)){
       //Processor p = architecture.getTiles().get(a.getTile().getId()).getProcessors().get(a.getProcessor().getId());
@@ -459,7 +450,6 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
           fifo.insertTimeProducedToken(new Transfer(application.getActors().get(a.getActor().getId()),fifo));
       }
     }
-
     // assign actor to core binding
     for(int j =this.stepStartKernel; j<this.stepEndKernel;j++){
       for(Action a : kernelActions.get(j)){
@@ -484,8 +474,7 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
     	memoryCapacity.put( t.getValue().getTileLocalMemory().getId(),t.getValue().getTileLocalMemory().getCapacity());
     }
     bytesMemory.put( architecture.getGlobalMemory().getId(), 0.0);
-	memoryCapacity.put( architecture.getGlobalMemory().getId(), architecture.getGlobalMemory().getCapacity());
-    
+    memoryCapacity.put( architecture.getGlobalMemory().getId(), architecture.getGlobalMemory().getCapacity());
     
     for(Map.Entry<Integer, Fifo> fifo : application.getFifos().entrySet()) {
     	int memoryId = bindings.getFifoMemoryBindings().get(fifo.getKey()).getTarget().getId();
@@ -503,67 +492,26 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
     
     // proceed to schedule the kernel
     for(int j =this.stepStartKernel; j<this.stepEndKernel; j++){  // this.stepEndKernel;j++){
-      System.out.println("Step "+j);
       this.getSchedulableActors(j);
       int sizeActions = queueActions.size();
-      System.out.println("sizeActions "+sizeActions);
-      // moved actions in queue to scheduler
       // schedule only reads     
       Map<Actor,List<Transfer>> processorReadTransfers = new HashMap<>(); 
       for(Action action : queueActions){
 	Processor p = architecture.getTiles().get(action.getTile().getId()).getProcessors().get(action.getProcessor().getId());
 	p.getScheduler().commitReads(action,application.getFifos(),application);
 	List<Transfer> readTransfers = p.getScheduler().getReadTransfers().get(action.getActor());
-	// 2) for each read transfer calculate the path that has to travel, might be comming from the tile local crossbar,
-	//    or the transfer has to travel across several interconnect elements, a read comming from NoC has to travel 
-	//    NoC -> TileLocal Crossbar -> Processor
-	//    other example es when the transfer source is a local memory of other processor placed in a different tile
-	//    Processor1 -> Tile local Crossbar of Processor 1 -> NoC -> TileLocal Crossbar of Processor 2 -> Processor 2
 	if (readTransfers == null)
 		continue;
-	List<Transfer> listSchedTransfers = new ArrayList<Transfer>();
-        // the iterate over Tranfesrs to calculate the routing
-        for(Transfer transfer : readTransfers){
-      	  Queue<PassTransferOverArchitecture> routings = calculatePathOfTransfer(transfer,bindings);
-      	  int routingsLength = routings.size();
-      	  Transfer scheduledTransfer = null;
-      	  Transfer temporalTransfer = new Transfer(transfer);
-      	  for(int m=0; m<routingsLength;m++){
-      		  // proceed to schedule the routing passes
-      		  PassTransferOverArchitecture routing = routings.remove();
-      		  scheduledTransfer = schedulePassOfTransfer(temporalTransfer,routing);
-      		  temporalTransfer = new Transfer(scheduledTransfer);
-      		  temporalTransfer.setStart_time(scheduledTransfer.getDue_time());
-      	  }
-      	  if(scheduledTransfer == null){
-      		  // if we reach this part, means that the transfer does not cost and is a writing to processor local memory
-      		  scheduledTransfer = new Transfer(transfer);
-      		  scheduledTransfer.setDue_time(scheduledTransfer.getStart_time());
-      	  }
-      	  /*if(!scheduledTransfer.getFifo().canFifoReadFromMemory(bindings)){
-      	      // do the remap and return false
-                    Memory reMappingMemory = ArchitectureManagement.getMemoryToBeRelocated(scheduledTransfer.getFifo(),architecture,application,bindings);
-                    ApplicationManagement.remapFifo(scheduledTransfer.getFifo(), reMappingMemory,bindings);
-                    return false;
-            }*/
-           //scheduledTransfer.getFifo().fifoReadFromMemory(scheduledTransfer,bindings);
-      	   listSchedTransfers.add(scheduledTransfer);
-        }
-        processorReadTransfers.put(action.getActor(),listSchedTransfers);
-	
-	
+        processorReadTransfers.put(action.getActor(), scheduleTransfers(readTransfers,bindings));
 	// commit the action in the processor
 	p.getScheduler().setReadTransfers(processorReadTransfers);
-	//p.getScheduler().setReadTransfersToMemory();
       }
 
       for(Action action : queueActions){
 	 Processor p = architecture.getTiles().get(action.getTile().getId()).getProcessors().get(action.getProcessor().getId());
-	 // schedule action and writes
+	 // schedule actions
 	 p.getScheduler().commitSingleAction(action,architecture,application, bindings, j ); 
       }
-
-
       Map<Actor,List<Transfer>> processorWriteTransfers = new HashMap<>();
       for(Action action : queueActions){
 	 Processor p = architecture.getTiles().get(action.getTile().getId()).getProcessors().get(action.getProcessor().getId());
@@ -574,60 +522,18 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
          List<Transfer> writeTransfers = p.getScheduler().getWriteTransfers().get(action.getActor());
 	 if (writeTransfers == null)
 		continue;
-         List<Transfer> listSchedTransfers = new ArrayList<Transfer>();
-       	 for(Transfer transfer : writeTransfers){
-		Queue<PassTransferOverArchitecture> routings = calculatePathOfTransfer(transfer,bindings);
-		int routingsLength = routings.size();
-		Transfer scheduledTransfer = null;
-		Transfer temporalTransfer = new Transfer(transfer);
-		for(int m=0; m < routingsLength; m++ ){
-			// proceed to schedule the routing of transfer
-			PassTransferOverArchitecture routing = routings.remove();
-			scheduledTransfer = schedulePassOfTransfer(temporalTransfer,routing);
-			temporalTransfer = new Transfer(scheduledTransfer);
-			temporalTransfer.setStart_time(scheduledTransfer.getDue_time());
-		}
-		if(scheduledTransfer == null){
-			// if we reach this part, means that the transfer does not cost and is a writing to processor local memory
-			scheduledTransfer = new Transfer(transfer);
-			scheduledTransfer.setDue_time(scheduledTransfer.getStart_time());
-		}
-		/*if(!scheduledTransfer.getFifo().canFifoWriteToMemory(bindings)){
-			// do the remap and return false
-              	Memory reMappingMemory = ArchitectureManagement.getMemoryToBeRelocated(scheduledTransfer.getFifo(),architecture,application,bindings);
-              	ApplicationManagement.remapFifo(scheduledTransfer.getFifo(), reMappingMemory,bindings);
-              	return false;
-        	}*/
-        	//scheduledTransfer.getFifo().fifoWriteToMemory(scheduledTransfer,bindings);
-		//listSchedTransfers.add(scheduledTransfer);
-		listSchedTransfers.add(transfer);
-	}
-	processorWriteTransfers.put(action.getActor(),listSchedTransfers);
-         
-       	 // update the write transfers of each processor with the correct start and due time
-       	 p.getScheduler().setWriteTransfers(processorWriteTransfers);
-       	 // update the last event in processor, taking into the account the processorWriteTransfers
-         p.getScheduler().updateLastEventAfterWrite(action);
-         // insert the time of the produced tokens by acton into the correspondent fifos
-         p.getScheduler().produceTokensinFifo(action,application.getFifos());
-         // managing the tracking of the memories
-       	 p.getScheduler().setWriteTransfersToMemory();
-         //transfersToMemory.addAll(p.getValue().getScheduler().getTransfersToMemory());
-         // clean the lists read and write transfers in each processor
-
-
-
+	processorWriteTransfers.put(action.getActor(), scheduleTransfers(writeTransfers,bindings));
+     	// update the write transfers of each processor with the correct start and due time
+	p.getScheduler().setWriteTransfers(processorWriteTransfers);
+      	// update the last event in processor, taking into the account the processorWriteTransfers
+        p.getScheduler().updateLastEventAfterWrite(action);
+        // insert the time of the produced tokens by acton into the correspondent fifos
+        p.getScheduler().produceTokensinFifo(action,application.getFifos());
+        // managing the tracking of the memories
+      	 p.getScheduler().setWriteTransfersToMemory();
+        //transfersToMemory.addAll(p.getValue().getScheduler().getTransfersToMemory());
+        // clean the lists read and write transfers in each processor
       }
-      for(HashMap.Entry<Integer,Tile> t: tiles.entrySet()){
-    	  for(HashMap.Entry<Integer,Processor> p : t.getValue().getProcessors().entrySet()){
-      	    //p.getValue().getScheduler().fireCommitedActions(application.getFifos());
-      	    p.getValue().getScheduler().getTransfersToMemory().clear();
-       	 	p.getValue().getScheduler().getReadTransfers().clear();
-         	p.getValue().getScheduler().getWriteTransfers().clear();
-		p.getValue().getScheduler().getQueueActions().clear();
-      	  }
-      }
-
     }
     return true;
   }
@@ -744,7 +650,7 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
         		      scheduledTransfer.getFifo().fifoReadFromMemory(scheduledTransfer,bindings);
         			  listSchedTransfers.add(scheduledTransfer);
         		  }
-        		  processorReadTransfers.put(action.getActor(),listSchedTransfers);
+        		  processorReadTransfers.put(action.getActor(), listSchedTransfers);
         	  }
         	  
         	  // commit the action in the processor
@@ -1022,5 +928,35 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
   public int getMII(){
     return this.MII;
   }
+
+  public List<Transfer> scheduleTransfers(List<Transfer> transfers,Bindings bindings){
+    List<Transfer> listSchedTransfers = new ArrayList<Transfer>();
+    //    for each transfer calculate the path that has to travel, might be comming from the tile local crossbar,
+    //    or the transfer has to travel across several interconnect elements, a read comming from NoC has to travel 
+    //    NoC -> TileLocal Crossbar -> Processor
+    //    other example es when the transfer source is a local memory of other processor placed in a different tile
+    //    Processor1 -> Tile local Crossbar of Processor 1 -> NoC -> TileLocal Crossbar of Processor 2 -> Processor 2  
+    for(Transfer transfer : transfers){
+  	  Queue<PassTransferOverArchitecture> routings = calculatePathOfTransfer(transfer,bindings);
+  	  int routingsLength = routings.size();
+  	  Transfer scheduledTransfer = null;
+  	  Transfer temporalTransfer = new Transfer(transfer);
+  	  for(int m=0; m<routingsLength;m++){
+  		  // proceed to schedule the routing passes
+  		  PassTransferOverArchitecture routing = routings.remove();
+  		  scheduledTransfer = schedulePassOfTransfer(temporalTransfer,routing);
+  		  temporalTransfer = new Transfer(scheduledTransfer);
+  		  temporalTransfer.setStart_time(scheduledTransfer.getDue_time());
+  	  }
+  	  if(scheduledTransfer == null){
+  		  // if we reach this part, means that the transfer does not cost and is a writing to processor local memory
+  		  scheduledTransfer = new Transfer(transfer);
+  		  scheduledTransfer.setDue_time(scheduledTransfer.getStart_time());
+  	  }
+	  listSchedTransfers.add(scheduledTransfer);
+    }
+    return listSchedTransfers;
+
+  } 
 
 }
