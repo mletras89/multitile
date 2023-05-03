@@ -192,15 +192,21 @@ public class CompositeFifo extends Fifo {
   
   @Override
   public double readTimeProducedToken() {
-    Transfer status;
+    Transfer status=null;
     //System.out.println("FIFO: "+this.getName()+" capacity "+this.get_capacity());
     this.numberOfReadsTimeProduced++;
     int currentNumberOfReads = this.numberOfReadsTimeProduced;
 	  
     if (currentNumberOfReads % readers.size()==0)
-      status = this.getTimeProducedToken().remove();
-    else 
-      status = this.getTimeProducedToken().peek(); //  .peekTimeProducedToken(); 
+    	if (this.getTimeProducedToken().size() > 0)
+        {
+    		status = this.getTimeProducedToken().remove();
+    	}
+    else
+      if (this.getTimeProducedToken().size() > 0)
+      {
+    	  status = this.getTimeProducedToken().peek(); //  .peekTimeProducedToken();
+      }
     if (status == null)
     		return 0;
 	assert status != null : "ERROR: FIFO"+this.getName()+" actor";

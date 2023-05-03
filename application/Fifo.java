@@ -324,9 +324,14 @@ public class Fifo implements Buffer{
     Transfer status;
     //System.out.println("FIFOS: "+this.getName());
     this.numberOfReadsTimeProduced++;
-    assert timeProducedToken.size() > 0: "Error here "+this.getName();
-    status = this.timeProducedToken.remove();
-    return status.getDue_time();
+    //assert timeProducedToken.size() > 0: "Error here "+this.getName();
+    
+    if (timeProducedToken.size() > 0)
+    {
+    	status = this.timeProducedToken.remove();
+    	return status.getDue_time();
+    }
+    return 0;
   }
   
  

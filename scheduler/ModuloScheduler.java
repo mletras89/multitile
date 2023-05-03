@@ -379,10 +379,10 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
     }
   }
   
-  public void scheduleSingleIteration(Bindings bindings,Mappings mappings){
+  public boolean scheduleSingleIteration(Bindings bindings,Mappings mappings){
     architecture.resetArchitecture();
     application.resetApplication(architecture, bindings, application);
-    scheduleModuloSingleIteration(bindings,mappings);
+    return scheduleModuloSingleIteration(bindings,mappings);
   }
 
   boolean scheduleModuloSingleIteration(Bindings bindings, Mappings mappings){
@@ -406,6 +406,7 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
     // 5) now, we schedule the actions
     int i = 1;
     //System.out.println("last step"+this.lastStep);
+    boolean stop = false;
     while(i<=this.lastStep){
       //System.out.println("step "+i);
       //System.out.println("scheduling step="+i);
@@ -431,7 +432,7 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
         action.setProcessor(p);
         Mapping<Processor> mapping = mappings.getActorProcessorMappings().get(action.getActor().getId()).get(p.getId());
         action.setProcessingTime((double)mapping.getProperties().get("runtime"));
-	action.setTile(tiles.get(actionToTileId));
+        action.setTile(tiles.get(actionToTileId));
 
         // put the action in the processor
         tiles.get(actionToTileId).getProcessors().get(availableProcessor).getScheduler().getQueueActions().add(action);
@@ -444,12 +445,12 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
       i++;
     }
     // fill the tokens to be read in FIFOs
-    for(Action a : kernelActions.get(this.stepStartKernel-1)){
+    /*for(Action a : kernelActions.get(this.stepStartKernel-1)){
       //Processor p = architecture.getTiles().get(a.getTile().getId()).getProcessors().get(a.getProcessor().getId());
       for(Fifo fifo : application.getActors().get(a.getActor().getId()).getOutputFifos()){
           fifo.insertTimeProducedToken(new Transfer(application.getActors().get(a.getActor().getId()),fifo));
       }
-    }
+    }*/
     // assign actor to core binding
     for(int j =this.stepStartKernel; j<this.stepEndKernel;j++){
       for(Action a : kernelActions.get(j)){
@@ -497,14 +498,14 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
       // schedule only reads     
       Map<Actor,List<Transfer>> processorReadTransfers = new HashMap<>(); 
       for(Action action : queueActions){
-	Processor p = architecture.getTiles().get(action.getTile().getId()).getProcessors().get(action.getProcessor().getId());
-	p.getScheduler().commitReads(action,application.getFifos(),application);
-	List<Transfer> readTransfers = p.getScheduler().getReadTransfers().get(action.getActor());
-	if (readTransfers == null)
-		continue;
-        processorReadTransfers.put(action.getActor(), scheduleTransfers(readTransfers,bindings));
-	// commit the action in the processor
-	p.getScheduler().setReadTransfers(processorReadTransfers);
+    	  Processor p = architecture.getTiles().get(action.getTile().getId()).getProcessors().get(action.getProcessor().getId());
+    	  p.getScheduler().commitReads(action,application.getFifos(),application);
+    	  List<Transfer> readTransfers = p.getScheduler().getReadTransfers().get(action.getActor());
+    	  if (readTransfers == null)
+    		  continue;
+    	  processorReadTransfers.put(action.getActor(), scheduleTransfers(readTransfers,bindings));
+    	  // commit the action in the processor
+    	  p.getScheduler().setReadTransfers(processorReadTransfers);
       }
 
       for(Action action : queueActions){
