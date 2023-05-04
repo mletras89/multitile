@@ -105,15 +105,21 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
   
   public void calculateModuloSchedule(Bindings bindings){
     HashMap<Integer,Tile> tiles = architecture.getTiles();
+    // key tile id
+    // number of actors mapped there
+    HashMap<Integer,Integer> actorsToTile = new HashMap<>();
+    for(Map.Entry<Integer, Tile> t : tiles.entrySet())  {
+    	actorsToTile.put(t.getKey(), 0);
+    }
+    for(Map.Entry<Integer, Actor> a : application.getActors().entrySet() ) {
+    	Tile tile = bindings.getActorTileBindings().get(a.getKey()).getTarget();
+    	int currentCount = actorsToTile.get(tile.getId());
+    	actorsToTile.put( tile.getId()  , currentCount+1);
+    }
+    
     List<Integer> V = new ArrayList<>();
     for(Map.Entry<Integer,Actor> v : application.getActors().entrySet()){
       V.add(v.getKey());
-    }
-    // first define a map  of scheduled actions <key,value> <ActorId,Bool>
-    HashMap<Integer, Boolean> scheduled = new HashMap<>(); 
-    // set the map, with the actors as not scheduled at this point
-    for(Map.Entry<Integer,Actor> e :   application.getActors().entrySet()){
-      scheduled.put(e.getKey(),false);
     }
     // 1 [Compute resource usage]
     // Examine the loop body to determine the usage, usage(i), of each resource class R(i) by the loop body
@@ -125,7 +131,9 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
     }
     // update the usage
     for(HashMap.Entry<Integer,Tile> t: tiles.entrySet()){
-      usage.put(t.getKey(),application.getActors().size());
+      int tileUsage = actorsToTile.get(t.getKey());
+      //usage.put(t.getKey(),application.getActors().size());
+      usage.put(t.getKey(),tileUsage);
     }
     // 2 [Determine recurrencies]
     // 		Enumerate all the recurrences in the dependence graph.
@@ -161,7 +169,7 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
       //             i and j are stored in a list which serves as key in a map
       Map<ArrayList<Integer>, Integer> U = new HashMap<>();
       for(HashMap.Entry<Integer,Tile> t: tiles.entrySet()) {
-        for (int i=0; i<application.getActors().size()*2;i++) {
+        for (int i=0; i<application.getActors().size()*10;i++) {
           ArrayList<Integer> p = new ArrayList<>();
           p.add(t.getKey());
           p.add(i);
@@ -177,14 +185,13 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
       HashMap<Integer,Set<Integer>> SUCC 	= new HashMap<>();
       for(Map.Entry<Integer, Actor> actor : application.getActors().entrySet()) {
       	l.put(actor.getKey(), 1);
-      	PCOUNT.put(actor.getKey(), getPCOUNT(actor.getValue(), scheduled));
+      	PCOUNT.put(actor.getKey(), getPCOUNT(actor.getValue()));
       	SUCC.put(actor.getKey(), getSUCC(actor.getValue()));
       }
-      // the number of the control step and the list is the actors scheduled in that control step
-      //HashMap<Integer,List<Integer>> controlStep = new HashMap<>();
-      //HashMap<Integer,List<Integer>> occHard     = new HashMap<>();
+
       while(!V.isEmpty()) {
         List<Integer> removeV = new ArrayList<>();
+        List<Integer> canRemove = new ArrayList<>();
         for (int v : V) {
           /* Check whether data dependences are satisfied */
           if (PCOUNT.get(v) == 0) {
@@ -192,16 +199,11 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
             /* Check that no more than num(r(v)) operations are scheduled on the
                resources corresponding to *R(r(v)) at the same time modulo MII */
             int BU = calcU(l,MII,U,v,bindings);
-            //System.out.println("l:");
-            //System.out.println(l);
-            //System.out.println("U");
-            //System.out.println(U);
-       	    //int mappingV = application.getActors().get(v).getMapping().getOwnerTile().getId();
             int mappingV =  bindings.getActorTileBindings().get(v).getTarget().getId();   //application.getActors().get(v).getMappingToTile().getId();
-            //System.out.println("BU:"+BU);
-            while(BU>=tiles.get(mappingV).getProcessors().size()) {
-              l.put(v, l.get(v)+1);
-              BU = calcU(l,MII,U,v,bindings);  
+            //while(BU>=tiles.get(mappingV).getProcessors().size()) {
+            while(!(BU<tiles.get(mappingV).getProcessors().size())) {
+               l.put(v, l.get(v)+1);
+               BU = calcU(l,MII,U,v,bindings);  
             }
             ArrayList<Integer> pair = new ArrayList<>();
             pair.add(mappingV);
@@ -213,8 +215,7 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
               int maxVal = l.get(w) > l.get(v)+1 ? l.get(w) : l.get(v)+1;
               l.put(w,maxVal);
             }
-            scheduled.put(v, true);
-        removeV.add(v);
+            removeV.add(v);
           }
         }
         V.removeAll(removeV);
@@ -226,7 +227,6 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
         // fill again V
         for(Map.Entry<Integer,Actor> v : application.getActors().entrySet()){
           V.add(v.getKey());
-          scheduled.put(v.getKey(),false);
         }
       }
       else
@@ -401,15 +401,15 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
           resourceOcupation.get(i).get(t.getKey()).put(p.getKey(),false);
         }
       }
-    }  
+    }
+    
     this.getKernelActions();
     // 5) now, we schedule the actions
     int i = 1;
     //System.out.println("last step"+this.lastStep);
     boolean stop = false;
     while(i<=this.lastStep){
-      //System.out.println("step "+i);
-      //System.out.println("scheduling step="+i);
+      //System.out.println("Working on Step "+i);
       this.cleanQueue();
       this.getSchedulableActors(i);
       //LinkedList<Action> stepScheduledActions = new LinkedList<Action>();
@@ -427,7 +427,9 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
         HashMap<Integer,Boolean> processorUtilization = currentTilesOccupation.get(actionToTileId);
 
         int availableProcessor = getNextAvailableProcessor(processorUtilization);
+        
         assert availableProcessor != -1;
+        
         Processor p = tiles.get(actionToTileId).getProcessors().get(availableProcessor);
         action.setProcessor(p);
         Mapping<Processor> mapping = mappings.getActorProcessorMappings().get(action.getActor().getId()).get(p.getId());
@@ -855,14 +857,11 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
   }
   
   // PCOUNT: is the number of immediate predecessors of v not yet scheduled  
-  int getPCOUNT(Actor v, HashMap<Integer, Boolean> scheduled) {
+  int getPCOUNT(Actor v) {
     int pCount=0;
     for(Fifo fifo : v.getInputFifos()) {
-      if(!fifo.isFifoRecurrence()){
-        int sourceActorId = fifo.getSource().getId();
-        if (scheduled.get(sourceActorId) == false)
-          pCount++;
-      }
+      if(!fifo.isFifoRecurrence())
+        pCount++;
     }
     return pCount;
   }
@@ -898,16 +897,23 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
             System.out.println("key :["+u.getKey().get(0)+","+u.getKey().get(1)+"] val: "+u.getValue());
     }
     System.out.println("==================================");*/
+    int maxL = 	Collections.max(new ArrayList<>(l.values()));
+    int mapping = bindings.getActorTileBindings().get(v).getTarget().getId();
     for (int i=0;i<=Math.floor(l.get(v)/MII);i++) {
-            //int mapping = application.getActors().get(v).getMapping().getOwnerTile().getId();
-    		int mapping = bindings.getActorTileBindings().get(v).getTarget().getId();
-    		//int mapping = application.getActors().get(v).getMappingToTile().getId();
-            //System.out.println("getting key :["+mapping+","+(l.get(v)-i*MII)+"]");
             ArrayList<Integer> pair = new ArrayList<>();
             pair.add(mapping);
             pair.add(l.get(v)-i*MII);
             BU += U.get(pair);
     }
+    int i = l.get(v) + MII;
+    while(i<=maxL) {
+    	ArrayList<Integer> pair = new ArrayList<>();
+        pair.add(mapping);
+        pair.add(i);
+        BU += U.get(pair);
+    	i=i+MII;
+    }
+    
     return BU;
   }
   
