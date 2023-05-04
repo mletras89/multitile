@@ -136,6 +136,17 @@ public class Application{
 	}
   }
   
+  public void printActorsTilesState(Bindings bindings,Map<Integer, Tile> tiles){
+	for(Map.Entry<Integer,Tile> t : tiles.entrySet()){
+	  System.out.println("Tile "+t.getValue().getName());
+	  for(Map.Entry<Integer,Actor> actorEntry : actors.entrySet()){
+		Tile map = bindings.getActorTileBindings().get(actorEntry.getKey()).getTarget();
+		if (map.getId() == t.getKey())
+			System.out.println("\t Id "+actorEntry.getKey()+" Actor:"+actorEntry.getValue().getName()+" is multicast:"+actorEntry.getValue().isMulticastActor());
+	  }
+	}
+  }
+  
   public void printFifos(){
 	for(Map.Entry<Integer,Fifo> fifoEntry : fifos.entrySet()){
 	  System.out.println("Fifo:"+fifoEntry.getValue().getName()+" is composite?:"+fifoEntry.getValue().isCompositeChannel());
