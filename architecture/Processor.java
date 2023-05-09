@@ -48,6 +48,7 @@ public class Processor {
   // each processors has a local memory
   private LocalMemory localMemory;
   private Tile ownerTile;
+  private String processorType="NONE";
 
 
   public Processor(String name) {
@@ -66,6 +67,8 @@ public class Processor {
 	  this.scheduler = new Scheduler(name,this);
 	  this.localMemory = new LocalMemory(other.getLocalMemory());
 	  this.localMemory.setEmbeddedToProcessor(this);
+	  this.setProcesorType(other.getProcesorType());
+	  this.setOwnerTile(other.ownerTile);
   }
 
   public double calculateOverallProcessorUtilization(double endTime){
@@ -76,7 +79,14 @@ public class Processor {
     return processorUtilization/endTime;
   }
 
-
+  public String getProcesorType() {
+	  return this.processorType;
+  }
+  
+  public void setProcesorType(String processorType) {
+	  this.processorType = processorType;
+  }
+  
   public boolean equals(Processor processor){
     return this.getId() == processor.getId() && this.getName().equals(processor.getName());
   }
