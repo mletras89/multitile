@@ -44,6 +44,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 
+import multitile.application.MyEntry;
+
 public class Architecture{
   // the key is the id
   private String name;
@@ -121,14 +123,84 @@ public class Architecture{
   }
   
   // clone the architecture but only a subset of the given architecture
-  public Architecture(Architecture another,HashMap<Integer,Integer> tileIndexToId, ArrayList<Integer> taskMapping) {
-	  HashSet<Integer> mappedTiles = new HashSet<Integer>(taskMapping);
+  public Architecture(Architecture another,HashMap<Integer,Integer> tileIndexToId, ArrayList<Integer> actorToTileMapping, ArrayList<Integer> actorToCoreTypeMapping,ArrayList<Integer> nCoresPerTypeMapping,int numberOfTiles,ArrayList<String> procTypes) {
+	  assert numberOfTiles == 3;
+	  Set<Integer> mappedTiles  = new HashSet<Integer>(actorToTileMapping);
+	  // real tile id. core type index, and count
+	  HashMap<ArrayList<Integer>,Integer> countCoresPerTile = new HashMap<ArrayList<Integer>,Integer>();
+	  
+	  for(Map.Entry<Integer,Tile> t : another.getTiles().entrySet()) {
+		  for(String pType : procTypes) {
+			  ArrayList<Integer> entryKey = new ArrayList<>();
+			  entryKey.add(t.getKey()); // tile first
+			  entryKey.add(procTypes.indexOf(pType));
+			  countCoresPerTile.put(entryKey, 0);
+		  }
+		  
+	  }
+	  
+	  for(int i = 0 ; i < actorToTileMapping.size(); i++) {
+		  int tile = actorToTileMapping.get(i);
+		  int coreType = actorToCoreTypeMapping.get(i);
+		  ArrayList<Integer> entryKey = new ArrayList<>();
+		  entryKey.add(tileIndexToId.get(tile)); // tile first
+		  entryKey.add(coreType);
+		  countCoresPerTile.put(entryKey,nCoresPerTypeMapping.get(numberOfTiles*tile + coreType));
+		  
+	  }
 	  this.name = another.getName();
 	  this.tiles = new HashMap<>();
+	  
+	  // key tile id
+	  // value procesor id
+	  ArrayList<MyEntry<Integer,Integer>> coresToRemove = new ArrayList<>();
+	  
 	  for(Integer mappedTile : mappedTiles) {
 		  int tileId = tileIndexToId.get(mappedTile);
-		  Tile clonedTile = new Tile(another.getTiles().get(tileId));
+		  Tile clonedTile = new Tile(new Tile(another.getTiles().get(tileId)));
+		  
+		  
+		  assert clonedTile.getId() == another.getTiles().get(tileId).getId();
 		  tiles.put(clonedTile.getId(), clonedTile);
+	  }	
+	  
+	  
+	  for(Map.Entry<Integer, Tile > t : this.tiles.entrySet()) {
+		  for(String pType : procTypes) {
+			  ArrayList<Integer> key = new ArrayList<Integer>(); 
+			  key.add(t.getKey());
+			  key.add(procTypes.indexOf(pType));
+			  if(countCoresPerTile.get(key)>0) {
+				  int nAllocatedCores = countCoresPerTile.get(key);
+				  int countAllocatedCores = 0;
+				  for(Map.Entry<Integer, Processor> p : t.getValue().getProcessors().entrySet()) {
+					  if (p.getValue().getProcesorType().compareTo(pType) == 0) {
+						  if (countAllocatedCores < nAllocatedCores) {
+							  //System.err.println("Allocating "+t.getValue().getName()+ " core "+p.getValue().getName()+" type "+p.getValue().getProcesorType() );
+							  countAllocatedCores++;
+						  }
+						  else {
+							  coresToRemove.add( new MyEntry<Integer,Integer>(t.getKey(), p.getKey()));
+							  //coresToRemove.put(t.getKey(), p.getKey() );
+							  //System.err.println("REMOVE "+t.getValue().getName()+ " core "+p.getValue().getName()+" type "+p.getValue().getProcesorType() );
+						  }  
+					  }
+				  }  
+			  }else{
+				  for(Map.Entry<Integer, Processor> p : t.getValue().getProcessors().entrySet()) {
+					  if (p.getValue().getProcesorType().compareTo(pType) == 0) {
+						  //coresToRemove.put(t.getKey(), p.getKey() ); 
+						  coresToRemove.add( new MyEntry<Integer,Integer>(t.getKey(), p.getKey()));
+						  //System.err.println("REMOVE "+t.getValue().getName()+ " core "+p.getValue().getName()+" type "+p.getValue().getProcesorType() );
+					  }
+				  }  
+			  }
+		  }
+	  }
+
+	  // remove cores
+	  for(MyEntry<Integer, Integer> entry : coresToRemove) {
+		  tiles.get(entry.getKey()).getProcessors().remove(entry.getValue());
 	  }
 	  
 	  this.noc = new NoC(another.getNoC());
@@ -209,7 +281,7 @@ public class Architecture{
 	  for(HashMap.Entry<Integer,Tile> t: this.tiles.entrySet()){
 		  System.out.println("Tile: "+t.getValue().getName());
 	      for(HashMap.Entry<Integer,Processor> p : t.getValue().getProcessors().entrySet()){
-	        System.out.println("\tProcessor "+p.getValue().getName());
+	        System.out.println("\tProcessor "+p.getValue().getName()+" type "+p.getValue().getProcesorType()+" core id "+p.getKey());
 	        System.out.println("\t\tLocal memory "+p.getValue().getLocalMemory().getName()+" capacity "+p.getValue().getLocalMemory().getCapacity());
 	      }
 	      System.out.println("\tTile Local memory: "+t.getValue().getTileLocalMemory().getName()+" capacity "+t.getValue().getTileLocalMemory().getCapacity());
@@ -265,4 +337,36 @@ public class Architecture{
     myWriter.close();
   }
 
+  
+  public HashMap<ArrayList<Integer>,Queue<Processor>> getMapTileCoreTypeCores(ArrayList<String> coreTypes) {
+	  
+	  // key Int is tile id of tile T, String core type s
+	  // content a list of cores allocated in tile T of type s
+	  HashMap<ArrayList<Integer>,Queue<Processor>> mapTileAndCoreAndTypeCores = new HashMap<>();
+	  
+	  
+	  for(Map.Entry<Integer, Tile > t: this.getTiles().entrySet()) {
+		  for(int i = 0; i < coreTypes.size(); i++) {
+			  ArrayList<Integer> key = new ArrayList<Integer>();
+			  key.add(t.getKey());
+			  key.add(i);
+			  mapTileAndCoreAndTypeCores.put(key, new LinkedList<> ());
+		  }
+	  }
+	  for(Map.Entry<Integer, Tile > t: this.getTiles().entrySet()) {
+		  for(Map.Entry<Integer,Processor> p : t.getValue().getProcessors().entrySet()) {
+			  String coreType = p.getValue().getProcesorType();
+			  ArrayList<Integer> key = new ArrayList<Integer>();
+			  key.add(t.getKey());
+			  key.add(coreTypes.indexOf(coreType));
+			  Queue<Processor> currentList = mapTileAndCoreAndTypeCores.get(key);
+			  
+			  currentList.add(new Processor(p.getValue()));
+			  
+			  mapTileAndCoreAndTypeCores.put(key, currentList);
+		  }
+	  }
+	  return mapTileAndCoreAndTypeCores;
+  }
+  
 }
