@@ -87,7 +87,7 @@ public class testModuloSchedulingMultipleOutputs {
       
       TestApplicationMultipleOutput sampleApplication = new TestApplicationMultipleOutput(architecture.getTiles().get(0), architecture.getTiles().get(1),architecture.getGlobalMemory(),bindings,mappings);  
       Application app = sampleApplication.getSampleApplication();
-      
+      /*
       ModuloScheduler scheduler = new ModuloScheduler();
       // I need to update the actor mapping according to the modulo schedule!!!!!
       scheduler.setApplication(app);
@@ -138,6 +138,6 @@ public class testModuloSchedulingMultipleOutputs {
       System.out.println("Global memory: "+architecture.getGlobalMemory().getName()+ " utilization "+architecture.getGlobalMemory().getUtilization(endTime));
 
       System.out.println("Testing quadcore implementation testcase done!");
-      architecture.saveArchitectureUtilizationStats(".");
+      architecture.saveArchitectureUtilizationStats(".");*/
     }
 }

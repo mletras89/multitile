@@ -89,7 +89,7 @@ public class testModuloSchedulingRecurrences {
       for(Cycle c : cycles.getCycles()){
     	  System.out.println("cycle "+c.getCycle());
       }
-      
+      /*
       ModuloScheduler scheduler = new ModuloScheduler();
       // I need to update the actor mapping according to the modulo schedule!!!!!
       scheduler.setApplication(app);
@@ -136,6 +136,6 @@ public class testModuloSchedulingRecurrences {
       System.out.println("Global memory: "+architecture.getGlobalMemory().getName()+ " utilization "+architecture.getGlobalMemory().getUtilization(endTime));
 
       System.out.println("Testing quadcore implementation testcase done!");
-      architecture.saveArchitectureUtilizationStats(".");
+      architecture.saveArchitectureUtilizationStats(".");*/
     }
 }

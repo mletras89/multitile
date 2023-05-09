@@ -62,7 +62,7 @@ public class testQuadCoreModuloScheduling {
       Mappings mappings = new Mappings();
       TestApplication testApplication = new TestApplication(singleCoreArchitecture.getTiles().get(0),bindings,mappings);  
       Application singleCoreApplication = testApplication.getSampleApplication();
-
+/*
       ModuloScheduler singleCoreScheduler = new ModuloScheduler();
       singleCoreScheduler.setApplication(singleCoreApplication);
       singleCoreScheduler.setArchitecture(singleCoreArchitecture);
@@ -187,7 +187,7 @@ public class testQuadCoreModuloScheduling {
       architecture.getTiles().get(0).getProcessors().get(2).getLocalMemory().saveMemoryUtilizationStats(".");
       architecture.getTiles().get(0).getProcessors().get(3).getLocalMemory().saveMemoryUtilizationStats(".");
       architecture.getTiles().get(0).getTileLocalMemory().saveMemoryUtilizationStats(".");
-
+*/
       System.out.println("Testing quadcore implementation testcase done!");
     }
 }

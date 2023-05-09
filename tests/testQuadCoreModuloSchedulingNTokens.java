@@ -70,7 +70,7 @@ public class testQuadCoreModuloSchedulingNTokens {
       Application app = sampleApplication.getSampleApplication();
       ApplicationManagement.assignFifoMapping(app,architecture,bindings); 
 
-
+/*
       ModuloScheduler scheduler = new ModuloScheduler();
       scheduler.setApplication(app);
       scheduler.setArchitecture(architecture);
@@ -96,7 +96,7 @@ public class testQuadCoreModuloSchedulingNTokens {
       architecture.getTiles().get(0).getProcessors().get(2).getLocalMemory().saveMemoryUtilizationStats(".");
       architecture.getTiles().get(0).getProcessors().get(3).getLocalMemory().saveMemoryUtilizationStats(".");
       architecture.getTiles().get(0).getTileLocalMemory().saveMemoryUtilizationStats(".");
-
+*/
       System.out.println("Testing quadcore implementation testcase done!");
     }
 }

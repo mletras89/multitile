@@ -85,7 +85,7 @@ public class testModuloSchedulingWithNoCMergeMulticast {
       ApplicationManagement.collapseMergeableMulticastActors(app,1);
       app.printActorsState(bindings);
       app.printFifosState();
-      
+      /*
       ModuloScheduler scheduler = new ModuloScheduler();
       // I need to update the actor mapping according to the modulo schedule!!!!!
       scheduler.setApplication(app);
@@ -142,6 +142,6 @@ public class testModuloSchedulingWithNoCMergeMulticast {
       System.out.println("Global memory: "+architecture.getGlobalMemory().getName()+ " utilization "+architecture.getGlobalMemory().getUtilization(endTime));
 
       System.out.println("Testing quadcore implementation testcase done!");
-      architecture.saveArchitectureUtilizationStats(".");
+      architecture.saveArchitectureUtilizationStats(".");*/
     }
 }

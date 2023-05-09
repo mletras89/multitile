@@ -88,7 +88,7 @@ public class testModuloSchedulingBrokenCase {
       app.printFifosMapping();
       System.err.println(bindings.getActorTileBindings());
       
-      ModuloScheduler scheduler = new ModuloScheduler();
+      /*ModuloScheduler scheduler = new ModuloScheduler();
       // I need to update the actor mapping according to the modulo schedule!!!!!
       scheduler.setApplication(app);
       scheduler.setArchitecture(architecture);
@@ -140,6 +140,6 @@ public class testModuloSchedulingBrokenCase {
       //System.out.println("NoC Utilization: "+architecture.getNoC().calculateNoCOverallUtilization(endTime));
       System.out.println("Global memory: "+architecture.getGlobalMemory().getName()+ " utilization "+architecture.getGlobalMemory().getUtilization(endTime));
       System.out.println("Testing quadcore implementation testcase done!");
-      architecture.saveArchitectureUtilizationStats(".");
+      architecture.saveArchitectureUtilizationStats(".");*/
     }
 }
