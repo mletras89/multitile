@@ -208,7 +208,7 @@ public class Fifo implements Buffer{
     this.mappingType = mappingType;
   }
 
-  public int getInitialTokens(int initial_tokens){
+  public int getInitialTokens(){
     return this.initial_tokens;
   }
 
