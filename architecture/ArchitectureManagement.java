@@ -108,7 +108,7 @@ public class ArchitectureManagement{
   }
 
 
-  public static Memory getMemoryToBeRelocated(Fifo fifo,Architecture architecture,Application application,Bindings bindings){
+  public static Memory getMemoryToBeRelocated(Fifo fifo,Architecture architecture,Bindings bindings){
     Memory mappedMemory = bindings.getFifoMemoryBindings().get(fifo.getId()).getTarget();
     //System.out.println("Mapped Memory "+mappedMemory.getName());
     Memory newMapping;
