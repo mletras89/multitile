@@ -184,11 +184,18 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
 	  // value -> number of firings in prologue
 	  HashMap<Integer,Integer> firingActorsPrologue = new HashMap<>();
 	  // initialize them
+	  
+	  HashMap<Integer,Integer> channelsNumberWrites = new HashMap<>();
+	  HashMap<Integer,Integer> channelsNumberReads = new HashMap<>();
+	  
+	  
 	  for(Map.Entry<Integer, Actor> a : application.getActors().entrySet()) {
 		  firingActorsPrologue.put(a.getKey(), 0);
 	  }
 	  for(Map.Entry<Integer, Fifo> c : application.getFifos().entrySet()) {
 		  stateChannelsAfterPrologue.put(c.getKey(), c.getValue().getInitialTokens());
+		  channelsNumberWrites.put(c.getKey(), 0);
+		  channelsNumberReads.put(c.getKey(), 0);
 	  }
 	  for(int i = 0 ; i < this.stepStartKernel; i++) {
 		  for(int actorId :kernel.get(i))
@@ -198,23 +205,38 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
 	  for(Map.Entry<Integer, Integer> actorEntry : firingActorsPrologue.entrySet() ) {
 		  Actor actor = application.getActors().get(actorEntry.getKey());
 		  int nFirings = actorEntry.getValue();
-		  // update the channels connected as inputs
-		  for(Fifo fifo : actor.getInputFifos()) {
-			  int nTokens = fifo.getProdRate();
-			  int newCount = stateChannelsAfterPrologue.get(fifo.getId()) - nTokens * nFirings;
-			  stateChannelsAfterPrologue.put(fifo.getId(), newCount);
-		  }
-		  // update the channels connected as outputs
+		 // update the channels connected as outputs (writes)
 		  for(Fifo fifo : actor.getOutputFifos()) {
 			  int nTokens = fifo.getConsRate();
-			  int newCount = stateChannelsAfterPrologue.get(fifo.getId()) + nTokens * nFirings;
-			  stateChannelsAfterPrologue.put(fifo.getId(), newCount);
+			  int newCount = channelsNumberWrites.get(fifo.getId()) + nTokens * nFirings;
+			  channelsNumberWrites.put(fifo.getId(), newCount);
+		  }
+		  // update the channels connected as inputs (reads)
+		  for(Fifo fifo : actor.getInputFifos()) {
+			  int nTokens = fifo.getProdRate();
+			  int newCount = channelsNumberReads.get(fifo.getId()) + nTokens * nFirings;
+			  channelsNumberReads.put(fifo.getId(), newCount);
 		  }
 	  }
+	  // update the counts of reads for the MRBs
+	  for(Map.Entry<Integer, Fifo> c : application.getFifos().entrySet()) {
+		 if (c.getValue().isCompositeChannel()) {
+			 CompositeFifo MRB = (CompositeFifo)c.getValue();
+			 int nReaders = MRB.getDestinations().size();
+			 int currentCountReads = channelsNumberReads.get(MRB.getId()) % nReaders;
+			 channelsNumberReads.put(MRB.getId(),currentCountReads );
+		 } 
+	  }
+	  for(Map.Entry<Integer, Fifo> fifo : application.getFifos().entrySet()) {
+		  int initState = stateChannelsAfterPrologue.get(fifo.getKey());
+		  stateChannelsAfterPrologue.put(fifo.getKey(), initState + channelsNumberWrites.get(fifo.getKey()) - channelsNumberReads.get(fifo.getKey())  );
+	  }
+	  
+	  
+	  
 	  // Once I get the prologue
 	  return stateChannelsAfterPrologue;
   }
-  
   
   public void calculateModuloSchedule(HashMap<Integer,Integer> actorIdToIndex, boolean checkRECII){
     // number of actors mapped there
@@ -491,42 +513,66 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
     return scheduleModuloSingleIteration(bindings);
   }
 
+  public void resizeFifos(HashMap<Integer,Integer> stateChannels) {
+	  for(Map.Entry<Integer, Fifo> f : application.getFifos().entrySet()) {
+		  // new capacity
+		  int tokens = stateChannels.get(f.getKey());
+		  if (f.getValue().get_capacity() < tokens)
+			  application.getFifos().get(f.getKey()).set_capacity(tokens);
+	  }
+  }
+  
+  public void checkAndReMapMemories(Bindings bindings,HashMap<Integer,Integer> stateChannels) {
+	  Map<Integer, Binding<Memory>>  memBindings = bindings.getFifoMemoryBindings();
+	  Set<Memory> setBoundMemories = new HashSet<Memory>(); // set of the ids of the bound memories
+	  for(Map.Entry<Integer, Binding<Memory>> m : memBindings.entrySet() ) {
+		  setBoundMemories.add(m.getValue().getTarget());
+	  }
+	  boolean success = false;
+	  while(!success) {
+		  boolean doRemap = false;
+		  for(Memory mem : setBoundMemories) {
+			  double capacityMem = mem.getCapacity();
+			  double currentFix = 0.0;
+			  for(Map.Entry<Integer, Binding<Memory>> m : memBindings.entrySet() ) { 
+				  if (mem.getId() == m.getValue().getTarget().getId()) {
+					  // check if I can write
+					  Fifo fifo = application.getFifos().get( m.getKey() );
+					  int bytesFifo = fifo.get_capacity() * fifo.getTokenSize();
+					  if(currentFix + bytesFifo <= capacityMem ) {
+						  currentFix += bytesFifo;
+					  }else {
+						  // ignore the binding and do the remap if a fifo does not fit 
+						  Memory reMappingMemory = ArchitectureManagement.getMemoryToBeRelocated(fifo,architecture,bindings);
+    		              ApplicationManagement.remapFifo(fifo, reMappingMemory,bindings);
+						  doRemap=true;
+						  //break;
+					  }
+				  }
+			  }
+			  if (doRemap) 
+				  break;
+		  }
+		  
+		  if(!doRemap)
+			  success = true;
+	  }
+  }
+  
+  
   boolean scheduleModuloSingleIteration(Bindings bindings){
     //HashMap<Integer,Tile> tiles = architecture.getTiles();
     this.getScheduledStepActions().clear();
     this.getKernelActions(bindings);
     
-    // check memory footprint and pass to next step if valid
-    // key -> memory id
-    // count of bytes
-    /*HashMap<Integer,Double> bytesMemory    = new HashMap<>();
-    HashMap<Integer,Double> memoryCapacity = new HashMap<>();
-    for(Map.Entry<Integer, Tile> t : architecture.getTiles().entrySet()) {
-    	for(Map.Entry<Integer, Processor> p : t.getValue().getProcessors().entrySet()) {
-    		bytesMemory.put( p.getValue().getLocalMemory().getId() , 0.0);
-    		memoryCapacity.put( p.getValue().getLocalMemory().getId() , p.getValue().getLocalMemory().getCapacity());
-    	}
-    	bytesMemory.put( t.getValue().getTileLocalMemory().getId(), 0.0);
-    	memoryCapacity.put( t.getValue().getTileLocalMemory().getId(),t.getValue().getTileLocalMemory().getCapacity());
-    }
-    bytesMemory.put( architecture.getGlobalMemory().getId(), 0.0);
-    memoryCapacity.put( architecture.getGlobalMemory().getId(), architecture.getGlobalMemory().getCapacity());
-    
-    for(Map.Entry<Integer, Fifo> fifo : application.getFifos().entrySet()) {
-    	int memoryId = bindings.getFifoMemoryBindings().get(fifo.getKey()).getTarget().getId();
-    	double fifoBytes = fifo.getValue().get_capacity()*fifo.getValue().getTokenSize();
-    	// do the remap of memory in case
-    	while(!(bytesMemory.get(memoryId) + fifoBytes <= memoryCapacity.get(memoryId))) {
-    		Memory reMappingMemory = ArchitectureManagement.getMemoryToBeRelocated(fifo.getValue(),architecture,application,bindings);
-    		ApplicationManagement.remapFifo(fifo.getValue(), reMappingMemory,bindings);
-    		memoryId = reMappingMemory.getId();
-    	}
-    	// put bytes in memory
-    	bytesMemory.put(memoryId, bytesMemory.get(memoryId) + fifoBytes);
-    }*/
-    // I reach this point, I can continue, no memory bounds are violated
+    HashMap<Integer,Integer> stateChannels = getStateChannelsAfterPrologue();
+    // resize fifos
+    resizeFifos(stateChannels);
+    // check memory constraint binding
+    checkAndReMapMemories(bindings,stateChannels);
     
     
+    // fill the fifos with the tokens
     
     // proceed to schedule the kernel
     for(int j =this.stepStartKernel; j<this.stepEndKernel; j++){  // this.stepEndKernel;j++){
@@ -691,7 +737,7 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
         			  }
         			  if(!scheduledTransfer.getFifo().canFifoReadFromMemory(bindings)){
         			      // do the remap and return false
-        		              Memory reMappingMemory = ArchitectureManagement.getMemoryToBeRelocated(scheduledTransfer.getFifo(),architecture,application,bindings);
+        		              Memory reMappingMemory = ArchitectureManagement.getMemoryToBeRelocated(scheduledTransfer.getFifo(),architecture,bindings);
         		              ApplicationManagement.remapFifo(scheduledTransfer.getFifo(), reMappingMemory,bindings);
         		              return false;
         		      }
@@ -741,7 +787,7 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
             		}
             		if(!scheduledTransfer.getFifo().canFifoWriteToMemory(bindings)){
             			// do the remap and return false
-      		          	Memory reMappingMemory = ArchitectureManagement.getMemoryToBeRelocated(scheduledTransfer.getFifo(),architecture,application,bindings);
+      		          	Memory reMappingMemory = ArchitectureManagement.getMemoryToBeRelocated(scheduledTransfer.getFifo(),architecture,bindings);
       		          	ApplicationManagement.remapFifo(scheduledTransfer.getFifo(), reMappingMemory,bindings);
       		          	return false;
                     }
