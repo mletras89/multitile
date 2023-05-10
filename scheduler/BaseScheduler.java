@@ -69,6 +69,10 @@ public class BaseScheduler{
     return this.scheduledStepActions;
   }
 
+  public Application getApplication() {
+	  return application;
+  }
+  
   public void setMaxIterations(int maxIterations){
     this.maxIterations = maxIterations;
   }
