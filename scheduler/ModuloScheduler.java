@@ -174,69 +174,7 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
 	  }
   }
   
-  public HashMap<Integer,Integer> getStateChannelsAfterPrologue() {
-	  // calculate the initial state of the fifos
-	  // key -> fifo id
-	  // value -> number of tokens
-	  HashMap<Integer,Integer> stateChannelsAfterPrologue = new HashMap<>();
-	  // count of actors during the
-	  // key -> actor id
-	  // value -> number of firings in prologue
-	  HashMap<Integer,Integer> firingActorsPrologue = new HashMap<>();
-	  // initialize them
-	  
-	  HashMap<Integer,Integer> channelsNumberWrites = new HashMap<>();
-	  HashMap<Integer,Integer> channelsNumberReads = new HashMap<>();
-	  
-	  
-	  for(Map.Entry<Integer, Actor> a : application.getActors().entrySet()) {
-		  firingActorsPrologue.put(a.getKey(), 0);
-	  }
-	  for(Map.Entry<Integer, Fifo> c : application.getFifos().entrySet()) {
-		  stateChannelsAfterPrologue.put(c.getKey(), c.getValue().getInitialTokens());
-		  channelsNumberWrites.put(c.getKey(), 0);
-		  channelsNumberReads.put(c.getKey(), 0);
-	  }
-	  for(int i = 0 ; i < this.stepStartKernel; i++) {
-		  for(int actorId :kernel.get(i))
-			  firingActorsPrologue.put( actorId , firingActorsPrologue.get(actorId) + 1  );
-	  }
-	  // update the fifo state
-	  for(Map.Entry<Integer, Integer> actorEntry : firingActorsPrologue.entrySet() ) {
-		  Actor actor = application.getActors().get(actorEntry.getKey());
-		  int nFirings = actorEntry.getValue();
-		 // update the channels connected as outputs (writes)
-		  for(Fifo fifo : actor.getOutputFifos()) {
-			  int nTokens = fifo.getConsRate();
-			  int newCount = channelsNumberWrites.get(fifo.getId()) + nTokens * nFirings;
-			  channelsNumberWrites.put(fifo.getId(), newCount);
-		  }
-		  // update the channels connected as inputs (reads)
-		  for(Fifo fifo : actor.getInputFifos()) {
-			  int nTokens = fifo.getProdRate();
-			  int newCount = channelsNumberReads.get(fifo.getId()) + nTokens * nFirings;
-			  channelsNumberReads.put(fifo.getId(), newCount);
-		  }
-	  }
-	  // update the counts of reads for the MRBs
-	  for(Map.Entry<Integer, Fifo> c : application.getFifos().entrySet()) {
-		 if (c.getValue().isCompositeChannel()) {
-			 CompositeFifo MRB = (CompositeFifo)c.getValue();
-			 int nReaders = MRB.getDestinations().size();
-			 int currentCountReads = channelsNumberReads.get(MRB.getId()) % nReaders;
-			 channelsNumberReads.put(MRB.getId(),currentCountReads );
-		 } 
-	  }
-	  for(Map.Entry<Integer, Fifo> fifo : application.getFifos().entrySet()) {
-		  int initState = stateChannelsAfterPrologue.get(fifo.getKey());
-		  stateChannelsAfterPrologue.put(fifo.getKey(), initState + channelsNumberWrites.get(fifo.getKey()) - channelsNumberReads.get(fifo.getKey())  );
-	  }
-	  
-	  
-	  
-	  // Once I get the prologue
-	  return stateChannelsAfterPrologue;
-  }
+  
   
   public void calculateModuloSchedule(HashMap<Integer,Integer> actorIdToIndex, boolean checkRECII){
     // number of actors mapped there
@@ -507,22 +445,37 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
     }
   }
   
-  public boolean scheduleSingleIteration(Bindings bindings){
+  public void scheduleSingleIteration(Bindings bindings){
     architecture.resetArchitecture();
     application.resetApplication(architecture, bindings, application);
-    return scheduleModuloSingleIteration(bindings);
+    while( ! scheduleModuloSingleIteration(bindings)) {
+    	architecture.resetArchitecture();
+        application.resetApplication(architecture, bindings, application);
+    }
   }
 
-  public void resizeFifos(HashMap<Integer,Integer> stateChannels) {
+  public boolean resizeFifos(HashMap<Integer,Integer> stateChannels) {
+	  boolean resize = false; 
 	  for(Map.Entry<Integer, Fifo> f : application.getFifos().entrySet()) {
 		  // new capacity
-		  int tokens = stateChannels.get(f.getKey());
-		  if (f.getValue().get_capacity() < tokens)
-			  application.getFifos().get(f.getKey()).set_capacity(tokens);
+		  if (resizeFifo(stateChannels,f.getValue()))
+			  resize = true;
 	  }
+	  return resize;
   }
   
-  public void checkAndReMapMemories(Bindings bindings,HashMap<Integer,Integer> stateChannels) {
+  public boolean resizeFifo(HashMap<Integer,Integer> stateChannels,Fifo fifo) {
+	  boolean resize = false;
+	  int tokens = stateChannels.get(fifo.getId());
+	  if (fifo.get_capacity() < tokens) {
+		  application.getFifos().get(fifo.getId()).set_capacity(tokens);
+		  resize = true;
+	  }
+	  return resize;
+  }
+  
+  
+  public void checkAndReMapMemories(Bindings bindings) {
 	  Map<Integer, Binding<Memory>>  memBindings = bindings.getFifoMemoryBindings();
 	  Set<Memory> setBoundMemories = new HashSet<Memory>(); // set of the ids of the bound memories
 	  for(Map.Entry<Integer, Binding<Memory>> m : memBindings.entrySet() ) {
@@ -559,20 +512,141 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
 	  }
   }
   
+  public boolean checkandReMapSingleFifo(Bindings bindings,Fifo fifo) {
+	  Map<Integer, Binding<Memory>>  memBindings = bindings.getFifoMemoryBindings();
+	  Binding<Memory>  bindingFifo = bindings.getFifoMemoryBindings().get(fifo.getId());
+	  Memory boundMemory = bindingFifo.getTarget();
+	  
+	  double capacityMem =boundMemory.getCapacity();
+	  double currentFix = 0.0;
+	  for(Map.Entry<Integer, Binding<Memory>> m : memBindings.entrySet() ) { 
+		  if (boundMemory.getId() == m.getValue().getTarget().getId()) {
+			  // check if I can write
+			  int bytesFifo = fifo.get_capacity() * fifo.getTokenSize();
+			  if(currentFix + bytesFifo <= capacityMem ) {
+				  currentFix += bytesFifo;
+			  }else {
+				  // ignore the binding and do the remap if a fifo does not fit 
+				  Memory reMappingMemory = ArchitectureManagement.getMemoryToBeRelocated(fifo,architecture,bindings);
+	              ApplicationManagement.remapFifo(fifo, reMappingMemory,bindings);
+				  return true;
+			  }
+		  }
+	  }
+	  return false;
+  }
+  
+  
+  public HashMap<Integer,Integer> getReadsAfterPrologue(HashMap<Integer,Integer> firingActorsPrologue) {
+	  HashMap<Integer,Integer> channelsNumberReads = new HashMap<>();
+	  for(Map.Entry<Integer, Fifo> c : application.getFifos().entrySet()) {
+		  channelsNumberReads.put(c.getKey(), 0);
+	  }
+	  for(Map.Entry<Integer, Integer> actorEntry : firingActorsPrologue.entrySet() ) {
+		  Actor actor = application.getActors().get(actorEntry.getKey());
+		  int nFirings = actorEntry.getValue();
+		  // update the channels connected as inputs (reads)
+		  for(Fifo fifo : actor.getInputFifos()) {
+			  int nTokens = fifo.getProdRate();
+			  int newCount = channelsNumberReads.get(fifo.getId()) + nTokens * nFirings;
+			  channelsNumberReads.put(fifo.getId(), newCount);
+		  }
+	  }
+	  return channelsNumberReads;
+  }
+  
+  public HashMap<Integer,Integer> getWritesAfterPrologue(HashMap<Integer,Integer> firingActorsPrologue) {
+	  HashMap<Integer,Integer> channelsNumberWrites = new HashMap<>();
+	  for(Map.Entry<Integer, Fifo> c : application.getFifos().entrySet()) {
+		  channelsNumberWrites.put(c.getKey(), 0);
+	  }
+	  for(Map.Entry<Integer, Integer> actorEntry : firingActorsPrologue.entrySet() ) {
+		  Actor actor = application.getActors().get(actorEntry.getKey());
+		  int nFirings = actorEntry.getValue();
+		  // update the channels connected as inputs (writes)
+		  for(Fifo fifo : actor.getOutputFifos()) {
+			  int nTokens = fifo.getConsRate();
+			  int newCount = channelsNumberWrites.get(fifo.getId()) + nTokens * nFirings;
+			  channelsNumberWrites.put(fifo.getId(), newCount);
+		  }
+	  }
+	  return channelsNumberWrites;
+  }
+  
+  
+  public  HashMap<Integer,Integer> getFiringActorsPrologue(){
+	  // count of actors during the
+	  // key -> actor id
+	  // value -> number of firings in prologue
+	  HashMap<Integer,Integer> firingActorsPrologue = new HashMap<>();
+	// initialize them
+	  for(Map.Entry<Integer, Actor> a : application.getActors().entrySet()) {
+		  firingActorsPrologue.put(a.getKey(), 0);
+	  }
+	  for(int i = 0 ; i < this.stepStartKernel; i++) {
+		  for(int actorId :kernel.get(i))
+			  firingActorsPrologue.put( actorId , firingActorsPrologue.get(actorId) + 1  );
+	  }
+	  return firingActorsPrologue;
+  }
+  
+  public HashMap<Integer,Integer> getInitialStateChannels(){
+	  // calculate the initial state of the fifos
+	  // key -> fifo id
+	  // value -> number of tokens
+	  HashMap<Integer,Integer> stateChannels = new HashMap<>();
+	  for(Map.Entry<Integer, Fifo> c : application.getFifos().entrySet()) {
+		  stateChannels.put(c.getKey(), c.getValue().getInitialTokens());
+	  }
+	  return stateChannels;
+  }
+  
+  public HashMap<Integer,Integer> updateStateChannels(HashMap<Integer,Integer> initialStateChannels,HashMap<Integer,Integer> channelsNumberReads,HashMap<Integer,Integer> channelsNumberWrites) {
+	  HashMap<Integer,Integer> stateChannels = new HashMap<>();
+	  
+	  HashMap<Integer,Integer> actualChannelsNumberReads = new HashMap<>();
+	  
+	  // update the counts of reads for the MRBs
+	  for(Map.Entry<Integer, Fifo> c : application.getFifos().entrySet()) {
+		 if (c.getValue().isCompositeChannel()) {
+			 CompositeFifo MRB = (CompositeFifo)c.getValue();
+			 int nReaders = MRB.getDestinations().size();
+			 int currentCountReads = channelsNumberReads.get(MRB.getId()) % nReaders;
+			 actualChannelsNumberReads.put(MRB.getId(),currentCountReads );
+		 }else {
+			 int currentCountReads = channelsNumberReads.get(c.getKey());
+			 actualChannelsNumberReads.put(c.getKey(),currentCountReads );
+		 }
+		 
+	  }
+	  for(Map.Entry<Integer, Fifo> fifo : application.getFifos().entrySet()) {
+		  int initState = initialStateChannels.get(fifo.getKey());
+		  stateChannels.put(fifo.getKey(), initState + channelsNumberWrites.get(fifo.getKey()) - actualChannelsNumberReads.get(fifo.getKey())  );
+	  }
+	  // -1 is wrong
+	  for(HashMap.Entry<Integer,Integer> e : stateChannels.entrySet()) {
+		  assert (e.getValue() >= 0);
+	  }
+	  
+	  // Once I get the prologue
+	  return stateChannels;
+  }
   
   boolean scheduleModuloSingleIteration(Bindings bindings){
     //HashMap<Integer,Tile> tiles = architecture.getTiles();
     this.getScheduledStepActions().clear();
     this.getKernelActions(bindings);
+    HashMap<Integer,Integer> firingActorsPrologue = getFiringActorsPrologue();
+    HashMap<Integer,Integer> initialState = getInitialStateChannels();
+    HashMap<Integer,Integer> writes = getReadsAfterPrologue(firingActorsPrologue);
+    HashMap<Integer,Integer> reads = getReadsAfterPrologue(firingActorsPrologue);
     
-    HashMap<Integer,Integer> stateChannels = getStateChannelsAfterPrologue();
+    HashMap<Integer,Integer> stateChannels = updateStateChannels(initialState, reads, writes);
+    
     // resize fifos
     resizeFifos(stateChannels);
     // check memory constraint binding
-    checkAndReMapMemories(bindings,stateChannels);
-    
-    
-    // fill the fifos with the tokens
+    checkAndReMapMemories(bindings);
     
     // proceed to schedule the kernel
     for(int j =this.stepStartKernel; j<this.stepEndKernel; j++){  // this.stepEndKernel;j++){
@@ -590,6 +664,11 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
     	  List<Transfer> readTransfers = p.getScheduler().getReadTransfers().get(action.getActor());
     	  if (readTransfers == null)
     		  continue;
+    	  // I have to update the state of the channels according to the reads
+    	  for(Transfer t: readTransfers) {
+    		  Fifo f = t.getFifo();
+    		  reads.put(f.getId(),  reads.get(f.getId()) + 1 );
+    	  }
     	  processorReadTransfers.put(action.getActor(), scheduleTransfers(readTransfers,bindings));
     	  // commit the action in the processor
     	  p.getScheduler().setReadTransfers(processorReadTransfers);
@@ -614,11 +693,18 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
          // put writing transfers to crossbar(s) or NoC
          // get write transfers from the scheduler
          List<Transfer> writeTransfers = p.getScheduler().getWriteTransfers().get(action.getActor());
-	 if (writeTransfers == null)
-		continue;
-	processorWriteTransfers.put(action.getActor(), scheduleTransfers(writeTransfers,bindings));
+         if (writeTransfers == null)
+        	 continue;
+         for(Transfer t : writeTransfers) {
+        	 Fifo f = t.getFifo();
+        	 writes.put(f.getId(),  writes.get(f.getId()) + 1 );
+        	 // update the state of the fifos 
+        	 
+         }
+         
+         processorWriteTransfers.put(action.getActor(), scheduleTransfers(writeTransfers,bindings));
      	// update the write transfers of each processor with the correct start and due time
-	p.getScheduler().setWriteTransfers(processorWriteTransfers);
+         p.getScheduler().setWriteTransfers(processorWriteTransfers);
       	// update the last event in processor, taking into the account the processorWriteTransfers
         p.getScheduler().updateLastEventAfterWrite(action);
         // insert the time of the produced tokens by acton into the correspondent fifos
@@ -628,7 +714,16 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
         //transfersToMemory.addAll(p.getValue().getScheduler().getTransfersToMemory());
         // clean the lists read and write transfers in each processor
       }
+      
     }
+    stateChannels = updateStateChannels(initialState, reads, writes);
+	  // check if resize is required
+	  if (resizeFifos(stateChannels)) {
+	  // check memory constraint binding
+		  //if(checkandReMapSingleFifo(bindings,f))
+		 checkAndReMapMemories(bindings);
+		
+	  }
     return true;
   }
   
