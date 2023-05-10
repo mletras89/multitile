@@ -183,9 +183,6 @@ public class Fifo implements Buffer{
 	    this.timeProducedToken.add(new Transfer(transfer));
   }  
   
-  
-  
-  
   public void setIsRecurrence(boolean val){
     this.isRecurrence = val;
   }
@@ -194,8 +191,6 @@ public class Fifo implements Buffer{
     return isRecurrence;
   }
 
-  
-  
   public Queue<Transfer> getTimeProducedToken(){
     return this.timeProducedToken;
   }
@@ -216,37 +211,17 @@ public class Fifo implements Buffer{
     this.initial_tokens = initial_tokens;
   }
 
-  //public void setNumberOfReadsReMapping(int numberOfReads) {
-  //  this.numberOfReadsReMapping = numberOfReads;
-  //}
-
- //public int getNumberOfReadsReMapping(){
- //   return this.numberOfReadsReMapping;
- //}
-
-  //public void insertReMapping(boolean value) {
-  //  this.ReMapping.add(value);
-  //}
-
-  //public boolean peekReMapping(){
-  //  return this.ReMapping.peek();
-  //}
-
 
   public Transfer removeTimeProducedToken(){
     assert this.timeProducedToken.size() > 0;
     return this.timeProducedToken.remove();
   }
 
-  /*public Transfer peekTimeProducedToken(){
-	assert this.timeProducedToken.size() > 0;
-    return this.timeProducedToken.peek();
-  }*/
-
   public boolean equals(Fifo fifo){
     return this.getId()==fifo.getId() && this.getName().equals(fifo.getName());
   }
 
+  
   // fifo to memory functions, used to write or read to memory
   
   public boolean canFifoWriteToMemory(Bindings bindings){
@@ -367,7 +342,7 @@ public class Fifo implements Buffer{
         
         while(!this.canFifoWriteToMemory(bindings)){
         	// do the remap and return false
-        	Memory reMappingMemory = ArchitectureManagement.getMemoryToBeRelocated(this,architecture,application,bindings);
+        	Memory reMappingMemory = ArchitectureManagement.getMemoryToBeRelocated(this,architecture,bindings);
         	ApplicationManagement.remapFifo(this, reMappingMemory,bindings);
         	System.out.println("Stuck here!");
         }
