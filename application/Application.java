@@ -390,6 +390,18 @@ public class Application{
 		      }
 		    }
 		}
+		
+	    public double calculateMemoryFootprint() {
+	        double memory_footprint = 0.0;
+	        //System.err.println("=====================");
+	        for (Map.Entry<Integer, Fifo> fifoEntry : fifos.entrySet()) {
+	            //System.err.println("fifo "+fifoEntry.getValue().getName()+ " cap "+fifoEntry.getValue().get_capacity() + "mem F " + (fifoEntry.getValue().get_capacity() * fifoEntry.getValue().getTokenSize()));
+	            memory_footprint += fifoEntry.getValue().get_capacity() * fifoEntry.getValue().getTokenSize();
+	        }
+	        //System.err.println("TOTAL MF "+memory_footprint);
+	        //System.exit(1);
+	        return memory_footprint;
+	    }
 	  
 }
 
