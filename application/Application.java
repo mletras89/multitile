@@ -370,6 +370,8 @@ public class Application{
 	      }
 		  //return writer;
 		  MyEntry<Fifo, CompositeFifo> result = new MyEntry<Fifo,CompositeFifo>(writer,compositeFifo);
+		  // check this before push
+		  compositeFifo.set_capacity(1);
 		  return result;
 	  }
 	  
