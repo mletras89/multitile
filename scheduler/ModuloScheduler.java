@@ -103,7 +103,7 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
     	key.add(tileIndexToId.get(tile));
     	key.add(coreType);
     	//new MyEntry<Integer,String>(, this.coreTypes.get(coreType));
-    	assert (numberOfTiles == 3);
+    	//assert (numberOfTiles == 3);
 		countCoresPerTile.put(key, this.nCoresPerTypeMapping.get( numberOfTiles*tile + coreType ));
 		
     }
@@ -448,7 +448,7 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
   public void scheduleSingleIteration(Bindings bindings){
     architecture.resetArchitecture();
     application.resetApplication(architecture, bindings, application);
-    while( ! scheduleModuloSingleIteration(bindings)) {
+    while( ! scheduleModuloSingleIterationFine(bindings)) {
     	architecture.resetArchitecture();
         application.resetApplication(architecture, bindings, application);
     }
@@ -600,6 +600,52 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
 	  }
 	  return stateChannels;
   }
+  /*public HashMap<Integer,Integer> updateStateChannelsAfterPrologue(HashMap<Integer,Integer> currentStateChannels,HashMap<Integer,Integer> channelsNumberReads,HashMap<Integer,Integer> channelsNumberWrites) {
+	  HashMap<Integer,Integer> firingActorsPrologue = new HashMap<>();
+	  HashMap<Integer,Integer> stateChannels = new HashMap<>();
+	  HashMap<Integer,Integer> actualChannelsNumberReads = new HashMap<>();
+	  //channelsNumberReads= new HashMap<>();
+	  //channelsNumberWrites = new HashMap<>();
+	  
+	  // initialize them
+	  for(Map.Entry<Integer, Actor> a : application.getActors().entrySet()) {
+		  firingActorsPrologue.put(a.getKey(), 0);
+	  }
+	  
+	  for(Map.Entry<Integer, Integer> state : currentStateChannels.entrySet()) {
+		  stateChannels.put(state.getKey(), state.getValue());
+		  //channelsNumberReads.put(state.getKey(), 0);
+		  //channelsNumberWrites.put(state.getKey(), 0);
+	  }
+	  
+	  for(int i = 0 ; i < this.stepStartKernel; i++) {
+		  for(int actorId :kernel.get(i)) {
+			  // update state of channels connected at it
+			  // first set the reads
+			  Actor actor = application.getActors().get(actorId);
+			  for(Fifo f : actor.getInputFifos()) {
+				  if (!f.isCompositeChannel()) {
+					  channelsNumberReads.put(f.getId(), channelsNumberReads.get(f.getId()) + f.getConsRate() );
+					  stateChannels.put(f.getId(),  stateChannels.get(f.getId())  - f.getConsRate()  );
+				  }else {
+					  CompositeFifo MRB = (CompositeFifo)f;
+					  int reads = channelsNumberReads.get(f.getId() );
+					  int nReaders = MRB.getDestinations().size();
+					  
+				  }
+			  }
+			  // then set the writes
+			  for(Fifo f : actor.getOutputFifos()) {
+				  channelsNumberWrites.put(f.getId(), channelsNumberWrites.get(f.getId()) + f.getProdRate() );
+				  stateChannels.put(f.getId(),  stateChannels.get(f.getId())  + f.getProdRate()  );
+			  }
+		  }
+		  // resize here resize
+		  resizeFifos(stateChannels);
+	 }
+	  
+	 return stateChannels;
+  }*/
   
   public HashMap<Integer,Integer> updateStateChannels(HashMap<Integer,Integer> initialStateChannels,HashMap<Integer,Integer> channelsNumberReads,HashMap<Integer,Integer> channelsNumberWrites) {
 	  HashMap<Integer,Integer> stateChannels = new HashMap<>();
@@ -624,12 +670,157 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
 		  stateChannels.put(fifo.getKey(), initState + channelsNumberWrites.get(fifo.getKey()) - actualChannelsNumberReads.get(fifo.getKey())  );
 	  }
 	  // -1 is wrong
-	  for(HashMap.Entry<Integer,Integer> e : stateChannels.entrySet()) {
+	  /*for(HashMap.Entry<Integer,Integer> e : stateChannels.entrySet()) {
 		  assert (e.getValue() >= 0);
-	  }
+	  }*/
 	  
 	  // Once I get the prologue
 	  return stateChannels;
+  }
+  
+  boolean scheduleModuloSingleIterationFine(Bindings bindings){
+	//HashMap<Integer,Tile> tiles = architecture.getTiles();
+	    this.getScheduledStepActions().clear();
+	    this.getKernelActions(bindings);
+	    //HashMap<Integer,Integer> firingActorsPrologue = getFiringActorsPrologue();
+	    HashMap<Integer,Integer> initialState = getInitialStateChannels();
+	    HashMap<Integer,Integer> writes = new HashMap<>();
+	    HashMap<Integer,Integer> reads = new HashMap<>();
+	    // initialize read and writes as empty
+	    for(Map.Entry<Integer, Fifo> f : application.getFifos().entrySet()) {
+	    	reads.put(f.getKey(), 0);
+			writes.put(f.getKey(), 0);
+		}
+	    
+	    HashMap<Integer,Integer> stateChannels = new HashMap<>();
+	    
+	    for(int i = 0 ; i < this.stepStartKernel; i++) {
+		  for(int actorId :kernel.get(i)) {
+			  // update state of channels connected at it
+			  // first set the reads
+			  Actor actor = application.getActors().get(actorId);
+			  for(Fifo f : actor.getInputFifos()) {
+				  reads.put(f.getId(), reads.get(f.getId()) + f.getConsRate() );
+			  }
+			  // then set the writes
+			  for(Fifo f : actor.getOutputFifos()) {
+				  writes.put(f.getId(), writes.get(f.getId()) + f.getProdRate() );
+			  }
+			  // calculate state
+			  stateChannels = updateStateChannels(initialState, reads, writes);
+			  // resize fifos
+			  resizeFifos(stateChannels);
+		  }
+		  
+	    }
+	    // check memory constraint binding
+	    checkAndReMapMemories(bindings);
+	    
+	    // insert tokens at FIFOs after prologue
+	    application.fillTokensAtState(stateChannels,reads);
+	    //application.printFifosState();
+	    // proceed to schedule the kernel
+	    for(int j =this.stepStartKernel; j<this.stepEndKernel; j++){  // this.stepEndKernel;j++){
+	    		//List<Action> actorsInStep = kernelActions.get(j);
+	    		//System.out.println("Working on step "+j);
+	    		//while(actorsInStep.size()>0) {
+	        	//System.out.println("actors in step: "+actorsInStep.size());
+	        	this.getSchedulableActors(j);
+	        	Map<Actor,List<Transfer>> processorReadTransfers = new HashMap<>();
+	        	Map<Actor,List<Transfer>> processorWriteTransfers = new HashMap<>();
+	        	for(Action action : queueActions){
+	        		//System.out.println("Firing "+action.getActor().getName());
+	        		int processorID = bindings.getActorProcessorBindings().get(action.getActor().getId()).getTarget().getId();
+	          	  	int tileId = bindings.getActorTileBindings().get(action.getActor().getId()).getTarget().getId();
+	          	  	Processor p = architecture.getTiles().get(tileId).getProcessors().get(processorID);
+	          	  	// sched reads
+	          	  	p.getScheduler().commitReads(action,application.getFifos(),application);
+	          	  	List<Transfer> readTransfers = p.getScheduler().getReadTransfers().get(action.getActor());
+	          	  	//if (readTransfers != null)
+	        		  //continue;
+	          	  	// I have to update the state of the channels according to the reads
+	          	  	for(Transfer t: readTransfers) {
+	        		  Fifo f = t.getFifo();
+	        		  reads.put(f.getId(),  reads.get(f.getId()) + 1 );
+	        		  // update the state of the fifos
+	        		  stateChannels = updateStateChannels(initialState, reads, writes);
+	        		  boolean resize =  resizeFifo(stateChannels,f);
+	        		  if(resize) {
+	        			  boolean stateRemap = checkandReMapSingleFifo(bindings,f);
+	        			  if (stateRemap)
+	        				  return false;
+	        		  } 
+	          	  	}
+	          	  	processorReadTransfers.put(action.getActor(), scheduleTransfers(readTransfers,bindings));
+	          	  	// commit the action in the processor
+	          	  	p.getScheduler().setReadTransfers(processorReadTransfers);
+	          	  	
+	          	  	// sched the action
+	          	  	p.getScheduler().commitSingleAction(action,architecture,application, bindings, j );
+	          	  	
+	          	  	// sched the writes
+	                p.getScheduler().commitWrites(action,application);
+	                // put writing transfers to crossbar(s) or NoC
+	                // get write transfers from the scheduler
+	                List<Transfer> writeTransfers = p.getScheduler().getWriteTransfers().get(action.getActor());
+	                //if (writeTransfers != null)
+	               	 //continue;
+	                for(Transfer t : writeTransfers) {
+	                	Fifo f = t.getFifo();
+	               	 	writes.put(f.getId(),  writes.get(f.getId()) + 1 );
+	               	 	// update the state of the fifos 
+	               	 	stateChannels = updateStateChannels(initialState, reads, writes);
+	               	 	boolean resize =  resizeFifo(stateChannels,f);
+	               	 	if(resize) {
+	        			  boolean stateRemap = checkandReMapSingleFifo(bindings,f);
+	        			  if (stateRemap)
+	        				  return false;
+	               	 	} 
+	               	}
+	                
+	                processorWriteTransfers.put(action.getActor(), scheduleTransfers(writeTransfers,bindings));
+	            	// update the write transfers of each processor with the correct start and due time
+	                p.getScheduler().setWriteTransfers(processorWriteTransfers);
+	             	// update the last event in processor, taking into the account the processorWriteTransfers
+	                p.getScheduler().updateLastEventAfterWrite(action);
+	                // insert the time of the produced tokens by action into the correspondent fifos
+	                p.getScheduler().produceTokensinFifo(action,application.getFifos());
+	                // managing the tracking of the memories
+	             	//p.getScheduler().setWriteTransfersToMemory();
+	             	
+	             	// fire and remove actor
+	             	//application.getActors().get(action.getActor().getId()).fire(application.getFifos()); 
+	             	//removeActionFromListOfActions(actorsInStep,action);
+	             	//System.out.println("Fired "+action.getActor().getName());
+	             	//application.printFifosState();
+	             	//actorsInStep.remove(action);
+	        	}
+	        	
+	        	
+	        //}
+	        /*stateChannels = updateStateChannels(initialState, reads, writes);
+	  	  	// check if resize is required
+	  	  	if (resizeFifos(stateChannels)) {
+	  	  		// check memory constraint binding
+	  	  		//if(checkandReMapSingleFifo(bindings,f))
+	  	  		checkAndReMapMemories(bindings);
+	  		 }*/
+	    }
+	    
+	    return true;
+  }
+  
+  void removeActionFromListOfActions(List<Action> actorsInStep,Action action) {
+	  int selectedAction = -1;
+	  for(int i = 0 ; i < actorsInStep.size();i++) {
+		  if( actorsInStep.get(i).getActor().getId() == action.getActor().getId() ) {
+			  selectedAction = i;
+			  break;
+		  }
+	  }
+	  if (selectedAction != -1) {
+		  actorsInStep.remove(selectedAction);
+	  }
   }
   
   boolean scheduleModuloSingleIteration(Bindings bindings){
@@ -638,7 +829,7 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
     this.getKernelActions(bindings);
     HashMap<Integer,Integer> firingActorsPrologue = getFiringActorsPrologue();
     HashMap<Integer,Integer> initialState = getInitialStateChannels();
-    HashMap<Integer,Integer> writes = getReadsAfterPrologue(firingActorsPrologue);
+    HashMap<Integer,Integer> writes = getWritesAfterPrologue(firingActorsPrologue);
     HashMap<Integer,Integer> reads = getReadsAfterPrologue(firingActorsPrologue);
     
     HashMap<Integer,Integer> stateChannels = updateStateChannels(initialState, reads, writes);
@@ -647,6 +838,9 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
     resizeFifos(stateChannels);
     // check memory constraint binding
     checkAndReMapMemories(bindings);
+    
+    // insert tokens at FIFOs after prologue
+    //application.fillTokensAtState(stateChannels);
     
     // proceed to schedule the kernel
     for(int j =this.stepStartKernel; j<this.stepEndKernel; j++){  // this.stepEndKernel;j++){
@@ -1034,13 +1228,28 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
     List<Action> actorsInStep = kernelActions.get(step);
     if (actorsInStep!=null) {
     	for(Action v : actorsInStep){
-    		//if (actors.get(v).canFire(fifos)){
+    	//	if (application.getActors().get(v.getActor().getId()).canFire(application.getFifos())){
     			Action action = new Action(v);
     			this.insertAction(action);
     		//}
     	}
     }
   }
+  
+  public void getSchedulableActors(List<Action> actorsInStep){
+  // from the list of actors in Processor, check which of them can fire
+  this.cleanQueue();
+  //List<Action> actorsInStep = kernelActions.get(step);
+  	if (actorsInStep!=null) {
+	  for(Action v : actorsInStep){
+		  if (application.getActors().get(v.getActor().getId()).canFire(application.getFifos())){
+			  Action action = new Action(v);
+			  this.insertAction(action);
+		  }
+	  }
+  	}
+  }
+  
   
   // PCOUNT: is the number of immediate predecessors of v not yet scheduled  
   int getPCOUNT(Actor v) {
