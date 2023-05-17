@@ -44,6 +44,7 @@ import multitile.architecture.Memory;
 import multitile.architecture.Tile;
 import multitile.mapping.Bindings;
 import net.sf.opendse.model.Task;
+import multitile.Transfer;
 import multitile.application.Fifo.FIFO_MAPPING_TYPE;
 import multitile.architecture.Architecture;
 
@@ -69,6 +70,25 @@ public class Application{
 		}
   }
 
+  
+  public void fillTokensAtState(HashMap<Integer,Integer> stateChannels, HashMap<Integer,Integer> nReads) {
+	  for(Map.Entry<Integer,Integer> state : stateChannels.entrySet()) {
+		  int fifoId = state.getKey();
+		  int countTokens = state.getValue();
+		  
+		  fifos.get(fifoId).set_tokens(countTokens);
+		  
+		  for(int i = 0 ; i < countTokens; i++) {
+			  // now insert the empty transfers
+			  Actor src = fifos.get(fifoId).getSource();
+			  Fifo f = fifos.get(fifoId);
+			  Transfer t = new Transfer(src,f);
+			  fifos.get(fifoId).insertTimeProducedToken(t);
+		  }
+		  fifos.get(state.getKey()).setNumberOfReads(nReads.get(fifoId));
+		  
+	  }
+  }
 
   public void resetApplication(){
     for(Map.Entry<Integer,Fifo> fifo : fifos.entrySet()){
@@ -171,7 +191,7 @@ public class Application{
   public void printFifosState(){
     for(Map.Entry<Integer,Fifo> fifoEntry : fifos.entrySet()){
     	if(!fifoEntry.getValue().isCompositeChannel()) {
-    		System.out.println("Fifo: "+fifoEntry.getValue().getName()+" contains tokens: "+fifoEntry.getValue().get_tokens()+" source "+fifoEntry.getValue().getSource().getName()+" destination "+fifoEntry.getValue().getDestination().getName());
+    		System.out.println("Fifo: "+fifoEntry.getValue().getName()+" contains tokens: "+fifoEntry.getValue().get_tokens()+" capacity "+fifoEntry.getValue().get_capacity()+" source "+fifoEntry.getValue().getSource().getName()+" destination "+fifoEntry.getValue().getDestination().getName());
     	}else {
     		CompositeFifo cf = (CompositeFifo) fifoEntry.getValue();
     		for(Actor a : cf.getDestinations()) {
