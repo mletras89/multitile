@@ -179,6 +179,10 @@ public class Fifo implements Buffer{
   }
 
   
+  public void setNumberOfReads(int numberOfReads) {
+	  this.numberOfReads = numberOfReads;
+  }
+  
   public void insertTimeProducedToken(Transfer transfer) {
 	    this.timeProducedToken.add(new Transfer(transfer));
   }  
