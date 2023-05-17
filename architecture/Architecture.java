@@ -124,7 +124,7 @@ public class Architecture{
   
   // clone the architecture but only a subset of the given architecture
   public Architecture(Architecture another,HashMap<Integer,Integer> tileIndexToId, ArrayList<Integer> actorToTileMapping, ArrayList<Integer> actorToCoreTypeMapping,ArrayList<Integer> nCoresPerTypeMapping,int numberOfTiles,ArrayList<String> procTypes) {
-	  assert numberOfTiles == 3;
+	  //assert numberOfTiles == 3;
 	  Set<Integer> mappedTiles  = new HashSet<Integer>(actorToTileMapping);
 	  // real tile id. core type index, and count
 	  HashMap<ArrayList<Integer>,Integer> countCoresPerTile = new HashMap<ArrayList<Integer>,Integer>();
