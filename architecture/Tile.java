@@ -114,6 +114,38 @@ public class Tile{
 	  return this.numberProcessors;
   }
   
+  public HashMap<String,Double>  mapAverageProcessorUtilization(Set<String> ProcType, double endTime){
+	     HashMap<String,Double> avgUtilization = new HashMap<>();
+	     
+	     for(String s : ProcType) {
+	    	 avgUtilization.put(s, 0.0);
+	     }
+	     
+	    
+	    for(String s : ProcType) {
+	    
+	    	double processorUtilization = 0.0;
+		    double nProcs=0.0;
+		    double tempVal;
+	    
+		    for(Map.Entry<Integer,Processor> entry : processors.entrySet()){
+		    	if(entry.getValue().getProcesorType().compareTo(s) == 0 ) {
+		    		tempVal = entry.getValue().calculateOverallProcessorUtilization(endTime);
+		    		if(tempVal > 0){
+		    			nProcs++;
+		    			processorUtilization += tempVal;
+		    		}
+		    	}
+		    }
+		    if (nProcs > 0)
+		    	avgUtilization.put(s, processorUtilization/nProcs);
+	    } 
+		    
+		return avgUtilization;
+   }
+  
+  
+  
   public double averageProcessorUtilization(double endTime){
     double processorUtilization = 0.0;
     double nProcs=0.0;
