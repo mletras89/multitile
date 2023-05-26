@@ -123,77 +123,63 @@ public class Architecture{
   }
   
   // clone the architecture but only a subset of the given architecture
-  public Architecture(Architecture another,HashMap<Integer,Integer> tileIndexToId, ArrayList<Integer> actorToTileMapping, ArrayList<Integer> actorToCoreTypeMapping,ArrayList<Integer> nCoresPerTypeMapping,int numberOfTiles,ArrayList<String> procTypes) {
+  public Architecture(Architecture another,  Map<Integer,ArrayList<MyEntry<Integer,Integer>>> procsPerType,  ArrayList<Integer> actorToCoreTypeMapping,ArrayList<Integer> nCoresPerTypeMapping,ArrayList<String> procTypes) {
 	  //assert numberOfTiles == 3;
-	  Set<Integer> mappedTiles  = new HashSet<Integer>(actorToTileMapping);
-	  // real tile id. core type index, and count
-	  HashMap<ArrayList<Integer>,Integer> countCoresPerTile = new HashMap<ArrayList<Integer>,Integer>();
 	  
-	  for(Map.Entry<Integer,Tile> t : another.getTiles().entrySet()) {
-		  for(String pType : procTypes) {
-			  ArrayList<Integer> entryKey = new ArrayList<>();
-			  entryKey.add(t.getKey()); // tile first
-			  entryKey.add(procTypes.indexOf(pType));
-			  countCoresPerTile.put(entryKey, 0);
+	  // get the list of mapped cores
+	  // it is a subset of the core list
+	  ArrayList<Integer> nCoresPerTypeInArch = new ArrayList<>();
+	  for(int i=0; i < procTypes.size();i++) {
+		  nCoresPerTypeInArch.add(0);
+	  }
+	  Set<Integer> mappedTypes = new HashSet<Integer>(actorToCoreTypeMapping);
+	  for(int type : mappedTypes) {
+		  nCoresPerTypeInArch.set(type, nCoresPerTypeMapping.get(type)  ); 
+	  }
+	  
+	  Map<Integer,ArrayList<MyEntry<Integer,Integer>>> allocatedProcsPerType = new HashMap<>();
+	  
+	  for(int type : mappedTypes) {
+		  allocatedProcsPerType.put(type, new ArrayList<>());
+	  }
+	  
+	  Set<Integer> mappedTiles = new HashSet<Integer>();
+	  ArrayList<Integer> coresToAllocate = new ArrayList<>();  // ids of cores to allocate
+	  
+	  for(int type : mappedTypes) {
+		  int nCores = nCoresPerTypeInArch.get(type);
+		  
+		  ArrayList<MyEntry<Integer,Integer>> cores = procsPerType.get(type);
+		  
+		  for(int i=0; i <nCores; i++) {
+			  ArrayList<MyEntry<Integer,Integer>> tmpList =allocatedProcsPerType.get(type);
+			  mappedTiles.add( cores.get(i).getKey() ); // the key is the tile id
+			  coresToAllocate.add(cores.get(i).getValue()); // the value is the core id
+			  tmpList.add(cores.get(i));
+			  allocatedProcsPerType.put(type, tmpList);
 		  }
-		  
 	  }
 	  
-	  for(int i = 0 ; i < actorToTileMapping.size(); i++) {
-		  int tile = actorToTileMapping.get(i);
-		  int coreType = actorToCoreTypeMapping.get(i);
-		  ArrayList<Integer> entryKey = new ArrayList<>();
-		  entryKey.add(tileIndexToId.get(tile)); // tile first
-		  entryKey.add(coreType);
-		  countCoresPerTile.put(entryKey,nCoresPerTypeMapping.get(numberOfTiles*tile + coreType));
-		  
-	  }
 	  this.name = another.getName();
 	  this.tiles = new HashMap<>();
-	  
-	  // key tile id
-	  // value procesor id
-	  ArrayList<MyEntry<Integer,Integer>> coresToRemove = new ArrayList<>();
-	  
+
+	  // clone allocated tiles
 	  for(Integer mappedTile : mappedTiles) {
-		  int tileId = tileIndexToId.get(mappedTile);
+		  int tileId = mappedTile;
 		  Tile clonedTile = new Tile(new Tile(another.getTiles().get(tileId)));
-		  
-		  
 		  assert clonedTile.getId() == another.getTiles().get(tileId).getId();
 		  tiles.put(clonedTile.getId(), clonedTile);
 	  }	
-	  
-	  
-	  for(Map.Entry<Integer, Tile > t : this.tiles.entrySet()) {
-		  for(String pType : procTypes) {
-			  ArrayList<Integer> key = new ArrayList<Integer>(); 
-			  key.add(t.getKey());
-			  key.add(procTypes.indexOf(pType));
-			  if(countCoresPerTile.get(key)>0) {
-				  int nAllocatedCores = countCoresPerTile.get(key);
-				  int countAllocatedCores = 0;
-				  for(Map.Entry<Integer, Processor> p : t.getValue().getProcessors().entrySet()) {
-					  if (p.getValue().getProcesorType().compareTo(pType) == 0) {
-						  if (countAllocatedCores < nAllocatedCores) {
-							  //System.err.println("Allocating "+t.getValue().getName()+ " core "+p.getValue().getName()+" type "+p.getValue().getProcesorType() );
-							  countAllocatedCores++;
-						  }
-						  else {
-							  coresToRemove.add( new MyEntry<Integer,Integer>(t.getKey(), p.getKey()));
-							  //coresToRemove.put(t.getKey(), p.getKey() );
-							  //System.err.println("REMOVE "+t.getValue().getName()+ " core "+p.getValue().getName()+" type "+p.getValue().getProcesorType() );
-						  }  
-					  }
-				  }  
-			  }else{
-				  for(Map.Entry<Integer, Processor> p : t.getValue().getProcessors().entrySet()) {
-					  if (p.getValue().getProcesorType().compareTo(pType) == 0) {
-						  //coresToRemove.put(t.getKey(), p.getKey() ); 
-						  coresToRemove.add( new MyEntry<Integer,Integer>(t.getKey(), p.getKey()));
-						  //System.err.println("REMOVE "+t.getValue().getName()+ " core "+p.getValue().getName()+" type "+p.getValue().getProcesorType() );
-					  }
-				  }  
+
+  
+	  // key tile id
+	  // value procesor id
+	  ArrayList<MyEntry<Integer,Integer>> coresToRemove = new ArrayList<>();
+
+	  for(Map.Entry<Integer,Tile> t : this.tiles.entrySet()) {
+		  for(Map.Entry<Integer, Processor> p : t.getValue().getProcessors().entrySet()) {
+			  if(!coresToAllocate.contains(p.getKey())) {
+				  coresToRemove.add( new MyEntry<Integer,Integer>(t.getKey(), p.getKey())  );
 			  }
 		  }
 	  }
@@ -338,35 +324,25 @@ public class Architecture{
   }
 
   
-  public HashMap<ArrayList<Integer>,Queue<Processor>> getMapTileCoreTypeCores(ArrayList<String> coreTypes) {
+  public HashMap<Integer,Queue<Processor>> getMapTileCoreTypeCores(ArrayList<String> coreTypes) {
 	  
-	  // key Int is tile id of tile T, String core type s
+	  // key Int is the core type
 	  // content a list of cores allocated in tile T of type s
-	  HashMap<ArrayList<Integer>,Queue<Processor>> mapTileAndCoreAndTypeCores = new HashMap<>();
-	  
-	  
-	  for(Map.Entry<Integer, Tile > t: this.getTiles().entrySet()) {
-		  for(int i = 0; i < coreTypes.size(); i++) {
-			  ArrayList<Integer> key = new ArrayList<Integer>();
-			  key.add(t.getKey());
-			  key.add(i);
-			  mapTileAndCoreAndTypeCores.put(key, new LinkedList<> ());
-		  }
+	  HashMap<Integer,Queue<Processor>> mapCoreTypeToCores = new HashMap<>();
+	  for(int i = 0; i < coreTypes.size(); i++) {
+		  mapCoreTypeToCores.put(i, new LinkedList<> ());
 	  }
 	  for(Map.Entry<Integer, Tile > t: this.getTiles().entrySet()) {
 		  for(Map.Entry<Integer,Processor> p : t.getValue().getProcessors().entrySet()) {
 			  String coreType = p.getValue().getProcesorType();
-			  ArrayList<Integer> key = new ArrayList<Integer>();
-			  key.add(t.getKey());
-			  key.add(coreTypes.indexOf(coreType));
-			  Queue<Processor> currentList = mapTileAndCoreAndTypeCores.get(key);
+			  int indexCoreType = coreTypes.indexOf(coreType);
 			  
+			  Queue<Processor> currentList = mapCoreTypeToCores.get(indexCoreType);
 			  currentList.add(new Processor(p.getValue()));
-			  
-			  mapTileAndCoreAndTypeCores.put(key, currentList);
+			  mapCoreTypeToCores.put(indexCoreType, currentList);
 		  }
 	  }
-	  return mapTileAndCoreAndTypeCores;
+	  return mapCoreTypeToCores;
   }
   
 }
