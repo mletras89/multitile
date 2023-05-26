@@ -118,7 +118,7 @@ public class testModuloSchedulingWithNoC {
       ApplicationManagement.assignFifoMapping(app,architecture,bindings);
       scheduler.scheduleSingleIteration(bindings);
       
-      System.out.println("Single iteration delay: "+scheduler.getDelaySingleIteration());
+      System.out.println("Single iteration delay: "+scheduler.getOverallDelay());
 
       System.out.println("The MMI is: "+scheduler.getMII());
       
