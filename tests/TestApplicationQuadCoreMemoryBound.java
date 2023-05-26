@@ -55,39 +55,59 @@ import java.util.*;
 
 public class TestApplicationQuadCoreMemoryBound{
   private Application sampleApplication;
+  private ArrayList<Integer> actorToCoreTypeMapping;
+  
+  public ArrayList<Integer> getActorToCoreTypeMapping() {
+	return actorToCoreTypeMapping;
+}
 
-  public TestApplicationQuadCoreMemoryBound(Tile t1,Tile t2, GlobalMemory globalMemory, Bindings bindings, Mappings mappings){
+
+
+public void setActorToCoreTypeMapping(ArrayList<Integer> actorToCoreTypeMapping) {
+	this.actorToCoreTypeMapping = actorToCoreTypeMapping;
+}
+
+
+
+public TestApplicationQuadCoreMemoryBound(Tile t1,Tile t2, GlobalMemory globalMemory, Bindings bindings, Mappings mappings){
 	  Processor cpu1 = t1.getProcessors().get(0);
       Processor cpu2 = t1.getProcessors().get(1);
 
       Processor cpu3 = t2.getProcessors().get(2);
       Processor cpu4 = t2.getProcessors().get(3);
-
+      
+      actorToCoreTypeMapping = new ArrayList<>();
+      
       Actor a1 = new Actor("a1");
       a1.setId(1) ;
       a1.setInputs(0);
       a1.setOutputs(1);
+      actorToCoreTypeMapping.add(0);
       
       Actor a2 = new Actor("a2");  // is a multicast actor
       a2.setId(2) ;
       a2.setType(ACTOR_TYPE.MULTICAST);
       a2.setInputs(1);
       a2.setOutputs(2);
+      actorToCoreTypeMapping.add(0);
       
       Actor a3 = new Actor("a3");
       a3.setId(3) ;
       a3.setInputs(1);
       a3.setOutputs(1);
+      actorToCoreTypeMapping.add(0);
       
       Actor a4 = new Actor("a4");
       a4.setId(4) ;
       a4.setInputs(1);
       a4.setOutputs(1);
+      actorToCoreTypeMapping.add(0);
       
       Actor a5 = new Actor("a5:sink");
       a5.setId(5) ;
       a5.setInputs(2);
       a5.setOutputs(0);
+      actorToCoreTypeMapping.add(0);
       
       Fifo c1 = new Fifo("c1",0,1,1000000,1,1,a1,a2,FIFO_MAPPING_TYPE.TILE_LOCAL_SOURCE);  // channel connected to writer
       Fifo c2 = new Fifo("c2",0,1,1000000,1,1,a2,a3,FIFO_MAPPING_TYPE.GLOBAL);      // channels connected to readers
@@ -250,6 +270,8 @@ public class TestApplicationQuadCoreMemoryBound{
 
 
   public TestApplicationQuadCoreMemoryBound(Tile t1, Bindings bindings, Mappings mappings){
+	  actorToCoreTypeMapping = new ArrayList<>();
+	  
       Processor cpu1 = t1.getProcessors().get(0);
       Processor cpu2 = t1.getProcessors().get(1);
       Processor cpu3 = t1.getProcessors().get(2);
@@ -259,27 +281,31 @@ public class TestApplicationQuadCoreMemoryBound{
       a1.setId(1) ;
       a1.setInputs(0);
       a1.setOutputs(1);
-
+      actorToCoreTypeMapping.add(0);
+      
       Actor a2 = new Actor("a2");  // is a multicast actor
       a2.setId(2) ;
       a2.setInputs(1);
       a2.setOutputs(2);
-
+      actorToCoreTypeMapping.add(0);
+      
       Actor a3 = new Actor("a3");
       a3.setId(3) ;
       a3.setInputs(1);
       a3.setOutputs(1);
+      actorToCoreTypeMapping.add(0);
       
       Actor a4 = new Actor("a4");
       a4.setId(4) ;
       a4.setInputs(1);
       a4.setOutputs(1);
-      
+      actorToCoreTypeMapping.add(0);
 
       Actor a5 = new Actor("a5:sink");
       a5.setId(5) ;
       a5.setInputs(2);
       a5.setOutputs(0);
+      actorToCoreTypeMapping.add(0);
       
       Fifo c1 = new Fifo("c1",0,1,1000000,1,1,a1,a2,FIFO_MAPPING_TYPE.SOURCE);  // channel connected to writer
       Fifo c2 = new Fifo("c2",0,1,1000000,1,1,a2,a3,FIFO_MAPPING_TYPE.SOURCE);  // channels connected to readers

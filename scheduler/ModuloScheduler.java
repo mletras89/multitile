@@ -91,7 +91,7 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
   private ArrayList<String> coreTypes;
   //private HashMap<Integer,Integer> tileIndexToId;
   
-  public ModuloScheduler(Architecture architecture, Application application, Map<Integer,ArrayList<Integer>> indexCoreTypes, ArrayList<Integer> actorToCoreTypeMapping,ArrayList<Integer> nCoresPerTypeMapping,int numberOfTiles,Set<String> coreTypes,HashMap<Integer,Integer> tileIndexToId){
+  public ModuloScheduler(Architecture architecture, Application application, Map<Integer,ArrayList<Integer>> indexCoreTypes, ArrayList<Integer> actorToCoreTypeMapping,Set<String> coreTypes){
     super();
     this.l = new HashMap<>();
     this.resourceOcupation = new HashMap<>();
@@ -143,7 +143,7 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
       ApplicationManagement.assignFifoMapping(application,architecture,bindings);
   }
   
-  public void assingActorBinding(Mappings mappings,Bindings bindings,HashMap<Integer,Integer> tileIndexToId,HashMap<Integer,Integer> actorIdToIndex) {
+  public void assingActorBinding(Mappings mappings,Bindings bindings,HashMap<Integer,Integer> actorIdToIndex) {
 	  for(int i = this.stepStartKernel; i < this.stepEndKernel; i++) {
 		  // key is core type
 		  HashMap<Integer,Queue<Processor>> availableCores = this.architecture.getMapTileCoreTypeCores(coreTypes);
