@@ -102,7 +102,7 @@ public class testModuloSchedulingWithNoC {
       Set<String> coreTypes = new HashSet<>();
       coreTypes.add("P0");
       
-      HashMap<Integer,Integer> actorIdToIndex = new HashMap<>();
+      HashMap<Integer,Integer> actorIdToIndex = sampleApplication.getActorIdToIndex();
       
       ModuloScheduler scheduler = new ModuloScheduler(architecture,app,indexCoreTypes,actorToCoreTypeMapping,coreTypes);
       // calculate modulo schedule but do not consider cycles to make it faster

@@ -57,9 +57,21 @@ public class TestApplicationQuadCoreMemoryBound{
   private Application sampleApplication;
   private ArrayList<Integer> actorToCoreTypeMapping;
   
-  HashMap<Integer,Integer> actorIdToIndex;
+  private HashMap<Integer,Integer> actorIdToIndex;
   
-  public ArrayList<Integer> getActorToCoreTypeMapping() {
+  public HashMap<Integer, Integer> getActorIdToIndex() {
+	return actorIdToIndex;
+}
+
+
+
+public void setActorIdToIndex(HashMap<Integer, Integer> actorIdToIndex) {
+	this.actorIdToIndex = actorIdToIndex;
+}
+
+
+
+public ArrayList<Integer> getActorToCoreTypeMapping() {
 	return actorToCoreTypeMapping;
 }
 
