@@ -440,14 +440,14 @@ public class Scheduler{
 	      }
 	    }
 	    //same read behavior as NGRES
-	    double maxStart = 0.0;
+	    /*double maxStart = 0.0;
 	    for(Transfer t : reads) {
 	    	if (t.getStart_time() > maxStart)
 	    		maxStart = t.getStart_time();
 	    }
 	    for(Transfer t : reads) {
 	    	t.setStart_time(maxStart);
-	    }
+	    }*/
 	    // end read NGRES
 	    
 	    readTransfers.put(commitAction.getActor(),reads);
