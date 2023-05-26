@@ -62,7 +62,7 @@ public class testModuloSchedulingWithNoCMergeMulticast {
       FifoManagement.resetCounters();
       ArchitectureManagement.resetCounters();
 
-      Architecture architecture = new Architecture("architecture",2,2, 1.0, 2);
+      Architecture architecture = new Architecture("architecture",2,2, 1.0, 1);
       //architecture.printArchitecture();
       // set the memory sizes
       architecture.getTiles().get(0).getProcessors().get(0).getLocalMemory().setCapacity(5000000);
