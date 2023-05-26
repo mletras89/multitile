@@ -50,12 +50,14 @@ import multitile.mapping.Binding;
 import multitile.mapping.Bindings;
 import multitile.mapping.Mapping;
 import multitile.mapping.Mappings;
+import multitile.architecture.Architecture;
 import multitile.architecture.ArchitectureManagement;
 import multitile.architecture.Memory;
 
 import multitile.application.ApplicationManagement;
 import multitile.application.CompositeFifo;
 import multitile.application.Actor;
+import multitile.application.Application;
 import multitile.application.Fifo;
 import multitile.application.MyEntry;
 import multitile.application.Cycles;
@@ -78,36 +80,50 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
   private int stepStartKernel = 0;
   private int stepEndKernel = 0;
 
-  private HashMap<ArrayList<Integer>,Integer> countCoresPerTile;
-  private ArrayList <Integer> actorToTileMapping;
-  private ArrayList<Integer> actorToCoreTypeMapping;
-  private ArrayList<Integer> nCoresPerTypeMapping;
-  private ArrayList<String> coreTypes;
-  private HashMap<Integer,Integer> tileIndexToId;
+  // key is the core type
+  private HashMap<Integer,Integer> countCoresPerType;
   
-  public ModuloScheduler(ArrayList <Integer> actorToTileMapping,ArrayList<Integer> actorToCoreTypeMapping,ArrayList<Integer> nCoresPerTypeMapping,int numberOfTiles,Set<String> coreTypes,HashMap<Integer,Integer> tileIndexToId){
+  private ArrayList<Integer> actorToCoreTypeMapping;
+  //private ArrayList<Integer> nCoresPerTypeMapping;
+  
+  Map<Integer,ArrayList<Integer>> indexCoreTypes;
+  
+  private ArrayList<String> coreTypes;
+  //private HashMap<Integer,Integer> tileIndexToId;
+  
+  public ModuloScheduler(Architecture architecture, Application application, Map<Integer,ArrayList<Integer>> indexCoreTypes, ArrayList<Integer> actorToCoreTypeMapping,ArrayList<Integer> nCoresPerTypeMapping,int numberOfTiles,Set<String> coreTypes,HashMap<Integer,Integer> tileIndexToId){
     super();
     this.l = new HashMap<>();
     this.resourceOcupation = new HashMap<>();
-    
-    countCoresPerTile = new HashMap<>();
+    this.indexCoreTypes =indexCoreTypes;
+    countCoresPerType = new HashMap<>();
     this.actorToCoreTypeMapping = actorToCoreTypeMapping;
-    this.actorToTileMapping = actorToTileMapping;
-    this.nCoresPerTypeMapping = nCoresPerTypeMapping;
+    this.setApplication(application);
+    this.setArchitecture(architecture);
+    //this.nCoresPerTypeMapping = nCoresPerTypeMapping;
     this.coreTypes = new ArrayList<>(coreTypes);
     
     for(int i = 0; i < actorToCoreTypeMapping.size(); i++){
-    	int tile = actorToTileMapping.get(i);
     	int coreType = actorToCoreTypeMapping.get(i);
-    	ArrayList<Integer> key =  new ArrayList<>();
-    	key.add(tileIndexToId.get(tile));
-    	key.add(coreType);
+    	ArrayList<Integer> key = indexCoreTypes.get(coreType);
+    	
     	//new MyEntry<Integer,String>(, this.coreTypes.get(coreType));
     	//assert (numberOfTiles == 3);
-		countCoresPerTile.put(key, this.nCoresPerTypeMapping.get( numberOfTiles*tile + coreType ));
+		//countCoresPerTile.put(key,  nCoresPerTypeMapping.get(coreType) );
 		
     }
-      this.tileIndexToId = tileIndexToId;
+    for(Map.Entry<Integer, Tile>  t : architecture.getTiles().entrySet()) {
+    	for(Map.Entry<Integer, Processor> p : t.getValue().getProcessors().entrySet()) {
+    		String coreType = p.getValue().getProcesorType();
+    		int index = this.coreTypes.indexOf(coreType);
+    		if( countCoresPerType.containsKey(index) ) {
+    			countCoresPerType.put(index,  countCoresPerType.get(index) + 1 );
+    		}else {
+    			countCoresPerType.put(index, 1 );
+    		}
+    	}
+    }
+      //this.tileIndexToId = tileIndexToId;
   }
 
   public HashMap<Integer,List<Integer>> getKernel(){
@@ -129,7 +145,8 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
   
   public void assingActorBinding(Mappings mappings,Bindings bindings,HashMap<Integer,Integer> tileIndexToId,HashMap<Integer,Integer> actorIdToIndex) {
 	  for(int i = this.stepStartKernel; i < this.stepEndKernel; i++) {
-		  HashMap<ArrayList<Integer>,Queue<Processor>> availableCores = this.architecture.getMapTileCoreTypeCores(coreTypes);
+		  // key is core type
+		  HashMap<Integer,Queue<Processor>> availableCores = this.architecture.getMapTileCoreTypeCores(coreTypes);
 		  /*System.out.println("Kernel step "+kernel.get(i));
 		  for(int actorId : kernel.get(i)) {
 			  int actorIndex = actorIdToIndex.get(actorId);
@@ -142,24 +159,19 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
 		  for(int actorId : kernel.get(i)) {
 			  //System.out.println("\tActor "+application.getActors().get(actorId).getName());
 			  int actorIndex = actorIdToIndex.get(actorId);
-			  
-			  int tileBinding =  actorToTileMapping.get(actorIndex); // index to tile id
 			  int coreTypeBinding = actorToCoreTypeMapping.get(actorIndex);
 			  
-			  ArrayList<Integer> key = new ArrayList<Integer>(); 
-			  key.add(tileIndexToId.get(tileBinding));
-			  key.add(coreTypeBinding);
-			  
-			  
-			  //MyEntry<Integer,String>(, coreTypes.get(coreTypeBinding) );
-			  //System.out.println("selected key "+key);
-			  
-			  Queue<Processor> queueCores = availableCores.get(key);
+			  Queue<Processor> queueCores = availableCores.get(coreTypeBinding);
 			  Processor selectedCore = queueCores.peek();
 			  
-			  //Processor selectedCore = availableCores.get(key).remove();
-			  
 			  // do the binding
+			  // binding to tile
+			  int tileId = selectedCore.getOwnerTile().getId();
+			  bindings.getActorTileBindings().put(actorId, new Binding<Tile>(architecture.getTiles().get(tileId)));
+	          // assign also the properties to the tile mapping!
+	          bindings.getActorTileBindings().get(actorId).setProperties( mappings.getActorTileMappings().get(actorId).get(tileId).getProperties() );
+			  
+			  // binding to core
 			  Binding<Processor> bindingToCore = new Binding<Processor>(new Processor(selectedCore));
 			  // get the mapping
 			  Mapping<Processor> mappingToCore = mappings.getActorProcessorMappings().get(actorId).get(selectedCore.getId());
@@ -167,7 +179,7 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
 			  bindings.getActorProcessorBindings().put(actorId, bindingToCore);
 			  
 			  queueCores.remove();
-			  availableCores.put(key,queueCores);
+			  availableCores.put(coreTypeBinding,queueCores);
 			  
 			  //System.out.println("Actor "+application.getActors().get(actorId).getName() +" bound to "+ selectedCore.getName() +" on tile "+selectedCore.getOwnerTile().getName());
 		  }
@@ -178,15 +190,19 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
   
   public void calculateModuloSchedule(HashMap<Integer,Integer> actorIdToIndex, boolean checkRECII){
     // number of actors mapped there
-    HashMap<ArrayList<Integer>,Integer> usage = new HashMap<>();
+	// key is only the core type
+    HashMap<Integer,Integer> usage = new HashMap<>();
     // initialize
     //for(int i=0; i <actorToTileMapping.size();i++) {
     for(Map.Entry<Integer, Actor > actor : application.getActors().entrySet()) {
-    	ArrayList<Integer> key = new ArrayList<Integer>();
     	int indexActor = actorIdToIndex.get( actor.getKey() );
-    	key.add(tileIndexToId.get(actorToTileMapping.get(indexActor)));
-    	key.add(actorToCoreTypeMapping.get(indexActor));
-    	usage.put(key, 0);
+    	int coreTypeBinding = actorToCoreTypeMapping.get(indexActor);
+    	//ArrayList<Integer> key = this.indexCoreTypes.get(coreTypeBinding);
+    	//ArrayList<Integer> key = new ArrayList<Integer>();
+    	//int indexActor = actorIdToIndex.get( actor.getKey() );
+    	//key.add(tileIndexToId.get(actorToTileMapping.get(indexActor)));
+    	//key.add(actorToCoreTypeMapping.get(indexActor));
+    	usage.put(coreTypeBinding, 0);
 	}
     List<Integer> V = new ArrayList<>();
     for(Map.Entry<Integer,Actor> v : application.getActors().entrySet()){
@@ -197,12 +213,14 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
     // <K,V> here the key is the id of the tile and the value is the usage of cpus in the tile
     // update the usage
     for(Map.Entry<Integer, Actor > actor : application.getActors().entrySet()) {
-        ArrayList<Integer> key = new ArrayList<Integer>();
+        //ArrayList<Integer> key = new ArrayList<Integer>();
         int indexActor = actorIdToIndex.get( actor.getKey() );
-        key.add(tileIndexToId.get(actorToTileMapping.get(indexActor)));
-    	  key.add(actorToCoreTypeMapping.get(indexActor));
-    	  int val = usage.get(key); 
-  	  usage.put(key, val + 1);
+        int coreTypeBinding = actorToCoreTypeMapping.get(indexActor);
+        //ArrayList<Integer> key = this.indexCoreTypes.get(coreTypeBinding);
+        //key.add(tileIndexToId.get(actorToTileMapping.get(indexActor)));
+    	//key.add(actorToCoreTypeMapping.get(indexActor));
+    	int val = usage.get(coreTypeBinding); 
+  	    usage.put(coreTypeBinding, val + 1);
     }
     // 2 [Determine recurrencies]
     // 		Enumerate all the recurrences in the dependence graph.
@@ -226,9 +244,9 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
     //System.out.println("countCoresPerTile "+countCoresPerTile);
     //System.out.println("usage "+usage);
     
-    for(HashMap.Entry<ArrayList<Integer>,Integer> u :usage.entrySet()){
+    for(HashMap.Entry<Integer,Integer> u :usage.entrySet()){
       // have to modifiy this part for multitile, here I am assuming that all the actors are mapped to the same tile
-      tmpL.add((int)Math.ceil((double)(u.getValue()) / (double)countCoresPerTile.get(u.getKey())));
+      tmpL.add((int)Math.ceil((double)(u.getValue()) / (double)countCoresPerType.get(u.getKey())));
     }
     int RESII = Collections.max(tmpL);
     //          b) [Compute the recurrence-constrained initiation interval]
@@ -244,13 +262,14 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
       //             i and j are stored in a list which serves as key in a map
       //Map<ArrayList<Integer>, Integer> U = new HashMap<>();
       
+      // key core type - step
       Map<ArrayList<Integer>,Integer> U = new HashMap<>();
       
       //for(HashMap.Entry<Integer,Tile> t: tiles.entrySet()) {
-      for(HashMap.Entry<ArrayList<Integer>,Integer>  u : usage.entrySet()) {
+      for(HashMap.Entry<Integer,Integer>  u : usage.entrySet()) {
     	for (int i=0; i<application.getActors().size()*3;i++) {
     		ArrayList<Integer> key = new ArrayList<Integer>();
-    		key.addAll(u.getKey());
+    		key.add(u.getKey());
     		key.add(i);
     		//p.add(i); // adding the control step
     		U.put(key, 0); 
@@ -276,29 +295,33 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
         	int v = V.get(k);
         	
         	int vIndex = actorIdToIndex.get(v);
+        	int coreTypeBinding = actorToCoreTypeMapping.get(vIndex);
         	
-        	int mappingToTile = tileIndexToId.get(actorToTileMapping.get(vIndex));
-        	int mappingToCoreType = actorToCoreTypeMapping.get(vIndex);
+            //ArrayList<Integer> mappingV = this.indexCoreTypes.get(coreTypeBinding);
         	
-        	ArrayList<Integer> mappingV = new ArrayList<>();
-        	mappingV.add(mappingToTile);
-        	mappingV.add(mappingToCoreType);
+        	
+        	//int mappingToTile = tileIndexToId.get(actorToTileMapping.get(vIndex));
+        	//int mappingToCoreType = actorToCoreTypeMapping.get(vIndex);
+        	
+        	//ArrayList<Integer> mappingV = new ArrayList<>();
+        	//mappingV.add(mappingToTile);
+        	//mappingV.add(mappingToCoreType);
         	
 			/* Check whether data dependences are satisfied */
           if (PCOUNT.get(v) == 0) {
             //System.out.println("TRY Scheduling "+actors.get(v).getName()+" on control step "+l.get(v)+ " on resource "+cpus.get(actors.get(v).getMapping()).getName());
             /* Check that no more than num(r(v)) operations are scheduled on the
                resources corresponding to *R(r(v)) at the same time modulo MII */
-            int BU = calcU(l,MII,U,v,mappingV);
+            int BU = calcU(l,MII,U,v,coreTypeBinding);
             //int mappingV =  bindings.getActorTileBindings().get(v).getTarget().getId();   //application.getActors().get(v).getMappingToTile().getId();
             //while(BU>=tiles.get(mappingV).getProcessors().size()) {
-            while(!(BU<  countCoresPerTile.get(mappingV))) {
+            while(!(BU<  countCoresPerType.get(coreTypeBinding))) {
                l.put(v, l.get(v)+1);
-               BU = calcU(l,MII,U,v,mappingV);  
+               BU = calcU(l,MII,U,v,coreTypeBinding);  
             }
             ArrayList<Integer> key = new ArrayList<>();
             //MyEntry<Integer> pair = new MyEntry<>( mappingV, l.get(v)  );
-            key.addAll(new ArrayList<>(mappingV));
+            key.add(coreTypeBinding);
             key.add(l.get(v));
             U.put(key, U.get(key) + 1);
             //System.out.println(U);
@@ -1285,7 +1308,7 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
     return SUCC;
   }
 
-  int calcU(HashMap<Integer,Integer> l,int MII, Map<ArrayList< Integer >,Integer> U,int v, ArrayList<Integer> mappingV) { // int mappingToTile, int mappingToCoreType) {
+  int calcU(HashMap<Integer,Integer> l,int MII, Map<ArrayList< Integer >,Integer> U,int v, int coreTypeMapping) { // int mappingToTile, int mappingToCoreType) {
     int BU=0;
     /*System.out.println("Here");
     for(Map.Entry<ArrayList<Integer>, Integer> u : U.entrySet()) {
@@ -1298,7 +1321,7 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
     
     for (int i=0;i<=Math.floor(l.get(v)/MII);i++) {
             ArrayList<Integer> key = new ArrayList<>();
-            key.addAll(mappingV);
+            key.add(coreTypeMapping);
             key.add(l.get(v)-i*MII);
             
             //pair.add(mappingToCoreType);
@@ -1310,7 +1333,7 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
     int i = l.get(v) + MII;
     while(i<=maxL) {
     	 ArrayList<Integer> key = new ArrayList<>();
-    	 key.addAll(mappingV);
+    	 key.add(coreTypeMapping);
     	 key.add(i);
     	 
     	//ArrayList<Integer> pair = new ArrayList<>();
