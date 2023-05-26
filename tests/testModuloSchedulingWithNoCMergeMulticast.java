@@ -73,6 +73,23 @@ public class testModuloSchedulingWithNoCMergeMulticast {
       architecture.getTiles().get(1).getTileLocalMemory().setCapacity(10000000);
       architecture.getGlobalMemory().setCapacity(50000000);
       
+      Map<Integer,ArrayList<Integer>> indexCoreTypes = new HashMap<>();
+      indexCoreTypes.put(0, new ArrayList<Integer>());
+      
+      for(HashMap.Entry<Integer,Tile> t: architecture.getTiles().entrySet()){
+        System.out.println("Tile name:"+t.getValue().getName());
+        for(HashMap.Entry<Integer,Processor> p: t.getValue().getProcessors().entrySet()){
+        	p.getValue().setProcesorType("P0");
+        	ArrayList<Integer> tmp = indexCoreTypes.get(0);
+        	tmp.add(p.getKey());
+        	indexCoreTypes.put(0, tmp);
+        	System.out.println("\tProcessor name:"+p.getValue().getName()+" with id "+p.getValue().getId());
+	  System.out.println("\tOwner tile:"+p.getValue().getOwnerTile().getName());
+     	  System.out.println("\t\tAttached to local memory:"+p.getValue().getLocalMemory().getName());
+        }			
+      }
+      
+      
       Bindings bindings = new Bindings();
       Mappings mappings = new Mappings();
       
@@ -80,56 +97,55 @@ public class testModuloSchedulingWithNoCMergeMulticast {
       Application app = sampleApplication.getSampleApplication();
       ApplicationManagement.setFifosToActors(app);
       ApplicationManagement.setAllMulticastActorsAsMergeable(app);
-      app.printActors();
-      app.printFifosState();
-      ApplicationManagement.collapseMergeableMulticastActors(app,1);
-      app.printActorsState(bindings);
-      app.printFifosState();
-      /*
-      ModuloScheduler scheduler = new ModuloScheduler();
-      // I need to update the actor mapping according to the modulo schedule!!!!!
-      scheduler.setApplication(app);
-      scheduler.setArchitecture(architecture);
-			
-      scheduler.setMaxIterations(10);
-      scheduler.calculateModuloSchedule(bindings);
-      boolean found = scheduler.findSchedule();
-      scheduler.printPipelinedSteps();
-      
-      if (found)
-      scheduler.scheduleSingleIteration(bindings,mappings);
-
-      //ApplicationManagement.assignActorMapping(app,architecture,scheduler,bindings);
-      //ApplicationManagement.assignFifoMapping(app,architecture,bindings); 
       //app.printActors();
-      //app.printFifos();
- 
-      //scheduler.schedule(bindings,mappings);
+      //app.printFifosState();
+      ApplicationManagement.collapseMergeableMulticastActors(app,1);
+      //app.printActorsState(bindings);
+      //app.printFifosState();
+      
+      ArrayList<Integer> actorToCoreTypeMapping = sampleApplication.getActorToCoreTypeMapping();
+      
+      Set<String> coreTypes = new HashSet<>();
+      coreTypes.add("P0");
+      
+      HashMap<Integer,Integer> actorIdToIndex = sampleApplication.getActorIdToIndex();
+      
+      ModuloScheduler scheduler = new ModuloScheduler(architecture,app,indexCoreTypes,actorToCoreTypeMapping,coreTypes);
+      // calculate modulo schedule but do not consider cycles to make it faster
+      scheduler.calculateModuloSchedule(actorIdToIndex,false);
+      
+      scheduler.findSchedule();
+  	  assert scheduler.checkValidKernel(); // check if the kernel is valid
+      
+      
+  	  // assign the actor binding
+      scheduler.assingActorBinding(mappings,bindings,actorIdToIndex);
+      
+      ApplicationManagement.assignFifoMapping(app,architecture,bindings);
+      scheduler.scheduleSingleIteration(bindings);
+      
+      System.out.println("Single iteration delay: "+scheduler.getOverallDelay());
 
-      //System.out.println("Single iteration delay: "+scheduler.getDelaySingleIteration());
-      app.printFifosMapping(bindings);
       System.out.println("The MMI is: "+scheduler.getMII());
       
-      architecture.printArchitecture();
-
-
+      scheduler.getArchitecture().printArchitecture();
       // dumping system utilization statistics
-      for(HashMap.Entry<Integer,Tile> t: architecture.getTiles().entrySet()){
+      for(HashMap.Entry<Integer,Tile> t: scheduler.getArchitecture().getTiles().entrySet()){
         for(HashMap.Entry<Integer,Processor> p: t.getValue().getProcessors().entrySet()){
           p.getValue().getScheduler().saveScheduleStats(".");
-	  p.getValue().getLocalMemory().saveMemoryUtilizationStats(".");
+          p.getValue().getLocalMemory().saveMemoryUtilizationStats(".");
         }
         t.getValue().getCrossbar().saveCrossbarUtilizationStats(".");
         t.getValue().getTileLocalMemory().saveMemoryUtilizationStats(".");
       }
-      architecture.getNoC().saveNoCUtilizationStats(".");
-      architecture.getGlobalMemory().saveMemoryUtilizationStats(".");
+      scheduler.getArchitecture().getNoC().saveNoCUtilizationStats(".");
+      scheduler.getArchitecture().getGlobalMemory().saveMemoryUtilizationStats(".");
       
       // get the end time
-      double endTime=architecture.getEndTime();
+      double endTime=scheduler.getArchitecture().getEndTime();
       System.out.println("End time: "+endTime);
       // print the utilization of each processor and each crossbar
-      for(HashMap.Entry<Integer,Tile> t: architecture.getTiles().entrySet()){
+      for(HashMap.Entry<Integer,Tile> t: scheduler.getArchitecture().getTiles().entrySet()){
         for(HashMap.Entry<Integer,Processor> p: t.getValue().getProcessors().entrySet()){
           System.out.println("Processor "+p.getValue().getName()+" Utilization: "+p.getValue().calculateOverallProcessorUtilization(endTime));
           System.out.println("Procesor Local Memory: "+p.getValue().getLocalMemory().getName()+" utilization "+p.getValue().getLocalMemory().getUtilization(endTime)); 
@@ -139,9 +155,9 @@ public class testModuloSchedulingWithNoCMergeMulticast {
         System.out.println("Tile local memory: "+t.getValue().getTileLocalMemory().getName()+ " utilization "+t.getValue().getTileLocalMemory().getUtilization(endTime));
       }
       //System.out.println("NoC Utilization: "+architecture.getNoC().calculateNoCOverallUtilization(endTime));
-      System.out.println("Global memory: "+architecture.getGlobalMemory().getName()+ " utilization "+architecture.getGlobalMemory().getUtilization(endTime));
+      System.out.println("Global memory: "+scheduler.getArchitecture().getGlobalMemory().getName()+ " utilization "+architecture.getGlobalMemory().getUtilization(endTime));
 
       System.out.println("Testing quadcore implementation testcase done!");
-      architecture.saveArchitectureUtilizationStats(".");*/
+      scheduler.getArchitecture().saveArchitectureUtilizationStats(".");
     }
 }
