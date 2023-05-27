@@ -54,6 +54,8 @@ import multitile.application.Application;
 import multitile.application.Fifo;
 import multitile.mapping.Bindings;
 
+import multitile.application.MyEntry;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -80,6 +82,8 @@ public class Scheduler{
   private Processor owner;
 
   private double lastEventinProcessor;
+  private double lastReadToken;
+
   private int numberIterations;
   private int runIterations;
   private String name;
@@ -94,6 +98,7 @@ public class Scheduler{
     this.runIterations = 0;
     this.name = name;
     this.owner = owner;
+    this.lastReadToken = 0.0;
     this.readTransfersToMemory = new ArrayList<>();
     this.writeTransfersToMemory = new ArrayList<>();
     this.transfersToMemory = new ArrayList<>();
@@ -106,10 +111,20 @@ public class Scheduler{
     this.writeTransfers.clear();
     this.lastEventinProcessor = 0.0;
     this.runIterations = 0;
+    this.lastReadToken = 0.0;
     this.readTransfersToMemory.clear();
     this.writeTransfersToMemory.clear();
     this.transfersToMemory.clear();
   } 
+
+
+  public void setLastRead(double time){
+    this.lastReadToken = time;
+  }
+
+  public double getLastRead(){
+    return this.lastReadToken;
+  }
 
   public Processor getOwner(){
     return this.owner;
@@ -379,12 +394,27 @@ public class Scheduler{
 
   }
 
+  public void commitSingleActionFCFS(Action commitAction,Architecture architecture,Application application,Bindings bindings,int step){
+    //this.syncTimeOfSrcActors(commitAction,architecture,application,bindings);
+    // proceed to schedule the Action
+    double ActionTime = commitAction.getProcessingTime();
 
+    double startTime;
+    System.out.println("last read token "+this.lastReadToken);
+    startTime= Collections.max(Arrays.asList(this.lastEventinProcessor,commitAction.getStart_time(),this.getTimeLastReadofActor(commitAction.getActor()), this.lastReadToken));
+    //else
+    //  startTime= Collections.max(Arrays.asList(this.lastEventinProcessor,commitAction.getStart_time(),this.getTimeLastReadofActor(commitAction.getActor()),ArchitectureManagement.getMaxPreviousStepScheduledAction(architecture,step)  ));
+    double endTime = startTime + ActionTime;
+    // update now the commit Action
+    commitAction.setStart_time(startTime);
+    commitAction.setDue_time(endTime);
+    // update the last event in processor
+    this.lastEventinProcessor = endTime;
+    // commit the Action
+    this.scheduledActions.addLast(commitAction);
+    //System.out.println("COMITTING:"+commitAction.getActor().getName());
 
-
-
-
-
+  }
 
   public void commitActionsinQueue(){
     // then commit all the schedulable Actions in the queue
@@ -448,6 +478,36 @@ public class Scheduler{
 	    for(Transfer t : reads) {
 	    	t.setStart_time(maxStart);
 	    }*/
+	    // end read NGRES
+	    
+	    readTransfers.put(commitAction.getActor(),reads);
+            // I have to specify the source and the target
+            
+  }
+
+  public void commitReadsFCFS(Action commitAction,Map<Integer,Fifo> fifos,Application app,Architecture architecture){
+	    List<Transfer> reads = new ArrayList<>();
+	    //System.out.println("Actor "+commitAction.getActor().getName());
+	    for(Fifo fifo : app.getActors().get(commitAction.getActor().getId()).getInputFifos()){
+	      int cons      = fifo.getProdRate();
+              MyEntry<Double, Processor> myEntry = fifos.get(fifo.getId()).readTimeProducedTokenFCFS(cons,commitAction.getActor().getId());
+	      double timeLastReadToken = myEntry.getKey();
+	      // I scheduled read of data by token reads
+	      for(int n = 0 ; n<cons;n++) {
+	          Transfer readTransfer = new Transfer(commitAction.getActor(),fifo,Collections.max(Arrays.asList(this.lastEventinProcessor,timeLastReadToken)),Transfer.TRANSFER_TYPE.READ);
+                  readTransfer.setProcessor(myEntry.getValue());
+	          reads.add(readTransfer);
+	      }
+	    }
+	    //same read behavior as NGRES
+	    double maxStart = 0.0;
+	    for(Transfer t : reads) {
+	    	if (t.getStart_time() > maxStart)
+	    		maxStart = t.getStart_time();
+	    }
+	    for(Transfer t : reads) {
+	    	t.setStart_time(maxStart);
+	    }
 	    // end read NGRES
 	    
 	    readTransfers.put(commitAction.getActor(),reads);
@@ -530,6 +590,7 @@ public class Scheduler{
 	      int prod    = fifo.getProdRate();
 	      for(int n=0; n<prod; n++){
 	          Transfer writeTransfer = new Transfer(commitAction.getActor(),fifo,this.lastEventinProcessor,Transfer.TRANSFER_TYPE.WRITE);
+		  writeTransfer.setProcessor(this.owner);
 	          writes.add(writeTransfer);
 	      }
 	    }
