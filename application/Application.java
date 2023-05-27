@@ -390,8 +390,6 @@ public class Application{
 	      }
 		  //return writer;
 		  MyEntry<Fifo, CompositeFifo> result = new MyEntry<Fifo,CompositeFifo>(writer,compositeFifo);
-		  // check this before push
-		  compositeFifo.set_capacity(1);
 		  return result;
 	  }
 	  
@@ -411,6 +409,13 @@ public class Application{
 			      mapOfFifos.put(cf.getName(), r);
 		      }
 		    }
+		}
+		
+		public void setMulticastCapacity(int capacity) {
+			for(Map.Entry<Integer, Fifo> f : fifos.entrySet()) {
+				if (f.getValue().isCompositeChannel())
+					f.getValue().set_capacity(capacity);
+			}
 		}
 		
 	    public double calculateMemoryFootprint() {
