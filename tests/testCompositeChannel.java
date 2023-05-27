@@ -59,10 +59,8 @@ public class testCompositeChannel {
       TestApplication sampleApplication = new TestApplication(t1,bindings,mappings);  
       Application app = sampleApplication.getSampleApplication();
 
-      FCFS scheduler = new FCFS();
-      scheduler.setApplication(app);
-      scheduler.setArchitecture(architecture);
-
+      FCFS scheduler = new FCFS(architecture,app);
+      
       scheduler.setMaxIterations(3);
       scheduler.schedule(bindings,null);
 
