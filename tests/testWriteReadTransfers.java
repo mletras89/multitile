@@ -101,9 +101,8 @@ public class testWriteReadTransfers {
       // memory binding
       bindings.getFifoMemoryBindings().put(c1.getId(), new Binding<Memory>(memory1));
       
-      FCFS scheduler = new FCFS();
-      scheduler.setApplication(application);
-      scheduler.setArchitecture(architecture);
+      FCFS scheduler = new FCFS(architecture,application);
+      
 
       scheduler.setMaxIterations(10);
       scheduler.schedule(bindings,null);

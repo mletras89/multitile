@@ -60,10 +60,8 @@ public class testQuadCoreImplementation {
       TestApplicationQuadCore sampleApplication = new TestApplicationQuadCore(t1,bindings);  
       Application app = sampleApplication.getSampleApplication();
 
-      FCFS scheduler = new FCFS();
-      scheduler.setApplication(app);
-      scheduler.setArchitecture(architecture);
-
+      FCFS scheduler = new FCFS(architecture,app);
+      
       scheduler.setMaxIterations(3);
       scheduler.schedule(bindings,null);
 

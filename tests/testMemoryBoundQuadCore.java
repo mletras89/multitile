@@ -64,10 +64,8 @@ public class testMemoryBoundQuadCore {
       Application app = sampleApplication.getSampleApplication();
       ApplicationManagement.assignFifoMapping(app,architecture,bindings); 
 
-      FCFS scheduler = new FCFS();
-      scheduler.setApplication(app);
-      scheduler.setArchitecture(architecture);
-
+      FCFS scheduler = new FCFS(architecture,app);
+      
       scheduler.setMaxIterations(10);
       scheduler.schedule(bindings,null);
 

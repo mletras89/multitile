@@ -59,10 +59,8 @@ public class testTileSingleCoreBus {
       TestApplication sampleApplication = new TestApplication(t1,bindings,mappings);  
       Application application = sampleApplication.getSampleApplication();
 
-      FCFS scheduler = new FCFS();
-      scheduler.setApplication(application);
-      scheduler.setArchitecture(architecture);
-
+      FCFS scheduler = new FCFS(architecture,application);
+      
       scheduler.setMaxIterations(1);
       scheduler.schedule(bindings,null);
 
