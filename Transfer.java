@@ -55,7 +55,7 @@ public class Transfer {
   // in a transfer, an actor and a Fifo are involved
   private Actor actor;
   private Fifo fifo;
-  private Processor processor;
+  private Processor processor;   // processor who triggered this transaction
   private Memory  memory;
 
   // depending on the type of the operation: {READ, WRITE}
@@ -99,6 +99,7 @@ public class Transfer {
     this.setType(other.getType());
     this.setStep(other.getStep());
     this.setEndOverall(other.getEndOverall());
+    this.setProcessor(other.getProcessor());
   }
 
   public void setProcessor(Processor p){
