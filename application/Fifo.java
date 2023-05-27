@@ -41,6 +41,7 @@ import multitile.mapping.Bindings;
 import multitile.Transfer;
 import multitile.architecture.Memory;
 import multitile.architecture.Architecture;
+import multitile.architecture.Processor;
 import multitile.architecture.ArchitectureManagement;
 import java.util.*;
 
@@ -288,8 +289,7 @@ public class Fifo implements Buffer{
  
   public double readTimeProducedToken(int n, int idWhoIsReading){
 	assert idWhoIsReading == this.getDestination().getId(): "Error "+this.getName();
-	  
-	  	
+  	
     // this method reads n tokens from the fifo and returns the one with
     // the max delay
     List<Double> reads = new ArrayList<>();
@@ -312,9 +312,40 @@ public class Fifo implements Buffer{
     }
     return 0;
   }
-  
+
+  public MyEntry<Double,Processor> readTimeProducedTokenFCFS(int n, int idWhoIsReading){
+    assert idWhoIsReading == this.getDestination().getId(): "Error "+this.getName();
+    // this method reads n tokens from the fifo and returns the one with
+    // the max delay
+    List<Double> reads = new ArrayList<>();
+    MyEntry<Double,Processor>  myEntry = new MyEntry<Double,Processor>(0.0,null);
+    for(int i=0;i<n;i++){
+      myEntry =  this.readTimeProducedTokenFCFS();
+      reads.add(myEntry.getKey());
+    }
+    myEntry = new MyEntry<Double,Processor>( Collections.max(reads), myEntry.getValue()); 
+    //myEntry.setKey(Collections.max(reads));
+    return myEntry;
+  }
+
+  public MyEntry<Double,Processor> readTimeProducedTokenFCFS() {
+    Transfer status;
+    //System.out.println("FIFOS: "+this.getName());
+    this.numberOfReadsTimeProduced++;
+    //assert timeProducedToken.size() > 0: "Error here "+this.getName();
+    MyEntry<Double,Processor>  myEntry = new MyEntry<Double,Processor>(0.0,null);
+    if (timeProducedToken.size() > 0)
+    {
+    	status = this.timeProducedToken.remove();
+        myEntry = new MyEntry<Double,Processor>(status.getDue_time(), status.getProcessor());
+        //myEntry.setKey(status.getDue_time());
+        //myEntry.setValue( status.getProcessor());
+//    	return myEntry;
+    }
+    return myEntry;
+  }
+
  
-  
   public boolean canFlushData() {
     return true;
   }
