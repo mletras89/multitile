@@ -400,7 +400,7 @@ public class Scheduler{
     double ActionTime = commitAction.getProcessingTime();
 
     double startTime;
-    System.out.println("last read token "+this.lastReadToken);
+    //System.out.println("last read token "+this.lastReadToken);
     startTime= Collections.max(Arrays.asList(this.lastEventinProcessor,commitAction.getStart_time(),this.getTimeLastReadofActor(commitAction.getActor()), this.lastReadToken));
     //else
     //  startTime= Collections.max(Arrays.asList(this.lastEventinProcessor,commitAction.getStart_time(),this.getTimeLastReadofActor(commitAction.getActor()),ArchitectureManagement.getMaxPreviousStepScheduledAction(architecture,step)  ));
