@@ -97,7 +97,7 @@ public class FCFS extends BaseScheduler implements Schedule{
     Map<Actor,List<Transfer>> processorReadTransfers = new HashMap<>();
     Map<Actor,List<Transfer>> processorWriteTransfers = new HashMap<>();
     
-    application.printFifosState();
+    //application.printFifosState();
 
     while(getNumberCurrentIterations() < this.getMaxIterations()){
       // get schedulable actions in all the processors in all the tiles
@@ -109,7 +109,7 @@ public class FCFS extends BaseScheduler implements Schedule{
       // create action to be scheduled
       Action action = new Action(application.getActors().get(actorId));
       action.setProcessingTime(processingTime);
-      System.out.println("Scheduling ... "+action.getActor().getName()); 
+      //System.out.println("Scheduling ... "+action.getActor().getName()); 
       // get processor to execute the action
       int processorID = bindings.getActorProcessorBindings().get(action.getActor().getId()).getTarget().getId();
       int tileId = bindings.getActorTileBindings().get(action.getActor().getId()).getTarget().getId();
@@ -154,7 +154,7 @@ public class FCFS extends BaseScheduler implements Schedule{
 
       countActorFirings.put( actorId, countActorFirings.get(actorId) + 1   );
 
-      application.printFifosState();
+      //application.printFifosState();
 //      break; 
     }
   }
