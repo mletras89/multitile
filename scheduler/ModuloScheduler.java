@@ -106,11 +106,6 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
     for(int i = 0; i < actorToCoreTypeMapping.size(); i++){
     	int coreType = actorToCoreTypeMapping.get(i);
     	ArrayList<Integer> key = indexCoreTypes.get(coreType);
-    	
-    	//new MyEntry<Integer,String>(, this.coreTypes.get(coreType));
-    	//assert (numberOfTiles == 3);
-		//countCoresPerTile.put(key,  nCoresPerTypeMapping.get(coreType) );
-		
     }
     for(Map.Entry<Integer, Tile>  t : architecture.getTiles().entrySet()) {
     	for(Map.Entry<Integer, Processor> p : t.getValue().getProcessors().entrySet()) {
@@ -496,45 +491,7 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
 	  }
 	  return resize;
   }
-  
-  
-  public void checkAndReMapMemories(Bindings bindings) {
-	  Map<Integer, Binding<Memory>>  memBindings = bindings.getFifoMemoryBindings();
-	  Set<Memory> setBoundMemories = new HashSet<Memory>(); // set of the ids of the bound memories
-	  for(Map.Entry<Integer, Binding<Memory>> m : memBindings.entrySet() ) {
-		  setBoundMemories.add(m.getValue().getTarget());
-	  }
-	  boolean success = false;
-	  while(!success) {
-		  boolean doRemap = false;
-		  for(Memory mem : setBoundMemories) {
-			  double capacityMem = mem.getCapacity();
-			  double currentFix = 0.0;
-			  for(Map.Entry<Integer, Binding<Memory>> m : memBindings.entrySet() ) { 
-				  if (mem.getId() == m.getValue().getTarget().getId()) {
-					  // check if I can write
-					  Fifo fifo = application.getFifos().get( m.getKey() );
-					  int bytesFifo = fifo.get_capacity() * fifo.getTokenSize();
-					  if(currentFix + bytesFifo <= capacityMem ) {
-						  currentFix += bytesFifo;
-					  }else {
-						  // ignore the binding and do the remap if a fifo does not fit 
-						  Memory reMappingMemory = ArchitectureManagement.getMemoryToBeRelocated(fifo,architecture,bindings);
-    		              ApplicationManagement.remapFifo(fifo, reMappingMemory,bindings);
-						  doRemap=true;
-						  //break;
-					  }
-				  }
-			  }
-			  if (doRemap) 
-				  break;
-		  }
-		  
-		  if(!doRemap)
-			  success = true;
-	  }
-  }
-  
+
   public boolean checkandReMapSingleFifo(Bindings bindings,Fifo fifo) {
 	  Map<Integer, Binding<Memory>>  memBindings = bindings.getFifoMemoryBindings();
 	  Binding<Memory>  bindingFifo = bindings.getFifoMemoryBindings().get(fifo.getId());

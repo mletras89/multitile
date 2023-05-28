@@ -43,12 +43,15 @@ import multitile.Transfer;
 import multitile.architecture.Processor;
 import multitile.architecture.Tile;
 import multitile.architecture.Architecture;
+import multitile.architecture.ArchitectureManagement;
 import multitile.architecture.Memory;
 import multitile.architecture.TileLocalMemory;
+import multitile.mapping.Binding;
 import multitile.mapping.Bindings;
 import multitile.application.Application;
+import multitile.application.ApplicationManagement;
+import multitile.application.Fifo;
 
-import java.util.List;
 import java.util.*;
 
 public class BaseScheduler{
@@ -208,5 +211,43 @@ public class BaseScheduler{
     }
     return sequence;
   }
+  
+  // check if the memory bounds are safe, if not do the re-mapping until the solution is feasible
+  public void checkAndReMapMemories(Bindings bindings) {
+	  Map<Integer, Binding<Memory>>  memBindings = bindings.getFifoMemoryBindings();
+	  Set<Memory> setBoundMemories = new HashSet<Memory>(); // set of the ids of the bound memories
+	  for(Map.Entry<Integer, Binding<Memory>> m : memBindings.entrySet() ) {
+		  setBoundMemories.add(m.getValue().getTarget());
+	  }
+	  boolean success = false;
+	  while(!success) {
+		  boolean doRemap = false;
+		  for(Memory mem : setBoundMemories) {
+			  double capacityMem = mem.getCapacity();
+			  double currentFix = 0.0;
+			  for(Map.Entry<Integer, Binding<Memory>> m : memBindings.entrySet() ) { 
+				  if (mem.getId() == m.getValue().getTarget().getId()) {
+					  // check if I can write
+					  Fifo fifo = application.getFifos().get( m.getKey() );
+					  int bytesFifo = fifo.get_capacity() * fifo.getTokenSize();
+					  if(currentFix + bytesFifo <= capacityMem ) {
+						  currentFix += bytesFifo;
+					  }else {
+						  // ignore the binding and do the remap if a fifo does not fit 
+						  Memory reMappingMemory = ArchitectureManagement.getMemoryToBeRelocated(fifo,architecture,bindings);
+			              ApplicationManagement.remapFifo(fifo, reMappingMemory,bindings);
+						  doRemap=true;
+						  //break;
+					  }
+				  }
+			  }
+			  if (doRemap) 
+				  break;
+		  }
+		  
+		  if(!doRemap)
+			  success = true;
+	  }
+	}
 
 }
