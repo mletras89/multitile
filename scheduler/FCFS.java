@@ -83,16 +83,19 @@ public class FCFS extends BaseScheduler implements Schedule{
   }
 
 
-  public void schedule(Bindings bindings){
-    //List<Actor> actors = application.getListActors(); 
-    //Map<Integer,Fifo> fifoMap = application.getFifos();
+  public void schedule(Bindings bindings,boolean boundedMemory){
+	
+	 // do the re-map of the FIFOs in case to be required
+	if (boundedMemory)
+		checkAndReMapMemories(bindings);
+    
     for(HashMap.Entry<Integer,Tile> t : architecture.getTiles().entrySet()){
       // reseting all the tiles in the architecture
       t.getValue().resetTile();
     }
     resetCountActorFirings();
 
-    List<Transfer> transfersToMemory = new ArrayList<>();
+
     this.schedulableActors = new LinkedList<>();
     Map<Actor,List<Transfer>> processorReadTransfers = new HashMap<>();
     Map<Actor,List<Transfer>> processorWriteTransfers = new HashMap<>();
