@@ -194,8 +194,8 @@ public class Application{
     		System.out.println("Fifo: "+fifoEntry.getValue().getName()+" contains tokens: "+fifoEntry.getValue().get_tokens()+" capacity "+fifoEntry.getValue().get_capacity()+" source "+fifoEntry.getValue().getSource().getName()+" destination "+fifoEntry.getValue().getDestination().getName());
     	}else {
     		CompositeFifo cf = (CompositeFifo) fifoEntry.getValue();
-    		for(Actor a : cf.getDestinations()) {
-    			System.out.println("Fifo: "+fifoEntry.getValue().getName()+" contains tokens: "+fifoEntry.getValue().get_tokens()+" source "+fifoEntry.getValue().getSource().getName()+" destination "+a.getName());
+    		for(Map.Entry<Integer, Fifo> f: cf.getReaders().entrySet() ) {
+    			System.out.println("Fifo: "+fifoEntry.getValue().getName()+" contains tokens: "+f.getValue().get_tokens()+" source "+fifoEntry.getValue().getSource().getName()+" destination "+f.getValue().getDestination().getName());
     		}
     	}
     	System.out.println("\t"+fifoEntry.getValue().getTimeProducedToken());
@@ -335,12 +335,14 @@ public class Application{
 		    //
 		    // the capacity of the composite is the addition of the capacity of the writer and the max capacity of readers
 		    int capacityWriter = writer.get_capacity();
-		    int capacityReader = 0;
+		    ArrayList<Integer> capacitiesReader = new ArrayList<>();
 
 		    for(Fifo fifo : readerFifos){
-		      if(fifo.get_capacity() > capacityReader)
-		        capacityReader = fifo.get_capacity();
+		      capacitiesReader.add( fifo.get_capacity());
 		    }
+		    
+		    int capacityReader = Collections.max(capacitiesReader);
+		    
 		    // updating fifos capacities of readers
 		    for(Fifo fifo : readerFifos){
 		      fifo.set_capacity(capacityWriter+capacityReader);
