@@ -111,7 +111,7 @@ public class testFCFSWithNoC {
       scheduler.setMaxIterations(1);
       // calculate modulo schedule but do not consider cycles to make it faster
 
-      scheduler.schedule(bindings);
+      scheduler.schedule(bindings,false);
    
 
       // dumping system utilization statistics
