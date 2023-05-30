@@ -287,30 +287,33 @@ public class Fifo implements Buffer{
 
   // functions to read the time of n produced tokens
  
-  public double readTimeProducedToken(int n, int idWhoIsReading){
+  public MyEntry<Double,Processor>  readTimeProducedToken(int n, int idWhoIsReading){
 	assert idWhoIsReading == this.getDestination().getId(): "Error "+this.getName();
   	
     // this method reads n tokens from the fifo and returns the one with
     // the max delay
     List<Double> reads = new ArrayList<>();
+    MyEntry<Double,Processor>  myEntry = new MyEntry<Double,Processor>(0.0,null);
     for(int i=0;i<n;i++){
-      reads.add(this.readTimeProducedToken());
+      myEntry =  this.readTimeProducedToken();
+      reads.add(myEntry.getKey());
     }
-    return Collections.max(reads);
+    myEntry = new MyEntry<Double,Processor>( Collections.max(reads), myEntry.getValue()); 
+    return myEntry;
   }
 
-  public double readTimeProducedToken() {
+  public MyEntry<Double,Processor> readTimeProducedToken() {
     Transfer status;
     //System.out.println("FIFOS: "+this.getName());
     this.numberOfReadsTimeProduced++;
     //assert timeProducedToken.size() > 0: "Error here "+this.getName();
-    
+    MyEntry<Double,Processor>  myEntry = new MyEntry<Double,Processor>(0.0,null);
     if (timeProducedToken.size() > 0)
     {
     	status = this.timeProducedToken.remove();
-    	return status.getDue_time();
+    	myEntry = new MyEntry<Double,Processor>(status.getDue_time(), status.getProcessor());
     }
-    return 0;
+    return myEntry;
   }
 
   public MyEntry<Double,Processor> readTimeProducedTokenFCFS(int n, int idWhoIsReading){
@@ -324,7 +327,7 @@ public class Fifo implements Buffer{
       reads.add(myEntry.getKey());
     }
     myEntry = new MyEntry<Double,Processor>( Collections.max(reads), myEntry.getValue()); 
-    //myEntry.setKey(Collections.max(reads));
+
     return myEntry;
   }
 
@@ -338,9 +341,6 @@ public class Fifo implements Buffer{
     {
     	status = this.timeProducedToken.remove();
         myEntry = new MyEntry<Double,Processor>(status.getDue_time(), status.getProcessor());
-        //myEntry.setKey(status.getDue_time());
-        //myEntry.setValue( status.getProcessor());
-//    	return myEntry;
     }
     return myEntry;
   }

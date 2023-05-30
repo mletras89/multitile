@@ -63,8 +63,8 @@ interface Buffer{
   
   public void insertTimeProducedToken(Transfer transfer) ;
   
-  public double readTimeProducedToken();
-  public double readTimeProducedToken(int n, int idWhoIsReading);
+  public MyEntry<Double,Processor> readTimeProducedToken();
+  public MyEntry<Double,Processor> readTimeProducedToken(int n, int idWhoIsReading);
   
   public  MyEntry<Double,Processor> readTimeProducedTokenFCFS();
   public  MyEntry<Double,Processor> readTimeProducedTokenFCFS(int n, int idWhoIsReading);

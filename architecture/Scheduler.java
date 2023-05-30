@@ -441,7 +441,8 @@ public class Scheduler{
     for(Fifo fifo : commitAction.getActor().getInputFifos()){
       int cons      = fifo.getProdRate();
       //System.out.println("1)Actor: "+commitAction.getActor().getName()+" reading from "+fifo.getName());
-      double timeLastReadToken = fifos.get(fifo.getId()).readTimeProducedToken(cons,commitAction.getActor().getId());
+      MyEntry<Double, Processor> myEntry = fifos.get(fifo.getId()).readTimeProducedToken(cons,commitAction.getActor().getId());
+      double timeLastReadToken = myEntry.getKey();
       // I scheduled read of data by token reads
       for(int n = 0 ; n<cons;n++) {
 //        if(fifo.getMapping().getType() == Memory.MEMORY_TYPE.TILE_LOCAL_MEM ||
@@ -462,27 +463,17 @@ public class Scheduler{
 	    //System.out.println("Actor "+commitAction.getActor().getName());
 	    for(Fifo fifo : app.getActors().get(commitAction.getActor().getId()).getInputFifos()){
 	      int cons      = fifo.getProdRate();
-	      double timeLastReadToken = fifos.get(fifo.getId()).readTimeProducedToken(cons,commitAction.getActor().getId());
+	      MyEntry<Double, Processor> myEntry = fifos.get(fifo.getId()).readTimeProducedToken(cons,commitAction.getActor().getId()); 
+	      double timeLastReadToken = myEntry.getKey();
 	      // I scheduled read of data by token reads
 	      for(int n = 0 ; n<cons;n++) {
 	          Transfer readTransfer = new Transfer(commitAction.getActor(),fifo,Collections.max(Arrays.asList(this.lastEventinProcessor,timeLastReadToken)),Transfer.TRANSFER_TYPE.READ);
+	          readTransfer.setProcessor(myEntry.getValue());
 	          reads.add(readTransfer);
 	      }
 	    }
-	    //same read behavior as NGRES
-	    /*double maxStart = 0.0;
-	    for(Transfer t : reads) {
-	    	if (t.getStart_time() > maxStart)
-	    		maxStart = t.getStart_time();
-	    }
-	    for(Transfer t : reads) {
-	    	t.setStart_time(maxStart);
-	    }*/
-	    // end read NGRES
 	    
 	    readTransfers.put(commitAction.getActor(),reads);
-            // I have to specify the source and the target
-            
   }
 
   public void commitReadsFCFS(Action commitAction,Map<Integer,Fifo> fifos,Application app,Architecture architecture){
@@ -490,12 +481,12 @@ public class Scheduler{
 	    //System.out.println("Actor "+commitAction.getActor().getName());
 	    for(Fifo fifo : app.getActors().get(commitAction.getActor().getId()).getInputFifos()){
 	      int cons      = fifo.getProdRate();
-              MyEntry<Double, Processor> myEntry = fifos.get(fifo.getId()).readTimeProducedTokenFCFS(cons,commitAction.getActor().getId());
-	      double timeLastReadToken = myEntry.getKey();
+          MyEntry<Double, Processor> myEntry = fifos.get(fifo.getId()).readTimeProducedTokenFCFS(cons,commitAction.getActor().getId());
+          double timeLastReadToken = myEntry.getKey();
 	      // I scheduled read of data by token reads
 	      for(int n = 0 ; n<cons;n++) {
 	          Transfer readTransfer = new Transfer(commitAction.getActor(),fifo,Collections.max(Arrays.asList(this.lastEventinProcessor,timeLastReadToken)),Transfer.TRANSFER_TYPE.READ);
-                  readTransfer.setProcessor(myEntry.getValue());
+              readTransfer.setProcessor(myEntry.getValue());
 	          reads.add(readTransfer);
 	      }
 	    }
@@ -509,10 +500,7 @@ public class Scheduler{
 	    	t.setStart_time(maxStart);
 	    }
 	    // end read NGRES
-	    
 	    readTransfers.put(commitAction.getActor(),reads);
-            // I have to specify the source and the target
-            
   }
 
   
@@ -522,7 +510,8 @@ public class Scheduler{
       for(Fifo fifo : commitAction.getActor().getInputFifos()){
         //System.out.println("1)Actor: "+commitAction.getActor().getName()+" reading from "+fifo.getName());
         int cons      = fifo.getProdRate();
-        double timeLastReadToken = fifos.get(fifo.getId()).readTimeProducedToken(cons,commitAction.getActor().getId());
+        MyEntry<Double, Processor> myEntry = fifos.get(fifo.getId()).readTimeProducedToken(cons,commitAction.getActor().getId());
+        double timeLastReadToken = myEntry.getKey();
         // I scheduled read of data by token reads
         for(int n = 0 ; n<cons;n++) {
 //          if(fifo.getMapping().getType() == Memory.MEMORY_TYPE.TILE_LOCAL_MEM ||
@@ -590,7 +579,7 @@ public class Scheduler{
 	      int prod    = fifo.getProdRate();
 	      for(int n=0; n<prod; n++){
 	          Transfer writeTransfer = new Transfer(commitAction.getActor(),fifo,this.lastEventinProcessor,Transfer.TRANSFER_TYPE.WRITE);
-		  writeTransfer.setProcessor(this.owner);
+	          writeTransfer.setProcessor(this.owner);
 	          writes.add(writeTransfer);
 	      }
 	    }

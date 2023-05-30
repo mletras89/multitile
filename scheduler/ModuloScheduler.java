@@ -59,7 +59,7 @@ import multitile.application.CompositeFifo;
 import multitile.application.Actor;
 import multitile.application.Application;
 import multitile.application.Fifo;
-import multitile.application.MyEntry;
+//import multitile.application.MyEntry;
 import multitile.application.Cycles;
 
 import java.util.*;
@@ -69,12 +69,12 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
   // first level key is the step,
   // the second level map, key is the id of the tile, 
   // the third level of the map, the key is the processor and bool the state of the occupation
-  private HashMap<Integer,HashMap<Integer,HashMap<Integer,Boolean>>> resourceOcupation;
+  //private HashMap<Integer,HashMap<Integer,HashMap<Integer,Boolean>>> resourceOcupation;
 
   // key is the actor id and the value is the scheduled step
   private HashMap<Integer,Integer> l;
   private int MII;
-  private int lastStep;
+  //private int lastStep;
   private HashMap<Integer,List<Integer>> kernel;
   private HashMap<Integer,List<Action>> kernelActions;
   private int stepStartKernel = 0;
@@ -94,7 +94,7 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
   public ModuloScheduler(Architecture architecture, Application application, Map<Integer,ArrayList<Integer>> indexCoreTypes, ArrayList<Integer> actorToCoreTypeMapping,Set<String> coreTypes){
     super();
     this.l = new HashMap<>();
-    this.resourceOcupation = new HashMap<>();
+    //this.resourceOcupation = new HashMap<>();
     this.indexCoreTypes =indexCoreTypes;
     countCoresPerType = new HashMap<>();
     this.actorToCoreTypeMapping = actorToCoreTypeMapping;
@@ -103,10 +103,10 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
     //this.nCoresPerTypeMapping = nCoresPerTypeMapping;
     this.coreTypes = new ArrayList<>(coreTypes);
     
-    for(int i = 0; i < actorToCoreTypeMapping.size(); i++){
-    	int coreType = actorToCoreTypeMapping.get(i);
-    	ArrayList<Integer> key = indexCoreTypes.get(coreType);
-    }
+    /*for(int i = 0; i < actorToCoreTypeMapping.size(); i++){
+    	//int coreType = actorToCoreTypeMapping.get(i);
+    	//ArrayList<Integer> key = indexCoreTypes.get(coreType);
+    }*/
     for(Map.Entry<Integer, Tile>  t : architecture.getTiles().entrySet()) {
     	for(Map.Entry<Integer, Processor> p : t.getValue().getProcessors().entrySet()) {
     		String coreType = p.getValue().getProcesorType();
@@ -457,16 +457,16 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
     architecture.resetArchitecture();
     //application.resetApplication(architecture, bindings, application);
     application.resetApplication();
-    while(!scheduleModulo(bindings,mappings)){
+    /*while(!scheduleModulo(bindings,mappings)){
       architecture.resetArchitecture();
       application.resetApplication();
-    }
+    }*/
   }
   
-  public void scheduleSingleIteration(Bindings bindings){
+  public void schedule(Bindings bindings){
     architecture.resetArchitecture();
     application.resetApplication(architecture, bindings, application);
-    while( ! scheduleModuloSingleIterationFine(bindings)) {
+    while( ! scheduleModulo(bindings)) {
     	architecture.resetArchitecture();
         application.resetApplication(architecture, bindings, application);
     }
@@ -580,53 +580,7 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
 	  }
 	  return stateChannels;
   }
-  /*public HashMap<Integer,Integer> updateStateChannelsAfterPrologue(HashMap<Integer,Integer> currentStateChannels,HashMap<Integer,Integer> channelsNumberReads,HashMap<Integer,Integer> channelsNumberWrites) {
-	  HashMap<Integer,Integer> firingActorsPrologue = new HashMap<>();
-	  HashMap<Integer,Integer> stateChannels = new HashMap<>();
-	  HashMap<Integer,Integer> actualChannelsNumberReads = new HashMap<>();
-	  //channelsNumberReads= new HashMap<>();
-	  //channelsNumberWrites = new HashMap<>();
-	  
-	  // initialize them
-	  for(Map.Entry<Integer, Actor> a : application.getActors().entrySet()) {
-		  firingActorsPrologue.put(a.getKey(), 0);
-	  }
-	  
-	  for(Map.Entry<Integer, Integer> state : currentStateChannels.entrySet()) {
-		  stateChannels.put(state.getKey(), state.getValue());
-		  //channelsNumberReads.put(state.getKey(), 0);
-		  //channelsNumberWrites.put(state.getKey(), 0);
-	  }
-	  
-	  for(int i = 0 ; i < this.stepStartKernel; i++) {
-		  for(int actorId :kernel.get(i)) {
-			  // update state of channels connected at it
-			  // first set the reads
-			  Actor actor = application.getActors().get(actorId);
-			  for(Fifo f : actor.getInputFifos()) {
-				  if (!f.isCompositeChannel()) {
-					  channelsNumberReads.put(f.getId(), channelsNumberReads.get(f.getId()) + f.getConsRate() );
-					  stateChannels.put(f.getId(),  stateChannels.get(f.getId())  - f.getConsRate()  );
-				  }else {
-					  CompositeFifo MRB = (CompositeFifo)f;
-					  int reads = channelsNumberReads.get(f.getId() );
-					  int nReaders = MRB.getDestinations().size();
-					  
-				  }
-			  }
-			  // then set the writes
-			  for(Fifo f : actor.getOutputFifos()) {
-				  channelsNumberWrites.put(f.getId(), channelsNumberWrites.get(f.getId()) + f.getProdRate() );
-				  stateChannels.put(f.getId(),  stateChannels.get(f.getId())  + f.getProdRate()  );
-			  }
-		  }
-		  // resize here resize
-		  resizeFifos(stateChannels);
-	 }
-	  
-	 return stateChannels;
-  }*/
-  
+    
   public HashMap<Integer,Integer> updateStateChannels(HashMap<Integer,Integer> initialStateChannels,HashMap<Integer,Integer> channelsNumberReads,HashMap<Integer,Integer> channelsNumberWrites) {
 	  HashMap<Integer,Integer> stateChannels = new HashMap<>();
 	  
@@ -658,7 +612,7 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
 	  return stateChannels;
   }
   
-  boolean scheduleModuloSingleIterationFine(Bindings bindings){
+  boolean scheduleModulo(Bindings bindings){
 	//HashMap<Integer,Tile> tiles = architecture.getTiles();
 	    this.getScheduledStepActions().clear();
 	    this.getKernelActions(bindings);
@@ -731,7 +685,17 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
 	        				  return false;
 	        		  } 
 	          	  	}
-	          	  	processorReadTransfers.put(action.getActor(), scheduleTransfers(readTransfers,bindings));
+	          	  	
+	                readTransfers = scheduleTransfers(readTransfers,bindings);
+	          	  	// udpate events in processor
+	                for(Transfer t : readTransfers){
+	                   if(t.getProcessor() != null) {
+	                	   int procId = t.getProcessor().getId();
+	                	   int tileTId = t.getProcessor().getOwnerTile().getId();
+	                	   architecture.getTiles().get(tileTId).getProcessors().get(procId).getScheduler().setLastRead(t.getDue_time());
+	                   }
+	                }
+	          	  	processorReadTransfers.put(action.getActor(), readTransfers);
 	          	  	// commit the action in the processor
 	          	  	p.getScheduler().setReadTransfers(processorReadTransfers);
 	          	  	
@@ -765,26 +729,7 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
 	                p.getScheduler().updateLastEventAfterWrite(action);
 	                // insert the time of the produced tokens by action into the correspondent fifos
 	                p.getScheduler().produceTokensinFifo(action,application.getFifos());
-	                // managing the tracking of the memories
-	             	//p.getScheduler().setWriteTransfersToMemory();
-	             	
-	             	// fire and remove actor
-	             	//application.getActors().get(action.getActor().getId()).fire(application.getFifos()); 
-	             	//removeActionFromListOfActions(actorsInStep,action);
-	             	//System.out.println("Fired "+action.getActor().getName());
-	             	//application.printFifosState();
-	             	//actorsInStep.remove(action);
-	        	}
-	        	
-	        	
-	        //}
-	        /*stateChannels = updateStateChannels(initialState, reads, writes);
-	  	  	// check if resize is required
-	  	  	if (resizeFifos(stateChannels)) {
-	  	  		// check memory constraint binding
-	  	  		//if(checkandReMapSingleFifo(bindings,f))
-	  	  		checkAndReMapMemories(bindings);
-	  		 }*/
+	            }
 	    }
 	    
 	    return true;
@@ -803,334 +748,7 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
 	  }
   }
   
-  boolean scheduleModuloSingleIteration(Bindings bindings){
-    //HashMap<Integer,Tile> tiles = architecture.getTiles();
-    this.getScheduledStepActions().clear();
-    this.getKernelActions(bindings);
-    HashMap<Integer,Integer> firingActorsPrologue = getFiringActorsPrologue();
-    HashMap<Integer,Integer> initialState = getInitialStateChannels();
-    HashMap<Integer,Integer> writes = getWritesAfterPrologue(firingActorsPrologue);
-    HashMap<Integer,Integer> reads = getReadsAfterPrologue(firingActorsPrologue);
-    
-    HashMap<Integer,Integer> stateChannels = updateStateChannels(initialState, reads, writes);
-    
-    // resize fifos
-    resizeFifos(stateChannels);
-    // check memory constraint binding
-    checkAndReMapMemories(bindings);
-    
-    // insert tokens at FIFOs after prologue
-    //application.fillTokensAtState(stateChannels);
-    
-    // proceed to schedule the kernel
-    for(int j =this.stepStartKernel; j<this.stepEndKernel; j++){  // this.stepEndKernel;j++){
-      this.getSchedulableActors(j);
-      // schedule only reads     
-      Map<Actor,List<Transfer>> processorReadTransfers = new HashMap<>(); 
-      for(Action action : queueActions){
-    	  //System.out.print("Action "+action.getActor().getName()+ " bound to "+bindings.getActorProcessorBindings().get(action.getActor().getId()).getTarget().getId());
-    	  int processorID = bindings.getActorProcessorBindings().get(action.getActor().getId()).getTarget().getId();
-    	  int tileId = bindings.getActorTileBindings().get(action.getActor().getId()).getTarget().getId();
-    	  Processor p = architecture.getTiles().get(tileId).getProcessors().get(processorID);
-    	  
-    	  //Processor p = bindings.getActorProcessorBindings().get(action.getActor().getId()).getTarget();
-    	  p.getScheduler().commitReads(action,application.getFifos(),application);
-    	  List<Transfer> readTransfers = p.getScheduler().getReadTransfers().get(action.getActor());
-    	  if (readTransfers == null)
-    		  continue;
-    	  // I have to update the state of the channels according to the reads
-    	  for(Transfer t: readTransfers) {
-    		  Fifo f = t.getFifo();
-    		  reads.put(f.getId(),  reads.get(f.getId()) + 1 );
-    	  }
-    	  processorReadTransfers.put(action.getActor(), scheduleTransfers(readTransfers,bindings));
-    	  // commit the action in the processor
-    	  p.getScheduler().setReadTransfers(processorReadTransfers);
-      }
-
-      for(Action action : queueActions){
-    	  int processorID = bindings.getActorProcessorBindings().get(action.getActor().getId()).getTarget().getId();
-    	  int tileId = bindings.getActorTileBindings().get(action.getActor().getId()).getTarget().getId();
-    	  Processor p = architecture.getTiles().get(tileId).getProcessors().get(processorID);
-    	  //Processor p = architecture.getTiles().get(action.getTile().getId()).getProcessors().get(action.getProcessor().getId());
-    	  // schedule actions
-    	  p.getScheduler().commitSingleAction(action,architecture,application, bindings, j ); 
-      }
-      Map<Actor,List<Transfer>> processorWriteTransfers = new HashMap<>();
-      for(Action action : queueActions){
-    	  int processorID = bindings.getActorProcessorBindings().get(action.getActor().getId()).getTarget().getId();
-    	  int tileId = bindings.getActorTileBindings().get(action.getActor().getId()).getTarget().getId();
-    	  Processor p = architecture.getTiles().get(tileId).getProcessors().get(processorID);
-    	  // Processor p = architecture.getTiles().get(action.getTile().getId()).getProcessors().get(action.getProcessor().getId());
-	 // finally, schedule the write of tokens
-         p.getScheduler().commitWrites(action,application);
-         // put writing transfers to crossbar(s) or NoC
-         // get write transfers from the scheduler
-         List<Transfer> writeTransfers = p.getScheduler().getWriteTransfers().get(action.getActor());
-         if (writeTransfers == null)
-        	 continue;
-         for(Transfer t : writeTransfers) {
-        	 Fifo f = t.getFifo();
-        	 writes.put(f.getId(),  writes.get(f.getId()) + 1 );
-        	 // update the state of the fifos 
-        	 
-         }
-         
-         processorWriteTransfers.put(action.getActor(), scheduleTransfers(writeTransfers,bindings));
-     	// update the write transfers of each processor with the correct start and due time
-         p.getScheduler().setWriteTransfers(processorWriteTransfers);
-      	// update the last event in processor, taking into the account the processorWriteTransfers
-        p.getScheduler().updateLastEventAfterWrite(action);
-        // insert the time of the produced tokens by acton into the correspondent fifos
-        p.getScheduler().produceTokensinFifo(action,application.getFifos());
-        // managing the tracking of the memories
-      	 p.getScheduler().setWriteTransfersToMemory();
-        //transfersToMemory.addAll(p.getValue().getScheduler().getTransfersToMemory());
-        // clean the lists read and write transfers in each processor
-      }
-      
-    }
-    stateChannels = updateStateChannels(initialState, reads, writes);
-	  // check if resize is required
-	  if (resizeFifos(stateChannels)) {
-	  // check memory constraint binding
-		  //if(checkandReMapSingleFifo(bindings,f))
-		 checkAndReMapMemories(bindings);
-		
-	  }
-    return true;
-  }
   
-  public boolean scheduleModulo(Bindings bindings, Mappings mappings){
-    HashMap<Integer,Tile> tiles = architecture.getTiles();
-    this.getScheduledStepActions().clear();
-    // 4) set the resource ocupation of all the resources as empty
-    resourceOcupation = new HashMap<>();
-    for(int i=1; i <= this.lastStep;i++){
-      // filling first level with step as key
-      resourceOcupation.put(i,new HashMap<>());
-      // filling second level where the key is the tile id
-      for(HashMap.Entry<Integer,Tile> t: tiles.entrySet()){
-        resourceOcupation.get(i).put(t.getKey(),new HashMap<>());
-        // filling the third level where the key is the processor id
-        for(HashMap.Entry<Integer,Processor> p: t.getValue().getProcessors().entrySet()){
-          resourceOcupation.get(i).get(t.getKey()).put(p.getKey(),false);
-        }
-      }
-    }  
-    //this.getKernelActions();
-    // 5) now, we schedule the actions
-    int i = 1;
-    List<Transfer> transfersToMemory = new ArrayList<>();
-    //System.out.println("last step"+this.lastStep);
-    while(i<=this.lastStep){
-      //System.out.println("step "+i);
-      //System.out.println("scheduling step="+i);
-      this.cleanQueue();
-      this.getSchedulableActors(i);
-      //LinkedList<Action> stepScheduledActions = new LinkedList<Action>();
-      // key is tile id
-      HashMap<Integer,HashMap<Integer,Boolean>> currentTilesOccupation = resourceOcupation.get(i);
-      // remove all the actions in the queue
-      int sizeActions = queueActions.size();
-      List<Action> mappedAction = new ArrayList<>();
-      for(int k =0 ; k < sizeActions; k++){
-        Action action = queueActions.remove();
-        //action.setStep(i);
-        //System.out.println("current actor "+action.getActor().getName());
-        int actionToTileId = bindings.getActorTileBindings().get(action.getActor().getId()).getTarget().getId(); //    action.getActor().getMappingToTile().getId();
-        // get the mapping 
-        HashMap<Integer,Boolean> processorUtilization = currentTilesOccupation.get(actionToTileId);
-
-        int availableProcessor = getNextAvailableProcessor(processorUtilization);
-        assert availableProcessor != -1;
-        Processor p = tiles.get(actionToTileId).getProcessors().get(availableProcessor);
-        //System.out.println("actor "+action.getActor().getName()+ " mapped to "+p.getName());
-        // setting the mapping of the actor and action
-        bindings.getActorProcessorBindings().put(action.getActor().getId(), new Binding<>(p));
-        action.setProcessor(p);
-        //System.out.println("ACTION "+action.getActor().getName());
-        
-        Mapping<Processor> mapping = mappings.getActorProcessorMappings().get(action.getActor().getId()).get(p.getId());
-        //System.out.println(mapping.getTarget().getName());
-        bindings.getActorProcessorBindings().get(action.getActor().getId()).setProperties(mapping.getProperties());
-        //mappings.getActorProcessorMappings().get(action.getActor().getId()).get(key)
-        //application.getActors().get(action.getActor().getId()).setMapping(p);
-        action.setProcessingTime((double)mapping.getProperties().get("runtime"));
-        //action.getActor().setMapping(p);
-        // put the action in the processor
-        tiles.get(actionToTileId).getProcessors().get(availableProcessor).getScheduler().getQueueActions().add(action);
-        processorUtilization.put(availableProcessor,true);
-        // update the availabilty
-        currentTilesOccupation.put(actionToTileId,processorUtilization);
-        mappedAction.add(action);
-      }
-      // iterate tiles and the processors to perform the simulation of the application
-      for(HashMap.Entry<Integer,Tile> t: tiles.entrySet()){
-        for(HashMap.Entry<Integer,Processor> p : t.getValue().getProcessors().entrySet()){
-          //System.out.println("Scheduling procesosr "+p.getValue().getName());
-          Queue<Action> actions = p.getValue().getScheduler().getQueueActions();
-          // scheduled transfers in processor p
-          Map<Actor,List<Transfer>> processorReadTransfers = new HashMap<>();
-          for(Action action : actions){
-                  //System.out.println("\tScheduling action "+action.getActor().getName());
-        	  // first schedule the reads
-        	  // 1) get the reads from the processor
-        	  p.getValue().getScheduler().commitReads(action,application.getFifos(),application);
-        	  
-        	  Map<Actor,List<Transfer>> readTransfers = p.getValue().getScheduler().getReadTransfers();
-        	  // 2) for each read transfer calculate the path that has to travel, might be comming from the tile local crossbar,
-        	  //    or the transfer has to travel across several interconnect elements, a read comming from NoC has to travel 
-        	  //    NoC -> TileLocal Crossbar -> Processor
-        	  //    other example es when the transfer source is a local memory of other processor placed in a different tile
-        	  //    Processor1 -> Tile local Crossbar of Processor 1 -> NoC -> TileLocal Crossbar of Processor 2 -> Processor 2
-        	  List<Transfer> listSchedTransfers = new ArrayList<Transfer>();
-        	  for(Map.Entry<Actor,List<Transfer>> entry : readTransfers.entrySet()){
-        		  // the iterate over Tranfesrs to calculate the routing
-        		  for(Transfer transfer : entry.getValue()){
-        			  Queue<PassTransferOverArchitecture> routings = calculatePathOfTransfer(transfer,bindings);
-        			  int routingsLength = routings.size();
-        			  Transfer scheduledTransfer = null;
-        			  Transfer temporalTransfer = new Transfer(transfer);
-        			  for(int m=0; m<routingsLength;m++){
-        				  // proceed to schedule the routing passes
-        				  PassTransferOverArchitecture routing = routings.remove();
-        				  scheduledTransfer = schedulePassOfTransfer(temporalTransfer,routing);
-        				  temporalTransfer = new Transfer(scheduledTransfer);
-        				  temporalTransfer.setStart_time(scheduledTransfer.getDue_time());
-        			  }
-        			  if(scheduledTransfer == null){
-        				  // if we reach this part, means that the transfer does not cost and is a writing to processor local memory
-        				  scheduledTransfer = new Transfer(transfer);
-        				  scheduledTransfer.setDue_time(scheduledTransfer.getStart_time());
-        			  }
-        			  if(!scheduledTransfer.getFifo().canFifoReadFromMemory(bindings)){
-        			      // do the remap and return false
-        		              Memory reMappingMemory = ArchitectureManagement.getMemoryToBeRelocated(scheduledTransfer.getFifo(),architecture,bindings);
-        		              ApplicationManagement.remapFifo(scheduledTransfer.getFifo(), reMappingMemory,bindings);
-        		              return false;
-        		      }
-        		      scheduledTransfer.getFifo().fifoReadFromMemory(scheduledTransfer,bindings);
-        			  listSchedTransfers.add(scheduledTransfer);
-        		  }
-        		  processorReadTransfers.put(action.getActor(), listSchedTransfers);
-        	  }
-        	  
-        	  // commit the action in the processor
-        	  p.getValue().getScheduler().setReadTransfers(processorReadTransfers);
-        	  p.getValue().getScheduler().setReadTransfersToMemory();
-        	  //transfersToMemory.addAll(p.getValue().getScheduler().getTransfersToMemory());
-          }
-        }
-      }
-      for(HashMap.Entry<Integer,Tile> t: tiles.entrySet()){
-        for(HashMap.Entry<Integer,Processor> p : t.getValue().getProcessors().entrySet()){
-          Queue<Action> actions = p.getValue().getScheduler().getQueueActions();
-          Map<Actor,List<Transfer>> processorWriteTransfers = new HashMap<>();
-          for(Action action : actions){
-            // schedule the action
-            p.getValue().getScheduler().commitSingleAction(action,architecture,application, bindings, i ); 
-            // finally, schedule the write of tokens
-            p.getValue().getScheduler().commitWrites(action,application);
-            // put writing transfers to crossbar(s) or NoC
-            // get write transfers from the scheduler
-            Map<Actor,List<Transfer>> writeTransfers = p.getValue().getScheduler().getWriteTransfers();
-            List<Transfer> listSchedTransfers = new ArrayList<Transfer>();
-            for(Map.Entry<Actor,List<Transfer>> entry: writeTransfers.entrySet()){
-            	for(Transfer transfer : entry.getValue()){
-            		Queue<PassTransferOverArchitecture> routings = calculatePathOfTransfer(transfer,bindings);
-            		int routingsLength = routings.size();
-            		Transfer scheduledTransfer = null;
-            		Transfer temporalTransfer = new Transfer(transfer);
-            		for(int m=0; m < routingsLength; m++ ){
-            			// proceed to schedule the routing of transfer
-            			PassTransferOverArchitecture routing = routings.remove();
-            			scheduledTransfer = schedulePassOfTransfer(temporalTransfer,routing);
-            			temporalTransfer = new Transfer(scheduledTransfer);
-            			temporalTransfer.setStart_time(scheduledTransfer.getDue_time());
-            		}
-            		if(scheduledTransfer == null){
-            			// if we reach this part, means that the transfer does not cost and is a writing to processor local memory
-            			scheduledTransfer = new Transfer(transfer);
-            			scheduledTransfer.setDue_time(scheduledTransfer.getStart_time());
-            		}
-            		if(!scheduledTransfer.getFifo().canFifoWriteToMemory(bindings)){
-            			// do the remap and return false
-      		          	Memory reMappingMemory = ArchitectureManagement.getMemoryToBeRelocated(scheduledTransfer.getFifo(),architecture,bindings);
-      		          	ApplicationManagement.remapFifo(scheduledTransfer.getFifo(), reMappingMemory,bindings);
-      		          	return false;
-                    }
-                    scheduledTransfer.getFifo().fifoWriteToMemory(scheduledTransfer,bindings);
-            		listSchedTransfers.add(scheduledTransfer);
-            	}
-            	processorWriteTransfers.put(action.getActor(),listSchedTransfers);
-            }
-       	    // update the write transfers of each processor with the correct start and due time
-       	    p.getValue().getScheduler().setWriteTransfers(processorWriteTransfers);
-       	    // update the last event in processor, taking into the account the processorWriteTransfers
-            p.getValue().getScheduler().updateLastEventAfterWrite(action);
-            // insert the time of the produced tokens by acton into the correspondent fifos
-            p.getValue().getScheduler().produceTokensinFifo(action,application.getFifos());
-            // managing the tracking of the memories
-       	    p.getValue().getScheduler().setWriteTransfersToMemory();
-            transfersToMemory.addAll(p.getValue().getScheduler().getTransfersToMemory());
-            // clean the lists read and write transfers in each processor
-       	    p.getValue().getScheduler().getReadTransfers().clear();
-            p.getValue().getScheduler().getWriteTransfers().clear();
-
-            // put the action in the step action
-            if(!this.getScheduledStepActions().containsKey(action.getStep())){
-              this.getScheduledStepActions().put(action.getStep(),new ArrayList<Action>());
-            }
-            this.getScheduledStepActions().get(action.getStep()).add(action);
-          }
-        }
-      }
-      
-      // commit all the writes to memory
-      SchedulerManagement.sort(transfersToMemory);
-      Transfer ReMapTransfer = null;
-      boolean successMemoryOperations = true; 
-      for(Transfer t: transfersToMemory){
-        if(t.getType()==Transfer.TRANSFER_TYPE.READ){
-          // at this point all the transfers are writes
-          //assert true: "Something wrong when updating memories after write!";
-          if(!t.getFifo().canFifoReadFromMemory(bindings)){
-            ReMapTransfer = t;
-            successMemoryOperations = false;
-            break;
-          }
-          t.getFifo().fifoReadFromMemory(t,bindings);
-        }else{
-          if(!t.getFifo().canFifoWriteToMemory(bindings)){
-            ReMapTransfer = t;
-            successMemoryOperations = false;
-            break;
-          }
-          t.getFifo().fifoWriteToMemory(t,bindings);
-        }
-      }
-      
-      
-      // commit the scheduled actions in this step
-      // update the state of the fifos
-      for(HashMap.Entry<Integer,Tile> t: tiles.entrySet()){
-    	  for(HashMap.Entry<Integer,Processor> p : t.getValue().getProcessors().entrySet()){
-      	    p.getValue().getScheduler().fireCommitedActions(application.getFifos());
-      	    p.getValue().getScheduler().getTransfersToMemory().clear();
-      	  }
-      }
-      resourceOcupation.put(i,currentTilesOccupation);
-      i++;
-      transfersToMemory.clear();
-    }
-    //for(Map.Entry<Integer,Binding<Processor>> b : bindings.getActorProcessorBindings().entrySet() ){
-    //  System.out.println("Actor "+application.getActors().get(b.getKey()).getName()+" -> "+b.getValue().getTarget().getName());
-    //}
-
-    return true;
-  }
-
   public double getDelaySingleIteration(){
     // we take into account when k=3 and K=4
     int start  = stepStartKernel; //this.MII*3+1;

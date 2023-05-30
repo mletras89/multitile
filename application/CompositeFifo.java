@@ -189,24 +189,26 @@ public class CompositeFifo extends Fifo {
   }
   
   @Override
-  public double readTimeProducedToken(int n, int idWhoIsReading){
-	  //Fifo fifo = readers.get(idWhoIsReading);
-	  //return fifo.readTimeProducedToken(n,idWhoIsReading);
-	  
+  public MyEntry<Double,Processor> readTimeProducedToken(int n, int idWhoIsReading){
 	  List<Double> reads = new ArrayList<>();
+	  MyEntry<Double,Processor>  myEntry = new MyEntry<Double,Processor>(0.0,null);
 	  for(int i=0;i<n;i++){
-		  reads.add(this.readTimeProducedToken());
+		  myEntry =  this.readTimeProducedToken();
+		  reads.add(myEntry.getKey());
 	  }
-	  return Collections.max(reads);
+	  myEntry = new MyEntry<Double,Processor>( Collections.max(reads), myEntry.getValue());
+	  return myEntry;
 	}
   
   @Override
-  public double readTimeProducedToken() {
+  public MyEntry<Double,Processor> readTimeProducedToken() {
     Transfer status=null;
     //System.out.println("FIFO: "+this.getName()+" capacity "+this.get_capacity());
     this.numberOfReadsTimeProduced++;
     int currentNumberOfReads = this.numberOfReadsTimeProduced;
 	  
+    MyEntry<Double,Processor>  myEntry = new MyEntry<Double,Processor>(0.0,null);
+    
     if (currentNumberOfReads % readers.size()==0)
     	if (this.getTimeProducedToken().size() > 0)
         {
@@ -217,10 +219,12 @@ public class CompositeFifo extends Fifo {
       {
     	  status = this.getTimeProducedToken().peek(); //  .peekTimeProducedToken();
       }
-    if (status == null)
-    		return 0;
-	assert status != null : "ERROR: FIFO"+this.getName()+" actor";
-    return status.getDue_time();
+    if (status == null) 
+    	myEntry = new MyEntry<Double,Processor>(0.0, null);
+    else
+    	myEntry = new MyEntry<Double,Processor>(status.getDue_time(), status.getProcessor());
+    		
+    return myEntry;
   }
   
   public MyEntry<Double,Processor> readTimeProducedTokenFCFS(int n, int idWhoIsReading){
