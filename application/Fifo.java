@@ -259,7 +259,7 @@ public class Fifo implements Buffer{
   
   public void fifoWrite(){
     this.set_tokens(this.get_tokens()+this.getProdRate()); 
-    //assert (this.get_tokens()<= this.get_capacity()): "Error in writing!!!";
+    assert (this.get_tokens()<= this.get_capacity()): "Error in writing!!!";
   }
 
   public void fifoRead(int idActorReader){
