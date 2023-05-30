@@ -94,7 +94,8 @@ public class FCFS extends BaseScheduler implements Schedule{
       t.getValue().resetTile();
     }
     resetCountActorFirings();
-
+    application.resetApplication();
+    architecture.resetArchitecture();
 
     this.schedulableActors = new LinkedList<>();
     Map<Actor,List<Transfer>> processorReadTransfers = new HashMap<>();
@@ -106,6 +107,7 @@ public class FCFS extends BaseScheduler implements Schedule{
       // get schedulable actions in all the processors in all the tiles
       this.getSchedulableActors();
       // pop the next actor to be scheduled
+      assert this.schedulableActors.size() > 0 : "THIS SHOULD NO HAPPEN!!!";
       int actorId = this.schedulableActors.remove();
       double processingTime = (double) bindings.getActorProcessorBindings().get(actorId).getProperties().get("runtime");
 
@@ -165,11 +167,17 @@ public class FCFS extends BaseScheduler implements Schedule{
 
 
   public void getSchedulableActors(){
-    for(Actor actor: this.application.getListActors()){
-      	if(actor.canFire(application.getFifos())){
-          if (schedulableActors.contains(actor.getId()) == false)
-            schedulableActors.add(actor.getId());
-      	}
+    //for(Actor actor: this.application.getListActors()){
+    for(Map.Entry<Integer,Actor> actor : this.application.getActors().entrySet()) {	
+      	if(this.application.getActors().get(actor.getKey()).canFire(application.getFifos())){
+          if (schedulableActors.contains(actor.getKey()) == false) {
+        	  //System.out.println("Can fire: "+actor.getValue().getName());
+        	  schedulableActors.add(actor.getKey());
+          }/*else
+        	  System.out.println("IS ALREADY IN LIST: "+actor.getValue().getName());*/
+      	}/*else {
+      		System.out.println("Can NOT fire: "+actor.getValue().getName());
+      	}*/
     }
   }
 
