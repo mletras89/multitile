@@ -43,11 +43,11 @@ import multitile.mapping.Bindings;
 import multitile.mapping.Mapping;
 import multitile.mapping.Mappings;
 import multitile.architecture.Processor;
-import multitile.architecture.GlobalMemory;
+//import multitile.architecture.GlobalMemory;
 
 import multitile.application.Application;
 import multitile.application.Actor;
-import multitile.application.Actor.ACTOR_TYPE;
+//import multitile.application.Actor.ACTOR_TYPE;
 import multitile.application.Fifo;
 import multitile.application.Fifo.FIFO_MAPPING_TYPE;
 

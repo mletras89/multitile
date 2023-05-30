@@ -51,14 +51,14 @@ public class CompositeFifo extends Fifo {
   private Map<Integer,Fifo> readers; // the key is the id of the actor reading the fifo
   private List<Actor> destinations;
   private Actor multicastActor;
-  private int readsMRB;
+  //private int readsMRB;
   
   public CompositeFifo(String name, int tokens, int capacity, int tokenSize,int consRate, int prodRate, Actor src, List<Fifo> destinationFifos,Actor multicastActor){
     super(name,tokens,capacity,tokenSize,consRate,prodRate);
     this.setSource(src);
     this.setDestinations(destinationFifos);
     this.setMulticastActor(multicastActor);
-    readsMRB = 0;
+    //readsMRB = 0;
   }
 
   public void setDestinations(List<Fifo> destinationFifos){
@@ -81,7 +81,7 @@ public class CompositeFifo extends Fifo {
 	    for(Map.Entry<Integer,Fifo> fifo : this.readers.entrySet()) {
 	    	fifo.getValue().resetFifo();
 	    }
-	    readsMRB = 0;
+	    //readsMRB = 0;
   }
   
   @Override
@@ -90,7 +90,7 @@ public class CompositeFifo extends Fifo {
 	  for(Map.Entry<Integer, Fifo> fifo: this.readers.entrySet()) {
 		  fifo.getValue().resetFifo(architecture,bindings, application);
 	  }
-	  readsMRB = 0;
+	  //readsMRB = 0;
   }
   
   @Override
@@ -134,7 +134,7 @@ public class CompositeFifo extends Fifo {
 	Fifo fifo = readers.get(idActorReader);
     int consTokens = fifo.getConsRate();
     
-    for(int i=0; i < consTokens; i++) {
+    /*for(int i=0; i < consTokens; i++) {
     	this.readsMRB++;
     	//if(this.readsMRB % readers.size() <=   )
     	//this.set_tokens(this.readsMRB % readers.size());
@@ -142,8 +142,8 @@ public class CompositeFifo extends Fifo {
     	/*if(this.readsMRB % readers.size() == 0) {
     		this.set_tokens(this.get_tokens() - 1);
     		assert this.get_tokens() >= 0 :  "Error reading composite Fifo "+this.getName()+"!!!"; 
-        }*/
-    }
+        }
+    }*/
     
     int new_tokens = fifo.get_tokens() - consTokens;
     fifo.set_tokens(new_tokens);

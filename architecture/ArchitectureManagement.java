@@ -40,7 +40,6 @@ package multitile.architecture;
 
 import java.util.Map;
 
-import multitile.application.Application;
 import multitile.application.Fifo;
 import multitile.mapping.Bindings;
 import multitile.Action;

@@ -97,12 +97,12 @@ public class testFCFSWithNoC {
       Application app = sampleApplication.getSampleApplication();
       
       
-      ArrayList<Integer> actorToCoreTypeMapping = sampleApplication.getActorToCoreTypeMapping();
+      //ArrayList<Integer> actorToCoreTypeMapping = sampleApplication.getActorToCoreTypeMapping();
       
       Set<String> coreTypes = new HashSet<>();
       coreTypes.add("P0");
       
-      HashMap<Integer,Integer> actorIdToIndex = sampleApplication.getActorIdToIndex();
+      //HashMap<Integer,Integer> actorIdToIndex = sampleApplication.getActorIdToIndex();
 
       ApplicationManagement.assignFifoMapping(app,architecture,bindings);
 
