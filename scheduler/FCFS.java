@@ -127,9 +127,11 @@ public class FCFS extends BaseScheduler implements Schedule{
       readTransfers = scheduleTransfers(readTransfers,bindings);
       // udpate events in processor
       for(Transfer t : readTransfers){
-         int procId = t.getProcessor().getId();
-         int tileTId = t.getProcessor().getOwnerTile().getId();
-         architecture.getTiles().get(tileTId).getProcessors().get(procId).getScheduler().setLastRead(t.getDue_time());
+    	 if (t.getProcessor() != null) {
+    		 int procId = t.getProcessor().getId();
+    		 int tileTId = t.getProcessor().getOwnerTile().getId();
+    		 architecture.getTiles().get(tileTId).getProcessors().get(procId).getScheduler().setLastRead(t.getDue_time());
+         }
       }
 
       processorReadTransfers.put(action.getActor(), readTransfers);
