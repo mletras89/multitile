@@ -38,6 +38,7 @@ package multitile.application;
 
 import multitile.Transfer;
 import multitile.architecture.Architecture;
+import multitile.architecture.Processor;
 import multitile.mapping.Bindings;
 
 interface Buffer{
@@ -65,6 +66,8 @@ interface Buffer{
   public double readTimeProducedToken();
   public double readTimeProducedToken(int n, int idWhoIsReading);
   
+  public  MyEntry<Double,Processor> readTimeProducedTokenFCFS();
+  public  MyEntry<Double,Processor> readTimeProducedTokenFCFS(int n, int idWhoIsReading);
   
   
 }
