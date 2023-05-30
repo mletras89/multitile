@@ -116,7 +116,7 @@ public class testModuloSchedulingWithNoC {
       scheduler.assingActorBinding(mappings,bindings,actorIdToIndex);
       
       ApplicationManagement.assignFifoMapping(app,architecture,bindings);
-      scheduler.scheduleSingleIteration(bindings);
+      scheduler.schedule(bindings);
       
       System.out.println("Single iteration delay: "+scheduler.getOverallDelay());
 
