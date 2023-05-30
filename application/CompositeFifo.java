@@ -42,6 +42,7 @@ package multitile.application;
 import multitile.Transfer;
 import multitile.architecture.Architecture;
 import multitile.architecture.Memory;
+import multitile.architecture.Processor;
 import multitile.mapping.Bindings;
 
 import java.util.*;
@@ -100,15 +101,14 @@ public class CompositeFifo extends Fifo {
   
   @Override
   public void fifoWrite(){
-	
-	this.set_tokens(this.get_tokens()+this.getProdRate());  
+	//this.set_tokens(this.get_tokens()+this.getProdRate());  
 	//assert this.get_tokens() <= this.get_capacity()  : "Error in writing composite fifo!!!";
-	/*
+	
     for(Map.Entry<Integer,Fifo> fifo : this.readers.entrySet()) {
       int new_tokens = fifo.getValue().get_tokens()+fifo.getValue().getProdRate();
       fifo.getValue().set_tokens(new_tokens);
       assert (fifo.getValue().get_tokens()<=fifo.getValue().get_capacity()): "Error in writing composite fifo!!!";
-    }*/
+    }
   }
   @Override
   public boolean canFifoReadFromMemory(Bindings bindings){
@@ -124,6 +124,10 @@ public class CompositeFifo extends Fifo {
     }
   }
   
+  public Map<Integer,Fifo> getReaders(){
+	  return this.readers;
+  }
+  
   @Override
   public void fifoRead(int idActorReader){
 	
@@ -132,15 +136,18 @@ public class CompositeFifo extends Fifo {
     
     for(int i=0; i < consTokens; i++) {
     	this.readsMRB++;
-    	if(this.readsMRB % readers.size() == 0) {
+    	//if(this.readsMRB % readers.size() <=   )
+    	//this.set_tokens(this.readsMRB % readers.size());
+    	//assert this.get_tokens() >= 0 :  "Error reading composite Fifo "+this.getName()+"!!!";
+    	/*if(this.readsMRB % readers.size() == 0) {
     		this.set_tokens(this.get_tokens() - 1);
-    		assert this.get_tokens() >= 0 :  "Error reading composite Fifo!!!"; 
-        }
+    		assert this.get_tokens() >= 0 :  "Error reading composite Fifo "+this.getName()+"!!!"; 
+        }*/
     }
-    /*Fifo fifo = readers.get(idActorReader);
-    int new_tokens = fifo.get_tokens() - fifo.getConsRate();
+    
+    int new_tokens = fifo.get_tokens() - consTokens;
     fifo.set_tokens(new_tokens);
-    assert (fifo.get_tokens()>=0) :  "Error reading composite Fifo!!!";*/
+    assert (fifo.get_tokens()>=0) :  "Error reading composite Fifo "+this.getName()+" with reader "+readers.get(idActorReader).getDestination().getName()+"!!!";
   }
   
   
@@ -155,27 +162,30 @@ public class CompositeFifo extends Fifo {
   public boolean fifoCanBeRead(int idWhoIsReading){
     // first get the FIFO
     Fifo fifo = readers.get(idWhoIsReading);
-    /*if(fifo.get_tokens() - fifo.getConsRate() < 0)
+    if(fifo.get_tokens() - fifo.getConsRate() < 0)
       return false; 
-    return true;*/
-    if (this.get_tokens() - fifo.getConsRate() < 0)
-    	return false;
     return true;
+    /*if (this.get_tokens() - fifo.getConsRate() < 0)
+    	return false;*/
+    //return true;
     		
   }
   
   @Override
   public boolean fifoCanBeWritten(){
     //System.out.println("Checking composite fifo");
-	if (this.get_capacity() < this.get_tokens()+this.getProdRate())
-		return false;
-	return true;
-	/*
-    for(Map.Entry<Integer,Fifo> reader : readers.entrySet()){
+	//if (this.get_capacity() < this.get_tokens()+this.getProdRate())
+	//	return false;
+	
+	/*ArrayList<Integer> capacities = new ArrayList<Integer>();  
+	for(Map.Entry<Integer,Fifo> reader : readers.entrySet()){
+		capacities.add(reader.getValue().get_capacity());
+	}*/
+	for(Map.Entry<Integer,Fifo> reader : readers.entrySet()){
       if(reader.getValue().get_capacity() < reader.getValue().get_tokens() + reader.getValue().getProdRate())
         return false;
     }
-    return true;*/
+    return true;
   }
   
   @Override
@@ -212,6 +222,54 @@ public class CompositeFifo extends Fifo {
 	assert status != null : "ERROR: FIFO"+this.getName()+" actor";
     return status.getDue_time();
   }
+  
+  public MyEntry<Double,Processor> readTimeProducedTokenFCFS(int n, int idWhoIsReading){
+    //assert idWhoIsReading == this.getDestination().getId(): "Error "+this.getName();
+    // this method reads n tokens from the fifo and returns the one with
+    // the max delay
+    List<Double> reads = new ArrayList<>();
+    MyEntry<Double,Processor>  myEntry = new MyEntry<Double,Processor>(0.0,null);
+    for(int i=0;i<n;i++){
+      myEntry =  this.readTimeProducedTokenFCFS();
+      reads.add(myEntry.getKey());
+    }
+    myEntry = new MyEntry<Double,Processor>( Collections.max(reads), myEntry.getValue()); 
+    //myEntry.setKey(Collections.max(reads));
+    return myEntry;
+  }
+
+  public MyEntry<Double,Processor> readTimeProducedTokenFCFS() {
+    Transfer status = null;
+    
+    this.numberOfReadsTimeProduced++;
+    int currentNumberOfReads = this.numberOfReadsTimeProduced;
+    
+    MyEntry<Double,Processor>  myEntry = new MyEntry<Double,Processor>(0.0,null);
+    /*System.out.println("this.getTimeProducedToken().size() "+this.getTimeProducedToken().size());
+    System.out.println("currentNumberOfReads "+currentNumberOfReads);
+    System.out.println("readers.size() "+readers.size());
+    System.out.println("currentNumberOfReads % readers.size() "+currentNumberOfReads % readers.size());*/
+    if (currentNumberOfReads % readers.size()==0) {
+    	if (this.getTimeProducedToken().size() > 0)
+    		status = this.getTimeProducedToken().remove();
+    }
+    else {
+        if (this.getTimeProducedToken().size() > 0)
+    	  status = this.getTimeProducedToken().peek(); //  .peekTimeProducedToken();
+    }
+    
+    if (status == null) 
+    	myEntry = new MyEntry<Double,Processor>(0.0, null);
+    else
+    	myEntry = new MyEntry<Double,Processor>(status.getDue_time(), status.getProcessor());
+    
+	assert status != null : "ERROR: FIFO "+this.getName()+" actor "+this.getDestination().getName();
+	
+    return myEntry;
+  }
+  
+  
+  
   @Override
   public boolean isCompositeChannel(){
     return true;
