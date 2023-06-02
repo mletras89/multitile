@@ -37,7 +37,7 @@
 */
 package multitile.tests;
 
-import multitile.scheduler.FCFS;
+import multitile.scheduler.FCFSwithFifoResizing;
 
 import multitile.architecture.Architecture;
 import multitile.architecture.Tile;
@@ -107,13 +107,13 @@ public class testFCFSWithNoC {
       ApplicationManagement.assignFifoMapping(app,architecture,bindings);
 
 
-      FCFS scheduler = new FCFS(architecture,app);
-      scheduler.setMaxIterations(1);
+      FCFSwithFifoResizing scheduler = new FCFSwithFifoResizing(architecture,app);
+      scheduler.setMaxIterations(10);
       // calculate modulo schedule but do not consider cycles to make it faster
 
       scheduler.schedule(bindings,false);
    
-
+      scheduler.printFifoCapacities();
       // dumping system utilization statistics
       for(HashMap.Entry<Integer,Tile> t: scheduler.getArchitecture().getTiles().entrySet()){
         for(HashMap.Entry<Integer,Processor> p: t.getValue().getProcessors().entrySet()){
