@@ -213,13 +213,14 @@ public class BaseScheduler{
   }
   
   // check if the memory bounds are safe, if not do the re-mapping until the solution is feasible
-  public void checkAndReMapMemories(Bindings bindings) {
+  public boolean checkAndReMapMemories(Bindings bindings) {
 	  Map<Integer, Binding<Memory>>  memBindings = bindings.getFifoMemoryBindings();
 	  Set<Memory> setBoundMemories = new HashSet<Memory>(); // set of the ids of the bound memories
 	  for(Map.Entry<Integer, Binding<Memory>> m : memBindings.entrySet() ) {
 		  setBoundMemories.add(m.getValue().getTarget());
 	  }
 	  boolean success = false;
+          boolean everRemap = false;
 	  while(!success) {
 		  boolean doRemap = false;
 		  for(Memory mem : setBoundMemories) {
@@ -237,6 +238,7 @@ public class BaseScheduler{
 						  Memory reMappingMemory = ArchitectureManagement.getMemoryToBeRelocated(fifo,architecture,bindings);
 			              ApplicationManagement.remapFifo(fifo, reMappingMemory,bindings);
 						  doRemap=true;
+                                                  everRemap= true;
 						  //break;
 					  }
 				  }
@@ -248,6 +250,7 @@ public class BaseScheduler{
 		  if(!doRemap)
 			  success = true;
 	  }
+          return everRemap;
 	}
-
+         
 }
