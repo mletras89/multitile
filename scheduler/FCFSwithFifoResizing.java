@@ -71,7 +71,7 @@ public class FCFSwithFifoResizing extends BaseScheduler implements Schedule{
     this.setMaxIterations(1); 
     this.setApplication(application);
     this.setArchitecture(architecture);
-
+    this.setPredecessors();
   }
 
   public void schedule(Bindings bindings,Mappings mappings){
@@ -85,7 +85,7 @@ public class FCFSwithFifoResizing extends BaseScheduler implements Schedule{
     }
   }
 
-  public void setFifosForAnaylisis() {
+  public void setFifosForAnalysis() {
 		for(Map.Entry<Integer, Fifo> f: application.getFifos().entrySet()) {
 			f.getValue().set_capacity(Integer.MAX_VALUE);  // this is done for analysis purposes and only applies to FCFC with fifo resizing
 			if (f.getValue().isCompositeChannel()) {
@@ -132,6 +132,8 @@ public class FCFSwithFifoResizing extends BaseScheduler implements Schedule{
   }
   
   public boolean canFireActor(int actorId) {
+	  if (!(countActorFirings.get(actorId) < this.getMaxIterations()))
+	  	return false;
 	  if (predecessors.get(actorId).size() == 0)
 		  return true;
 	  if (getMinCountOfPredecessors(actorId) > countActorFirings.get(actorId))
@@ -199,15 +201,11 @@ public class FCFSwithFifoResizing extends BaseScheduler implements Schedule{
   }
 
   public boolean scheduleFCFS(Bindings bindings,boolean boundedMemory){
-	  setPredecessors();
+	  
 	 // do the re-map of the FIFOs in case to be required
     if (boundedMemory)
       checkAndReMapMemories(bindings);
     
-    for(HashMap.Entry<Integer,Tile> t : architecture.getTiles().entrySet()){
-      // reseting all the tiles in the architecture
-      t.getValue().resetTile();
-    }
     resetCountActorFirings();
     resetFifoCapacities();
     application.resetApplication();
@@ -300,7 +298,7 @@ public class FCFSwithFifoResizing extends BaseScheduler implements Schedule{
     HashMap<Integer,Integer> mapOcurrences = new HashMap<>();
 
     for(Map.Entry<Integer,Actor> actor : this.application.getActors().entrySet()) {	
-      	//if(this.application.getActors().get(actor.getKey()).canFire(application.getFifos())){
+      	//if(this.application.getActors().get(actor.getKey()).canFire(application.getFifos()) && countActorFirings.get(actor.getKey()) < this.getMaxIterations()){
       	if(canFireActor(actor.getKey())) {	
        	  schedulableActors.add(actor.getKey());
           mapOcurrences.put(actor.getKey(), countActorFirings.get(actor.getKey()));
