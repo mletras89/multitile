@@ -47,13 +47,13 @@ import multitile.architecture.Architecture;
 import multitile.application.Actor;
 import multitile.application.Fifo;
 import multitile.application.Application;
+import multitile.application.CompositeFifo;
 
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Queue;
 import java.util.ArrayList; 
-import java.util.LinkedList;
 import java.util.Collections;  
 
 
@@ -62,7 +62,10 @@ public class FCFSwithFifoResizing extends BaseScheduler implements Schedule{
   private ArrayList<Integer> schedulableActors;
   private Map<Integer,Integer> countActorFirings;
   private Map<Integer,Integer> fifoCapacities;
-
+  // key actor, value list of keys of predecessors
+  private Map<Integer,ArrayList<Integer>> predecessors;
+  
+  
   public FCFSwithFifoResizing(Architecture architecture, Application application){
     super();
     this.setMaxIterations(1); 
@@ -82,6 +85,54 @@ public class FCFSwithFifoResizing extends BaseScheduler implements Schedule{
     }
   }
 
+  public void setPredecessors() {
+	// key actor, value list of keys of predecessors
+	predecessors = new HashMap<Integer,ArrayList<Integer>>();
+	for(Map.Entry<Integer, Actor> a : application.getActors().entrySet()) {
+		ArrayList<Integer> preds = new ArrayList<Integer>();
+		for(Map.Entry<Integer, Fifo> fifo : application.getFifos().entrySet()) {
+			if (fifo.getValue().isCompositeChannel() == false) {
+				if (fifo.getValue().getDestination().getId() == a.getKey()) {
+					preds.add(fifo.getValue().getSource().getId() );
+				}	
+			}else {
+				CompositeFifo mrb = (CompositeFifo)fifo.getValue();
+				for(Map.Entry<Integer, Fifo> reader : mrb.getReaders().entrySet()) {
+					if(reader.getValue().getDestination().getId() == a.getKey()) {
+						preds.add(mrb.getSource().getId());
+					}
+				}
+			}
+		}
+		predecessors.put(a.getKey(), preds);
+	}
+  }
+  
+  public int getMinCountOfPredecessors(int actorId) {
+	  ArrayList<Integer> preds = predecessors.get(actorId);
+	  int min = Integer.MAX_VALUE;
+	  for(int pred : preds) {
+		  int firingCount = countActorFirings.get(pred);
+		  if (firingCount <= min)
+			  min = firingCount;
+	  }
+	  return min;
+  }
+  
+  public boolean canFireActor(int actorId) {
+	  if (predecessors.get(actorId).size() == 0)
+		  return true;
+	  if (getMinCountOfPredecessors(actorId) > countActorFirings.get(actorId))
+		  return true;
+	  return false;
+  }
+  
+  public void assignValidFifoCapacities() {
+	for(Map.Entry<Integer, Integer> e : fifoCapacities.entrySet()) {
+  		application.getFifos().get(e.getKey()).set_capacity(e.getValue());
+  	}
+  }
+  
   public void resetFifoCapacities(){
     fifoCapacities = new HashMap<>();
     for(Map.Entry<Integer,Fifo> f : application.getFifos().entrySet()){
@@ -91,17 +142,24 @@ public class FCFSwithFifoResizing extends BaseScheduler implements Schedule{
 
   public boolean updateFifoCapacitiesFromStateOfApplication(){
     // retunrs true if there is a change
-    double remap = false;
+    boolean change = false;
     for(Map.Entry<Integer,Fifo> f : application.getFifos().entrySet()){
-      int currentTokens = f.getValue().get_tokens();
+     
+      int currentTokens;
+      if(f.getValue().isCompositeChannel()) {
+    	  CompositeFifo mrb  = (CompositeFifo)f.getValue();
+    	  currentTokens = mrb.getTokensInMRB();
+      }
+      else
+    	  currentTokens = f.getValue().get_tokens();
       int currentCapacity = fifoCapacities.get(f.getKey());
       if(currentTokens > currentCapacity){
-      // then update
-   	fifoCapacities.put(f.getKey(), currentTokens);
-	remap = true;
+    	  // then update
+    	  fifoCapacities.put(f.getKey(), currentTokens);
+    	  change = true;
       }
     }
-    return remap;
+    return change;
   }
 
   public void updateFifoCapsToApplication(){
@@ -125,11 +183,11 @@ public class FCFSwithFifoResizing extends BaseScheduler implements Schedule{
   }
 
   public void schedule(Bindings bindings, boolean boundedMemory){
-     while(!schduleFCFS(bindings,boundedMemory));   
+     while(!scheduleFCFS(bindings,boundedMemory));   
   }
 
   public boolean scheduleFCFS(Bindings bindings,boolean boundedMemory){
-	
+	  setPredecessors();
 	 // do the re-map of the FIFOs in case to be required
     if (boundedMemory)
       checkAndReMapMemories(bindings);
@@ -162,7 +220,7 @@ public class FCFSwithFifoResizing extends BaseScheduler implements Schedule{
         // create action to be scheduled
         Action action = new Action(application.getActors().get(actorId));
         action.setProcessingTime(processingTime);
-        //System.out.println("Scheduling ... "+action.getActor().getName()); 
+        System.out.println("Scheduling ... "+action.getActor().getName()); 
         // get processor to execute the action
         int processorID = bindings.getActorProcessorBindings().get(action.getActor().getId()).getTarget().getId();
         int tileId = bindings.getActorTileBindings().get(action.getActor().getId()).getTarget().getId();
@@ -202,22 +260,23 @@ public class FCFSwithFifoResizing extends BaseScheduler implements Schedule{
         // insert the time of the produced tokens by action into the correspondent fifos
         p.getScheduler().produceTokensinFifo(action,application.getFifos());
         // fire and update the state of the fifos
-        //p.getScheduler().fireCommitedActions(application.getFifos());
         application.getActors().get(actorId).fire( application.getFifos() );
 
         boolean isChange = updateFifoCapacitiesFromStateOfApplication();
         // here check if I have to remap       
         if (isChange == true && boundedMemory){
-          remap = checkAndReMapMemories(bindings);
+          boolean remap = checkAndReMapMemories(bindings);
           if (remap == true)
-	  	return false;
+        	  return false;
         }
-
+        //System.out.println("Here!");
+        //application.printFifosState();
         countActorFirings.put( actorId, countActorFirings.get(actorId) + 1   );
       }
       //application.printFifosState();
 //      break; 
     }
+    //System.exit(1);
     return true;
   }
 
@@ -229,14 +288,16 @@ public class FCFSwithFifoResizing extends BaseScheduler implements Schedule{
     HashMap<Integer,Integer> mapOcurrences = new HashMap<>();
 
     for(Map.Entry<Integer,Actor> actor : this.application.getActors().entrySet()) {	
-      	if(this.application.getActors().get(actor.getKey()).canFire(application.getFifos())){
-       	  //schedulableActors.add(actor.getKey());
-          mapOcurrences.put(actor.getKey(), countActorFirings.get(actor.getKey()));
+      	//if(this.application.getActors().get(actor.getKey()).canFire(application.getFifos())){
+      	if(canFireActor(actor.getKey())) {	
+       	  schedulableActors.add(actor.getKey());
+          //mapOcurrences.put(actor.getKey(), countActorFirings.get(actor.getKey()));
       	}
     }
     // the order: first those with less number of firings
+    
+    /*
     int nEntries = mapOcurrences.size();
-
     for(int i=0; i < nEntries; i++){
       int selectedKey=0;
       int minVal = Integer.MAX_VALUE;
@@ -250,7 +311,7 @@ public class FCFSwithFifoResizing extends BaseScheduler implements Schedule{
       mapOcurrences.remove(selectedKey);
       // update schedulable actors
       schedulableActors.add(selectedKey);
-    }
+    }*/
   }
 
 
