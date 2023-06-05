@@ -85,6 +85,18 @@ public class FCFSwithFifoResizing extends BaseScheduler implements Schedule{
     }
   }
 
+  public void setFifosForAnaylisis() {
+		for(Map.Entry<Integer, Fifo> f: application.getFifos().entrySet()) {
+			f.getValue().set_capacity(Integer.MAX_VALUE);  // this is done for analysis purposes and only applies to FCFC with fifo resizing
+			if (f.getValue().isCompositeChannel()) {
+				CompositeFifo mrb = (CompositeFifo)f.getValue();
+				for(Map.Entry<Integer, Fifo> reader: mrb.getReaders().entrySet()) {
+					reader.getValue().set_capacity(Integer.MAX_VALUE);
+				}
+			}
+		}
+  }
+  
   public void setPredecessors() {
 	// key actor, value list of keys of predecessors
 	predecessors = new HashMap<Integer,ArrayList<Integer>>();
@@ -220,7 +232,7 @@ public class FCFSwithFifoResizing extends BaseScheduler implements Schedule{
         // create action to be scheduled
         Action action = new Action(application.getActors().get(actorId));
         action.setProcessingTime(processingTime);
-        System.out.println("Scheduling ... "+action.getActor().getName()); 
+        //System.out.println("Scheduling ... "+action.getActor().getName()); 
         // get processor to execute the action
         int processorID = bindings.getActorProcessorBindings().get(action.getActor().getId()).getTarget().getId();
         int tileId = bindings.getActorTileBindings().get(action.getActor().getId()).getTarget().getId();
@@ -291,12 +303,10 @@ public class FCFSwithFifoResizing extends BaseScheduler implements Schedule{
       	//if(this.application.getActors().get(actor.getKey()).canFire(application.getFifos())){
       	if(canFireActor(actor.getKey())) {	
        	  schedulableActors.add(actor.getKey());
-          //mapOcurrences.put(actor.getKey(), countActorFirings.get(actor.getKey()));
+          mapOcurrences.put(actor.getKey(), countActorFirings.get(actor.getKey()));
       	}
     }
     // the order: first those with less number of firings
-    
-    /*
     int nEntries = mapOcurrences.size();
     for(int i=0; i < nEntries; i++){
       int selectedKey=0;
@@ -311,7 +321,7 @@ public class FCFSwithFifoResizing extends BaseScheduler implements Schedule{
       mapOcurrences.remove(selectedKey);
       // update schedulable actors
       schedulableActors.add(selectedKey);
-    }*/
+    }
   }
 
 
