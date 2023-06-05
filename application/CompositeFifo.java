@@ -61,6 +61,17 @@ public class CompositeFifo extends Fifo {
     //readsMRB = 0;
   }
 
+  public int getTokensInMRB() {
+	  int tokens = 0;
+	  for(Map.Entry<Integer, Fifo> f : readers.entrySet() ) {
+		  if (f.getValue().get_tokens() > tokens) {
+			  tokens = f.getValue().get_tokens();
+		  }
+	  }
+	  return tokens;
+  }
+  
+  
   public void setDestinations(List<Fifo> destinationFifos){
     this.readers = new HashMap<>();
     this.destinations = new ArrayList<>();
