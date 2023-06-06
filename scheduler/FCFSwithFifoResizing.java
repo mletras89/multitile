@@ -392,21 +392,21 @@ public class FCFSwithFifoResizing extends BaseScheduler implements Schedule{
     nextSchedulableActors.clear();
     
     // key, id and value number of current firings
-    //HashMap<Integer,Integer> mapOcurrences = new HashMap<>();
-
+    HashMap<Integer,Integer> mapOcurrences = new HashMap<>();
+    ArrayList<Integer> potentialSched = new ArrayList<>();
     for(Map.Entry<Integer,Actor> actor : this.application.getActors().entrySet()) {	
       	//if(this.application.getActors().get(actor.getKey()).canFire(application.getFifos()) && countActorFirings.get(actor.getKey()) < this.getMaxIterations()){
       	if(canFireActor(actor.getKey()) && countActorFirings.get(actor.getKey()) < this.getMaxIterations() ) {
-      	  Processor core = bindings.getActorProcessorBindings().get(actor.getKey()).getTarget();
-      	  if (!nextSchedulableActors.containsKey( core.getId() )) {
-      		  nextSchedulableActors.put(new MyEntry<Integer,Integer>(core.getOwnerTile().getId(),core.getId()), actor.getKey());
-      	  }
+      	  //Processor core = bindings.getActorProcessorBindings().get(actor.getKey()).getTarget();
+      	  //if (!nextSchedulableActors.containsKey( core.getId() )) {
+      	  //	  nextSchedulableActors.put(new MyEntry<Integer,Integer>(core.getOwnerTile().getId(),core.getId()), actor.getKey());
+      	  //}
        	  //schedulableActors.add(actor.getKey());
-          //mapOcurrences.put(actor.getKey(), countActorFirings.get(actor.getKey()));
+          mapOcurrences.put(actor.getKey(), countActorFirings.get(actor.getKey()));
       	}
     }
     // the order: first those with less number of firings
-    /*int nEntries = mapOcurrences.size();
+    int nEntries = mapOcurrences.size();
     for(int i=0; i < nEntries; i++){
       int selectedKey=0;
       int minVal = Integer.MAX_VALUE;
@@ -419,8 +419,14 @@ public class FCFSwithFifoResizing extends BaseScheduler implements Schedule{
       // remove val and key from map
       mapOcurrences.remove(selectedKey);
       // update schedulable actors
-      schedulableActors.add(selectedKey);
-    }*/
+      potentialSched.add(selectedKey);
+    }
+    for(int s : potentialSched) {
+    	Processor core = bindings.getActorProcessorBindings().get(s).getTarget();
+    	if (!nextSchedulableActors.containsKey(new MyEntry<Integer,Integer>(core.getOwnerTile().getId(),core.getId())) ) {
+    		  nextSchedulableActors.put(new MyEntry<Integer,Integer>(core.getOwnerTile().getId(),core.getId()), s);
+    	}
+    }
   }
 
 
