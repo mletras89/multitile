@@ -66,7 +66,7 @@ public class FCFSwithFifoResizing extends BaseScheduler implements Schedule{
   private HashMap<MyEntry<Integer,Integer>,Integer> nextSchedulableActors;
   
   private Map<Integer,Integer> countActorFirings;
-  private Map<Integer,Integer> fifoCapacities;
+  
   // key actor, value list of keys of predecessors
   private Map<Integer,ArrayList<Integer>> predecessors;
   
@@ -90,17 +90,7 @@ public class FCFSwithFifoResizing extends BaseScheduler implements Schedule{
     }
   }
 
-  public void setFifosForAnalysis() {
-		for(Map.Entry<Integer, Fifo> f: application.getFifos().entrySet()) {
-			f.getValue().set_capacity(Integer.MAX_VALUE);  // this is done for analysis purposes and only applies to FCFC with fifo resizing
-			if (f.getValue().isCompositeChannel()) {
-				CompositeFifo mrb = (CompositeFifo)f.getValue();
-				for(Map.Entry<Integer, Fifo> reader: mrb.getReaders().entrySet()) {
-					reader.getValue().set_capacity(Integer.MAX_VALUE);
-				}
-			}
-		}
-  }
+
   
   public void setPredecessors() {
 	// key actor, value list of keys of predecessors
@@ -146,54 +136,6 @@ public class FCFSwithFifoResizing extends BaseScheduler implements Schedule{
 	  return false;
   }
   
-  public void assignValidFifoCapacities() {
-	for(Map.Entry<Integer, Integer> e : fifoCapacities.entrySet()) {
-  		application.getFifos().get(e.getKey()).set_capacity(e.getValue());
-  	}
-  }
-  
-  public void resetFifoCapacities(){
-    fifoCapacities = new HashMap<>();
-    for(Map.Entry<Integer,Fifo> f : application.getFifos().entrySet()){
-      fifoCapacities.put(f.getKey(), Integer.MIN_VALUE);
-    }
-  }
-
-  public boolean updateFifoCapacitiesFromStateOfApplication(){
-    // retunrs true if there is a change
-    boolean change = false;
-    for(Map.Entry<Integer,Fifo> f : application.getFifos().entrySet()){
-     
-      int currentTokens;
-      if(f.getValue().isCompositeChannel()) {
-    	  CompositeFifo mrb  = (CompositeFifo)f.getValue();
-    	  currentTokens = mrb.getTokensInMRB();
-      }
-      else
-    	  currentTokens = f.getValue().get_tokens();
-      int currentCapacity = fifoCapacities.get(f.getKey());
-      if(currentTokens > currentCapacity){
-    	  // then update
-    	  fifoCapacities.put(f.getKey(), currentTokens);
-    	  change = true;
-      }
-    }
-    return change;
-  }
-
-  public void updateFifoCapsToApplication(){
-    for(Map.Entry<Integer,Fifo> f : application.getFifos().entrySet()){
-      // then update
-      f.getValue().set_tokens(fifoCapacities.get(f.getKey()));
-    }
-  }
-
-
-  public void printFifoCapacities(){
-    for(Map.Entry<Integer,Fifo> f : application.getFifos().entrySet()){
-      System.out.println("Fifo "+f.getValue().getName()+" suggested capacity "+fifoCapacities.get(f.getKey()));
-    }
-  }
 
 
   public int getNumberCurrentIterations(){
@@ -306,86 +248,9 @@ public class FCFSwithFifoResizing extends BaseScheduler implements Schedule{
     		  }
     	  }
       }
-      // update state of fifos
-      
-      /*
-      for(int actorId : this.schedulableActors){
-        //int actorId = this.schedulableActors.remove();
-        double processingTime = (double) bindings.getActorProcessorBindings().get(actorId).getProperties().get("runtime");
-
-        // create action to be scheduled
-        Action action = new Action(application.getActors().get(actorId));
-        action.setProcessingTime(processingTime);
-        //System.out.println("Scheduling ... "+action.getActor().getName()); 
-        // get processor to execute the action
-        int processorID = bindings.getActorProcessorBindings().get(action.getActor().getId()).getTarget().getId();
-        int tileId = bindings.getActorTileBindings().get(action.getActor().getId()).getTarget().getId();
-        Processor p = architecture.getTiles().get(tileId).getProcessors().get(processorID);
-
-        // schedule the reads
-        p.getScheduler().commitReadsFCFS(action,application.getFifos(),application,architecture);
-        List<Transfer> readTransfers = p.getScheduler().getReadTransfers().get(action.getActor()); 
-    
-        readTransfers = scheduleTransfers(readTransfers,bindings);
-        // udpate events in processor
-        for(Transfer t : readTransfers){
-           if (t.getProcessor() != null) {
-          	 int procId = t.getProcessor().getId();
-          	 int tileTId = t.getProcessor().getOwnerTile().getId();
-          	 architecture.getTiles().get(tileTId).getProcessors().get(procId).getScheduler().setLastRead(t.getDue_time());
-           }
-        }
-
-        processorReadTransfers.put(action.getActor(), readTransfers);
-        // commit the reads in the processor
-        p.getScheduler().setReadTransfers(processorReadTransfers);
-          
-        // sched the action
-        p.getScheduler().commitSingleActionFCFS(action,architecture,application, bindings,1 );
-
-        // sched the writes
-        p.getScheduler().commitWrites(action,application);
-        // put writing transfers to crossbar(s) or NoC
-        // get write transfers from the scheduler
-        List<Transfer> writeTransfers = p.getScheduler().getWriteTransfers().get(action.getActor());
-        processorWriteTransfers.put(action.getActor(), scheduleTransfers(writeTransfers,bindings));
-        // update the write transfers of each processor with the correct start and due time
-        p.getScheduler().setWriteTransfers(processorWriteTransfers);
-        // update the last event in processor, taking into the account the processorWriteTransfers
-        p.getScheduler().updateLastEventAfterWrite(action);
-        // insert the time of the produced tokens by action into the correspondent fifos
-        p.getScheduler().produceTokensinFifo(action,application.getFifos());
-        // fire and update the state of the fifos
-        application.getActors().get(actorId).fire( application.getFifos() );
-
-        boolean isChange = updateFifoCapacitiesFromStateOfApplication();
-        // here check if I have to remap       
-        if (isChange == true && boundedMemory){
-          boolean remap = checkAndReMapMemories(bindings);
-          if (remap == true)
-        	  return false;
-        }
-        //System.out.println("Here!");
-        //application.printFifosState();
-        countActorFirings.put( actorId, countActorFirings.get(actorId) + 1   );
-      }
-      //application.printFifosState();
-//      break;*/ 
     }
-    
-    //System.exit(1);
     return true;
   }
-
-
-  public void cleanQueueProcessors() {
-	  for(Map.Entry<Integer, Tile> t : architecture.getTiles().entrySet()) {
-		  for(Map.Entry<Integer, Processor> p : t.getValue().getProcessors().entrySet()) {
-			  p.getValue().getScheduler().cleanQueue();
-		  }
-	  }
-  }
-  
 
   public void getSchedulableActors(Bindings bindings){
     schedulableActors.clear();
@@ -396,7 +261,8 @@ public class FCFSwithFifoResizing extends BaseScheduler implements Schedule{
     ArrayList<Integer> potentialSched = new ArrayList<>();
     for(Map.Entry<Integer,Actor> actor : this.application.getActors().entrySet()) {	
       	//if(this.application.getActors().get(actor.getKey()).canFire(application.getFifos()) && countActorFirings.get(actor.getKey()) < this.getMaxIterations()){
-      	if(canFireActor(actor.getKey()) && countActorFirings.get(actor.getKey()) < this.getMaxIterations() ) {
+      	//if(canFireActor(actor.getKey()) && countActorFirings.get(actor.getKey()) < this.getMaxIterations() ) {
+    	if(canFireActor(actor.getKey())  ) {
       	  //Processor core = bindings.getActorProcessorBindings().get(actor.getKey()).getTarget();
       	  //if (!nextSchedulableActors.containsKey( core.getId() )) {
       	  //	  nextSchedulableActors.put(new MyEntry<Integer,Integer>(core.getOwnerTile().getId(),core.getId()), actor.getKey());
