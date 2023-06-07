@@ -50,6 +50,7 @@ import multitile.mapping.Binding;
 import multitile.mapping.Bindings;
 import multitile.application.Application;
 import multitile.application.ApplicationManagement;
+import multitile.application.CompositeFifo;
 import multitile.application.Fifo;
 
 import java.util.*;
@@ -57,7 +58,8 @@ import java.util.*;
 public class BaseScheduler{
   // key is the step and the list are the actions scheduled in the step
   private HashMap<Integer,List<Action>> scheduledStepActions;
-
+  private Map<Integer,Integer> fifoCapacities;
+  
   private int maxIterations;
   public Architecture architecture;
   public Application application;
@@ -252,5 +254,73 @@ public class BaseScheduler{
 	  }
           return everRemap;
 	}
-         
+  
+  public void cleanQueueProcessors() {
+	  for(Map.Entry<Integer, Tile> t : architecture.getTiles().entrySet()) {
+		  for(Map.Entry<Integer, Processor> p : t.getValue().getProcessors().entrySet()) {
+			  p.getValue().getScheduler().cleanQueue();
+		  }
+	  }
+  }
+  
+  public void setFifosForAnalysis() {
+		for(Map.Entry<Integer, Fifo> f: application.getFifos().entrySet()) {
+			f.getValue().set_capacity(Integer.MAX_VALUE);  // this is done for analysis purposes and only applies to FCFC with fifo resizing
+			if (f.getValue().isCompositeChannel()) {
+				CompositeFifo mrb = (CompositeFifo)f.getValue();
+				for(Map.Entry<Integer, Fifo> reader: mrb.getReaders().entrySet()) {
+					reader.getValue().set_capacity(Integer.MAX_VALUE);
+				}
+			}
+		}
+  }  
+  
+  public void assignValidFifoCapacities() {
+	for(Map.Entry<Integer, Integer> e : fifoCapacities.entrySet()) {
+  		application.getFifos().get(e.getKey()).set_capacity(e.getValue());
+  	}
+  }
+  
+  public void resetFifoCapacities(){
+    fifoCapacities = new HashMap<>();
+    for(Map.Entry<Integer,Fifo> f : application.getFifos().entrySet()){
+      fifoCapacities.put(f.getKey(), Integer.MIN_VALUE);
+    }
+  }
+  
+  public boolean updateFifoCapacitiesFromStateOfApplication(){
+	    // retunrs true if there is a change
+	    boolean change = false;
+	    for(Map.Entry<Integer,Fifo> f : application.getFifos().entrySet()){
+	     
+	      int currentTokens;
+	      if(f.getValue().isCompositeChannel()) {
+	    	  CompositeFifo mrb  = (CompositeFifo)f.getValue();
+	    	  currentTokens = mrb.getTokensInMRB();
+	      }
+	      else
+	    	  currentTokens = f.getValue().get_tokens();
+	      int currentCapacity = fifoCapacities.get(f.getKey());
+	      if(currentTokens > currentCapacity){
+	    	  // then update
+	    	  fifoCapacities.put(f.getKey(), currentTokens);
+	    	  change = true;
+	      }
+	    }
+	    return change;
+	  }
+  
+  public void updateFifoCapsToApplication(){
+	    for(Map.Entry<Integer,Fifo> f : application.getFifos().entrySet()){
+	      // then update
+	      f.getValue().set_tokens(fifoCapacities.get(f.getKey()));
+	    }
+	  }
+
+  public void printFifoCapacities(){
+	    for(Map.Entry<Integer,Fifo> f : application.getFifos().entrySet()){
+	      System.out.println("Fifo "+f.getValue().getName()+" suggested capacity "+fifoCapacities.get(f.getKey()));
+	    }
+	  }
+  
 }
