@@ -184,8 +184,7 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
 		  }
 	  }
   }
-  
-  
+
   
   public void calculateModuloSchedule(HashMap<Integer,Integer> actorIdToIndex, boolean checkRECII){
     // number of actors mapped there
