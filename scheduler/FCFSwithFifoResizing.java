@@ -147,6 +147,118 @@ public class FCFSwithFifoResizing extends BaseScheduler implements Schedule{
      while(!scheduleFCFS(bindings,boundedMemory));   
   }
 
+  public void scheduleUpperBound(Bindings bindings, boolean boundedMemory){
+	  while(!upperBound(bindings,boundedMemory));
+  }
+  
+  
+  public boolean upperBound(Bindings bindings,boolean boundedMemory){
+	  
+	 // do the re-map of the FIFOs in case to be required
+    if (boundedMemory)
+      checkAndReMapMemories(bindings);
+    
+    resetCountActorFirings();
+    resetFifoCapacities();
+    application.resetApplication();
+    architecture.resetArchitecture();
+    updateFifoCapacitiesFromStateOfApplication();
+
+    this.schedulableActors = new ArrayList<>();
+    this.nextSchedulableActors = new HashMap<>();
+    Map<Actor,List<Transfer>> processorReadTransfers = new HashMap<>();
+    Map<Actor,List<Transfer>> processorWriteTransfers = new HashMap<>();
+    //application.printFifosState();
+    while(getNumberCurrentIterations() < this.getMaxIterations()){
+      // get schedulable actions in all the processors in all the tiles
+      this.getSchedulableActors(bindings);
+      this.cleanQueueProcessors();
+      // pop the next actor to be scheduled
+      assert this.nextSchedulableActors.size() > 0 : "THIS SHOULD NO HAPPEN!!!";
+      // assign the actions to the processor
+      for(Map.Entry<MyEntry<Integer,Integer>, Integer>  n : nextSchedulableActors.entrySet() ) {
+    	  // get the processor
+    	  Tile t = architecture.getTiles().get(n.getKey().getKey());
+    	  Processor p = t.getProcessors().get(n.getKey().getValue());
+    	  double processingTime = (double)bindings.getActorProcessorBindings().get(n.getValue()).getProperties().get("runtime");
+    	  Action a = new Action(application.getActors().get(n.getValue()),processingTime);
+    	  p.getScheduler().insertAction(a);
+      }
+      //schedule all the reads
+      for(Map.Entry<Integer, Tile> tile : architecture.getTiles().entrySet()) {
+    	  for(Map.Entry<Integer, Processor> proc : tile.getValue().getProcessors().entrySet()) {
+    		  Processor p = proc.getValue();
+    		  if (p.getScheduler().getQueueActions().size()==0)
+    			  continue;
+    		  for(Action action : p.getScheduler().getQueueActions()) {
+    			  p.getScheduler().commitReadsFCFS(action,application.getFifos(),application,architecture);
+    			  List<Transfer> readTransfers = p.getScheduler().getReadTransfers().get(action.getActor());
+    			  readTransfers = scheduleTransfers(readTransfers,bindings);
+    			  // udpate events in processor
+    		      for(Transfer t : readTransfers){
+    		    	  if (t.getProcessor() != null) {
+    		    		  int procId = t.getProcessor().getId();
+    		    		  int tileTId = t.getProcessor().getOwnerTile().getId();
+    		    		  architecture.getTiles().get(tileTId).getProcessors().get(procId).getScheduler().setLastRead(t.getDue_time());
+    		          }
+    		      }
+
+    		      processorReadTransfers.put(action.getActor(), readTransfers);
+    		      // commit the reads in the processor
+    		      p.getScheduler().setReadTransfers(processorReadTransfers);
+    		  }
+    	  }
+      }
+      // schedule actions
+      for(Map.Entry<Integer, Tile> tile : architecture.getTiles().entrySet()) {
+    	  for(Map.Entry<Integer, Processor> proc : tile.getValue().getProcessors().entrySet()) {
+    		  Processor p = proc.getValue();
+    		  if (p.getScheduler().getQueueActions().size()==0)
+    			  continue;
+    		  for(Action action : p.getScheduler().getQueueActions()) {
+    			  // sched the action
+    			  p.getScheduler().commitSingleActionFCFS(action,architecture,application, bindings,1 );
+    	      }
+    	  }
+      }
+      // schedule writes
+      for(Map.Entry<Integer, Tile> tile : architecture.getTiles().entrySet()) {
+    	  for(Map.Entry<Integer, Processor> proc : tile.getValue().getProcessors().entrySet()) {
+    		  Processor p = proc.getValue();
+    		  if (p.getScheduler().getQueueActions().size()==0)
+    			  continue;
+    		  for(Action action : p.getScheduler().getQueueActions()) {
+    			  // sched the writes
+    		      p.getScheduler().commitWrites(action,application);
+    		      // put writing transfers to crossbar(s) or NoC
+    		      // get write transfers from the scheduler
+    		      List<Transfer> writeTransfers = p.getScheduler().getWriteTransfers().get(action.getActor());
+    		      processorWriteTransfers.put(action.getActor(), scheduleTransfers(writeTransfers,bindings));
+    		      // update the write transfers of each processor with the correct start and due time
+    		      p.getScheduler().setWriteTransfers(processorWriteTransfers);
+    		      // update the last event in processor, taking into the account the processorWriteTransfers
+    		      p.getScheduler().updateLastEventAfterWrite(action);
+    		      // insert the time of the produced tokens by action into the correspondent fifos
+    		      p.getScheduler().produceTokensinFifo(action,application.getFifos());
+    		      // update the state of the application
+    		      application.getActors().get(action.getActor().getId()).fire( application.getFifos() );
+    		      boolean isChange = updateFifoCapacitiesFromStateOfApplication();
+    		      // here check if I have to remap       
+    		      if (isChange == true && boundedMemory){
+    		    	  boolean remap = checkAndReMapMemories(bindings);
+    		          if (remap == true)
+    		        	  return false;
+    		        	}
+    		      countActorFirings.put( action.getActor().getId(), countActorFirings.get(action.getActor().getId()) + 1   );
+    		  }
+    	  }
+      }
+    }
+    return true;
+  }
+  
+  
+  
   public boolean scheduleFCFS(Bindings bindings,boolean boundedMemory){
 	  
 	 // do the re-map of the FIFOs in case to be required
@@ -295,6 +407,10 @@ public class FCFSwithFifoResizing extends BaseScheduler implements Schedule{
     }
   }
 
+  
+
+
+  
 
   public List<Transfer> scheduleTransfers(List<Transfer> transfers,Bindings bindings){
     List<Transfer> listSchedTransfers = new ArrayList<Transfer>();
@@ -308,13 +424,17 @@ public class FCFSwithFifoResizing extends BaseScheduler implements Schedule{
   	  int routingsLength = routings.size();
   	  Transfer scheduledTransfer = null;
   	  Transfer temporalTransfer = new Transfer(transfer);
+  	  
   	  for(int m=0; m<routingsLength;m++){
+  		  if (routingsLength > 1)
+  			  temporalTransfer.setTransferWithNoC(architecture.getNoC());
   		  // proceed to schedule the routing passes
   		  PassTransferOverArchitecture routing = routings.remove();
   		  scheduledTransfer = schedulePassOfTransfer(temporalTransfer,routing);
   		  temporalTransfer = new Transfer(scheduledTransfer);
-  		  temporalTransfer.setStart_time(scheduledTransfer.getDue_time());
+  		  temporalTransfer.setStart_time(scheduledTransfer.getStart_time());
   	  }
+
   	  if(scheduledTransfer == null){
   		  // if we reach this part, means that the transfer does not cost and is a writing to processor local memory
   		  scheduledTransfer = new Transfer(transfer);
