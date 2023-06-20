@@ -42,7 +42,7 @@ import multitile.architecture.NoC;
 public class PassTransferOverArchitecture {
 
   private Crossbar crossbar;
-  private NoC noc;
+  private NoC noc=null;
   private PASS_TYPE type;
 
   public static enum PASS_TYPE {
@@ -72,5 +72,8 @@ public class PassTransferOverArchitecture {
     return this.type;
   }
 
+  public void setNoC(NoC noc){
+	    this.noc=noc;
+  }
 
 }
