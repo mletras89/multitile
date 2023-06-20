@@ -66,6 +66,8 @@ public class Crossbar{
   private double bandwidth;  // each crossbar has a bandwidht in Gbps
   private double bandwidthPerChannel;
 
+  private boolean scale = false;
+  private double scaleFactor = 1;
 
   // initializing empty crossbar
   public Crossbar() {
@@ -98,6 +100,8 @@ public class Crossbar{
         this.timeEachChannel.add(0.0);
     }
     this.setBandwidth(other.getNumberofParallelChannels(),other.getBandwidth());
+    this.setScale(other.isScale());
+    this.setScaleFactor(other.getScaleFactor());
   }
   // creating crossbar from given parameters
   public Crossbar(String name, double bandwidth, int numberofParallelChannels){
@@ -214,6 +218,11 @@ public class Crossbar{
 
   public double calculateTransferTime(Transfer transfer){
     int numberofBytes = transfer.getBytes();
+    
+    if (transfer.getTransferWithNoC() != null) {
+    	return transfer.getTransferWithNoC().calculateTransferTime(transfer);
+    }
+    
     double processingTime = ((( BytesToGigabytes(numberofBytes) / this.bandwidthPerChannel))); // 8 bits in a byte, 100 000 to convert from secs to microseconds
     return processingTime;
   }
@@ -286,12 +295,17 @@ public class Crossbar{
       scheduledWriteTransfers.put(transfer.getActor(),transfers);
     }
   }
-   
+
   public Transfer putTransferInCrossbar(Transfer t){
     Transfer commitTransfer   = new Transfer(t);
     int availChannelIndex     = getAvailableChannel();
     double timeLastAction     = this.timeEachChannel.get(availChannelIndex);
     double transferTime       = this.calculateTransferTime(commitTransfer);
+    
+    if (this.isScale()) {
+    	transferTime = Math.ceil(transferTime/this.getScaleFactor());
+    }
+    
     double startTime          = (commitTransfer.getStart_time() > timeLastAction) ? commitTransfer.getStart_time() : timeLastAction;
     double endTime            = startTime + transferTime;
 
@@ -390,5 +404,17 @@ public class Crossbar{
       }
     }
   }
+public boolean isScale() {
+	return scale;
+}
+public void setScale(boolean scale) {
+	this.scale = scale;
+}
+public double getScaleFactor() {
+	return scaleFactor;
+}
+public void setScaleFactor(double scaleFactor) {
+	this.scaleFactor = scaleFactor;
+}
 
 }

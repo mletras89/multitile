@@ -47,6 +47,7 @@ import multitile.application.Actor;
 import multitile.application.Fifo;
 import multitile.architecture.Processor;
 import multitile.architecture.Memory;
+import multitile.architecture.NoC;
 
 public class Transfer {
   private double start_time;
@@ -57,7 +58,8 @@ public class Transfer {
   private Fifo fifo;
   private Processor processor;   // processor who triggered this transaction
   private Memory  memory;
-
+  private NoC transferWithNoC = null;
+  	
   // depending on the type of the operation: {READ, WRITE}
   private TRANSFER_TYPE type;
 
@@ -100,6 +102,15 @@ public class Transfer {
     this.setStep(other.getStep());
     this.setEndOverall(other.getEndOverall());
     this.setProcessor(other.getProcessor());
+    this.setTransferWithNoC(other.getTransferWithNoC());
+  }
+  
+  public void setTransferWithNoC(NoC t) {
+	  this.transferWithNoC = t;
+  }
+  
+  public NoC getTransferWithNoC() {
+	  return this.transferWithNoC;
   }
 
   public void setProcessor(Processor p){

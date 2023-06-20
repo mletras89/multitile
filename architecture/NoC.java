@@ -62,6 +62,9 @@ public class NoC{
   private double bandwidth;  
   private double bandwidthPerChannel;
   
+  private boolean scale = false;
+  private double scaleFactor = 1;
+  
   public NoC(){
     this.id = ArchitectureManagement.getNoCId();
     this.name = "NoC";
@@ -92,6 +95,8 @@ public class NoC{
         this.channels.add(schedActions);
         this.timeEachChannel.add(0.0);
     }
+    this.setScale(other.isScale());
+    this.setScaleFactor(other.getScaleFactor());
   }
 
   public void restartNoC(){
@@ -234,6 +239,11 @@ public class NoC{
     int availChannelIndex = getAvailableChannel();  
     double timeLastAction = this.timeEachChannel.get(availChannelIndex);
     double transferTime = this.calculateTransferTime(commitTransfer);
+    
+    if (this.isScale()) {
+    	transferTime = Math.ceil(transferTime/this.getScaleFactor());
+    }
+    
     double startTime = (commitTransfer.getStart_time() > timeLastAction) ? commitTransfer.getStart_time() : timeLastAction;
     double endTime  = startTime + transferTime;
     commitTransfer.setStart_time(startTime);
@@ -269,5 +279,21 @@ public class NoC{
     double ToGiga = ToMega/1024;
     return ToGiga;
   }
+
+public boolean isScale() {
+	return scale;
+}
+
+public void setScale(boolean scale) {
+	this.scale = scale;
+}
+
+public double getScaleFactor() {
+	return scaleFactor;
+}
+
+public void setScaleFactor(double scaleFactor) {
+	this.scaleFactor = scaleFactor;
+}
 
 }
