@@ -617,7 +617,7 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
   }
   
   boolean scheduleModuloFCFS(Bindings bindings) {
-		//HashMap<Integer,Tile> tiles = architecture.getTiles();
+	  	//HashMap<Integer,Tile> tiles = architecture.getTiles();
 	    this.getScheduledStepActions().clear();
 	    this.getKernelActions(bindings);
 	    //HashMap<Integer,Integer> firingActorsPrologue = getFiringActorsPrologue();
@@ -653,7 +653,6 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
 	    }
 	    // check memory constraint binding
 	    checkAndReMapMemories(bindings);
-	    
 	    // insert tokens at FIFOs after prologue
 	    application.fillTokensAtState(stateChannels,reads);
 	    //application.printFifosState();
@@ -1111,7 +1110,7 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
     return this.MII;
   }
 
-  public List<Transfer> scheduleTransfers(List<Transfer> transfers,Bindings bindings){
+  /*public List<Transfer> scheduleTransfers(List<Transfer> transfers,Bindings bindings){
     List<Transfer> listSchedTransfers = new ArrayList<Transfer>();
     //    for each transfer calculate the path that has to travel, might be comming from the tile local crossbar,
     //    or the transfer has to travel across several interconnect elements, a read comming from NoC has to travel 
@@ -1139,7 +1138,7 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
     }
     return listSchedTransfers;
 
-  }
+  }*/
   
   
   

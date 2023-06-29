@@ -342,5 +342,40 @@ public class BaseScheduler{
 	      System.out.println("Fifo "+f.getValue().getName()+" suggested capacity "+fifoCapacities.get(f.getKey()));
 	    }
 	  }
+
+  
+  public List<Transfer> scheduleTransfers(List<Transfer> transfers,Bindings bindings){
+	    List<Transfer> listSchedTransfers = new ArrayList<Transfer>();
+	    //    for each transfer calculate the path that has to travel, might be comming from the tile local crossbar,
+	    //    or the transfer has to travel across several interconnect elements, a read comming from NoC has to travel 
+	    //    NoC -> TileLocal Crossbar -> Processor
+	    //    other example es when the transfer source is a local memory of other processor placed in a different tile
+	    //    Processor1 -> Tile local Crossbar of Processor 1 -> NoC -> TileLocal Crossbar of Processor 2 -> Processor 2  
+	    for(Transfer transfer : transfers){
+	  	  Queue<PassTransferOverArchitecture> routings = calculatePathOfTransfer(transfer,bindings);
+	  	  int routingsLength = routings.size();
+	  	  Transfer scheduledTransfer = null;
+	  	  Transfer temporalTransfer = new Transfer(transfer);
+	  	  
+	  	  for(int m=0; m<routingsLength;m++){
+	  		  if (routingsLength > 1)
+	  			  temporalTransfer.setTransferWithNoC(architecture.getNoC());
+	  		  // proceed to schedule the routing passes
+	  		  PassTransferOverArchitecture routing = routings.remove();
+	  		  scheduledTransfer = schedulePassOfTransfer(temporalTransfer,routing);
+	  		  temporalTransfer = new Transfer(scheduledTransfer);
+	  		  temporalTransfer.setStart_time(scheduledTransfer.getStart_time());
+	  	  }
+
+	  	  if(scheduledTransfer == null){
+	  		  // if we reach this part, means that the transfer does not cost and is a writing to processor local memory
+	  		  scheduledTransfer = new Transfer(transfer);
+	  		  scheduledTransfer.setDue_time(scheduledTransfer.getStart_time());
+	  	  }
+		  listSchedTransfers.add(scheduledTransfer);
+	    }
+	    return listSchedTransfers;
+
+	  } 
   
 }
