@@ -63,7 +63,7 @@ public class testQuadCoreImplementation {
       FCFS scheduler = new FCFS(architecture,app);
       
       scheduler.setMaxIterations(3);
-      scheduler.schedule(bindings,null);
+      scheduler.schedule(bindings);
 
       for(HashMap.Entry<Integer,Processor> p: architecture.getTiles().get(0).getProcessors().entrySet()){
         p.getValue().getScheduler().saveScheduleStats(".");

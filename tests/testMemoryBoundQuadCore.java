@@ -67,7 +67,7 @@ public class testMemoryBoundQuadCore {
       FCFS scheduler = new FCFS(architecture,app);
       
       scheduler.setMaxIterations(10);
-      scheduler.schedule(bindings,null);
+      scheduler.schedule(bindings);
 
       architecture.getTiles().get(0).getProcessors().get(0).getScheduler().saveScheduleStats(".");
       architecture.getTiles().get(0).getProcessors().get(1).getScheduler().saveScheduleStats(".");
