@@ -62,7 +62,8 @@ public class testModuloSchedulingWithNoC {
       FifoManagement.resetCounters();
       ArchitectureManagement.resetCounters();
 
-      Architecture architecture = new Architecture("architecture",2,2, 1.0, 2);
+      Architecture architecture = new Architecture("architecture",2,2, 2.0, 1);
+      architecture.getNoC().setBandwidth(1,1);
       // I see the types as val1: tile id, val2: core type
       Map<Integer,ArrayList<Integer>> indexCoreTypes = new HashMap<>();
       indexCoreTypes.put(0, new ArrayList<Integer>());
