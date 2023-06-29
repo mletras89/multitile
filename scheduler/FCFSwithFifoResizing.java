@@ -40,7 +40,6 @@ import multitile.Action;
 import multitile.Transfer;
 //import multitile.architecture.Tile;
 import multitile.mapping.Bindings;
-import multitile.mapping.Mappings;
 import multitile.architecture.Processor;
 import multitile.architecture.Tile;
 import multitile.architecture.Architecture;
@@ -54,7 +53,6 @@ import multitile.application.CompositeFifo;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
-import java.util.Queue;
 import java.util.ArrayList; 
 import java.util.Collections;  
 
@@ -79,7 +77,7 @@ public class FCFSwithFifoResizing extends BaseScheduler implements Schedule{
     this.setPredecessors();
   }
 
-  public void schedule(Bindings bindings,Mappings mappings){
+  public void schedule(Bindings bindings){
 
   }
 

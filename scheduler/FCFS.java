@@ -40,7 +40,6 @@ import multitile.Action;
 import multitile.Transfer;
 import multitile.architecture.Tile;
 import multitile.mapping.Bindings;
-import multitile.mapping.Mappings;
 import multitile.architecture.Processor;
 import multitile.architecture.Architecture;
 
@@ -66,7 +65,7 @@ public class FCFS extends BaseScheduler implements Schedule{
     this.setArchitecture(architecture);
   }
 
-  public void schedule(Bindings bindings,Mappings mappings){
+  public void schedule(Bindings bindings){
 
   }
 
