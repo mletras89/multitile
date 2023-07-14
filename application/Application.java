@@ -41,17 +41,24 @@ import java.util.*;
 
 import multitile.architecture.Processor;
 import multitile.architecture.Memory;
+import multitile.architecture.NoC;
 import multitile.architecture.Tile;
+import multitile.mapping.Binding;
 import multitile.mapping.Bindings;
 import net.sf.opendse.model.Task;
 import multitile.Transfer;
+import multitile.application.Actor.ACTOR_TYPE;
 import multitile.application.Fifo.FIFO_MAPPING_TYPE;
 import multitile.architecture.Architecture;
 
 public class Application{
   private Map<Integer,Actor> actors;
   private Map<Integer,Fifo> fifos;
-
+  
+  // the key is the actor id and the value is the FIFO
+  private Map<Integer,Fifo> transferWrites;
+  private Map<Integer,Fifo> transferReads;
+  
   public Application(){
     this.actors = new HashMap<>();
     this.fifos  = new HashMap<>();
@@ -59,6 +66,9 @@ public class Application{
   public Application(Application appSpec){
 		actors = new HashMap<>();
 		fifos =  new HashMap<>();
+		transferWrites = new HashMap<>();
+		transferReads = new HashMap<>();
+		
 		for(Map.Entry<Integer, Actor> actor : appSpec.getActors().entrySet()) {
 			Actor clonedActor = new Actor(actor.getValue());
 			actors.put(clonedActor.getId(), clonedActor);
@@ -66,10 +76,37 @@ public class Application{
 		// cloning the fifos
 		for(Map.Entry<Integer, Fifo> fifo: appSpec.getFifos().entrySet()) {
 			Fifo clonedFifo = new Fifo(fifo.getValue());
-		        fifos.put(clonedFifo.getId(), clonedFifo);
+		    fifos.put(clonedFifo.getId(), clonedFifo);
 		}
   }
 
+  
+  public void fillTransferActions(Map<Integer, Integer> commsTime,Bindings bindings) {
+	  transferWrites = new HashMap<>();
+	  transferReads = new HashMap<>();
+	  for(Map.Entry<Integer, Fifo> f: fifos.entrySet()) {
+		  Actor actorWrite = new Actor("w:"+f.getValue().getName());
+		  actorWrite.setType(ACTOR_TYPE.WRITE_ACTION);
+		  Actor actorRead  = new Actor("r:"+f.getValue().getName());
+		  actorRead.setType(ACTOR_TYPE.READ_ACTION);
+		  
+		  Binding<NoC> wBinding = new Binding<NoC>();
+		  wBinding.getProperties().put("runtime-discrete", commsTime.get(f.getKey()));
+		  
+		  Binding<NoC> rBinding = new Binding<NoC>();
+		  rBinding.getProperties().put("runtime-discrete", commsTime.get(f.getKey()));
+		  
+		  bindings.getCommTaskToNoCBinding().put(actorWrite.getId(), wBinding);
+		  bindings.getCommTaskToNoCBinding().put(actorRead.getId(), rBinding);
+		  
+		  actors.put(actorRead.getId(), actorRead);
+		  actors.put(actorWrite.getId(), actorWrite);
+		  
+		  transferWrites.put(actorWrite.getId(), f.getValue());
+		  transferReads.put(actorRead.getId(), f.getValue());
+		  
+	  }
+  }
   
   public void fillTokensAtState(HashMap<Integer,Integer> stateChannels, HashMap<Integer,Integer> nReads) {
 	  for(Map.Entry<Integer,Integer> state : stateChannels.entrySet()) {
@@ -90,6 +127,15 @@ public class Application{
 	  }
   }
 
+  
+  public Map<Integer, Fifo> getTransferWrites() {
+		return transferWrites;
+  }
+
+  public Map<Integer, Fifo> getTransferReads() {
+		return transferReads;
+  }  
+  
   public void resetApplication(){
     for(Map.Entry<Integer,Fifo> fifo : fifos.entrySet()){
       fifo.getValue().reset();
