@@ -41,6 +41,7 @@ package multitile.mapping;
 import java.util.HashMap;
 
 import multitile.architecture.Memory;
+import multitile.architecture.NoC;
 import multitile.architecture.Processor;
 import multitile.architecture.Tile;
 
@@ -50,11 +51,16 @@ public class Bindings{
 	private HashMap<Integer,Binding<Tile>> actorTileBindings;
 	private HashMap<Integer,Binding<Processor>> actorProcessorBindings;
 	private HashMap<Integer,Binding<Memory>> fifoMemoryBindings;
+	private HashMap<Integer,Binding<NoC>> commTaskToNoC;
 	
 	public Bindings() {
 		actorTileBindings = new HashMap<>();
 		actorProcessorBindings = new HashMap<>();
 		fifoMemoryBindings = new HashMap<>();
+	}
+	
+	public HashMap<Integer,Binding<NoC>> getCommTaskToNoCBinding(){
+		return commTaskToNoC;
 	}
 	
 	public HashMap<Integer,Binding<Tile>> getActorTileBindings(){

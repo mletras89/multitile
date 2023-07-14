@@ -38,7 +38,9 @@
 package multitile.mapping;
 
 import java.util.HashMap;
+import java.util.Map;
 
+import multitile.architecture.Architecture;
 import multitile.architecture.Memory;
 import multitile.architecture.Processor;
 import multitile.architecture.Tile;
@@ -80,4 +82,20 @@ public class Mappings{
   public HashMap<Integer,HashMap<Integer,Mapping<Memory>>> getFifoMemoryMappings(){
 	return fifoMemoryMappings;
   }
+  
+  
+  public double getExecTimeToProcMapping(String type, int actorId, Architecture architecture) {
+	  
+	  HashMap<Integer,Mapping<Processor>> actorMappings = actorProcessorMappings.get(actorId);
+	  
+	  for(Map.Entry<Integer, Mapping<Processor>> mp : actorMappings.entrySet()) {
+		  int procId = mp.getKey();
+		  Processor proc = architecture.getProcessor(procId);
+		  if (proc.getProcesorType().compareTo(type) == 0)
+		     return (double)mp.getValue().getProperties().get("runtime-discrete");
+	  }
+	  
+	  return -1;
+  }
+  
 }
