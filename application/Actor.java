@@ -54,7 +54,9 @@ public class Actor{
 
   public static enum ACTOR_TYPE {
       ACTOR,
-      MULTICAST
+      MULTICAST,
+      WRITE_ACTION,
+      READ_ACTION
     }
     
   public Actor(
@@ -96,9 +98,9 @@ public class Actor{
   }
 
   public boolean isMulticastActor(){
-    if (this.getType() == ACTOR_TYPE.ACTOR)
-      return false;
-    return true;
+    if (this.getType() == ACTOR_TYPE.MULTICAST)
+      return true;
+    return false;
   }
 
   // method for checking if an actor can FIRE
