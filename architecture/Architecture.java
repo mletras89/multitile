@@ -345,4 +345,17 @@ public class Architecture{
 	  return mapCoreTypeToCores;
   }
   
+  
+
+  public Processor getProcessor(int processorId) {
+	  for(Map.Entry<Integer, Tile> t: this.tiles.entrySet()) {
+		  for(Map.Entry<Integer, Processor> p : t.getValue().getProcessors().entrySet()) {
+			  if (p.getKey() == processorId)
+				  return p.getValue();
+		  }
+	  }
+	  return null;
+  }
+  
+  
 }
