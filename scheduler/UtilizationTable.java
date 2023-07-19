@@ -9,42 +9,44 @@ public class UtilizationTable {
 	
 	public static class TimeSlot {
 		
-		private int startTime;
+		private int startTime = 0;
 		private int endTime;
 		private String name;
 		
 		
 		public TimeSlot(int startTime, int endTime) {
-			assert endTime > startTime : "This should not happen";  
-			this.setStartTime(startTime);
+			assert endTime > startTime : "This should not happen";
 			this.setEndTime(endTime);
+			this.setStartTime(startTime);
+			
 		}
 
 		public TimeSlot(String name, int startTime, int endTime) {
 			assert endTime > startTime : "This should not happen";
 			this.setName(name);
-			this.setStartTime(startTime);
 			this.setEndTime(endTime);
+			this.setStartTime(startTime);
+			
 		}
 		
 		public int getStartTime() {
 			return startTime;
 		}
 
-		public void setStartTime(int startTime) {
-			assert endTime > startTime : "This should not happen";
+		public void setStartTime(int start) {
+			//assert endTime > start : "This should not happen start";
 			
-			this.startTime = startTime;
+			this.startTime = start;
 		}
 
 		public int getEndTime() {
 			return endTime;
 		}
 
-		public void setEndTime(int endTime) {
-			assert endTime > startTime : "This should not happen";
+		public void setEndTime(int end) {
+			//assert end > this.startTime : "This should not happen end="+end+" start = "+this.startTime;
 			
-			this.endTime = endTime;
+			this.endTime = end;
 		}
 		
 		public int getLength() {
