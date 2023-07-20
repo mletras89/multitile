@@ -39,7 +39,9 @@
 package multitile.mapping;
 
 import java.util.HashMap;
+import java.util.Map;
 
+import multitile.application.Application;
 import multitile.architecture.Memory;
 import multitile.architecture.NoC;
 import multitile.architecture.Processor;
@@ -74,4 +76,16 @@ public class Bindings{
 	public HashMap<Integer,Binding<Memory>> getFifoMemoryBindings(){
 		return fifoMemoryBindings;
 	}
+	
+	
+	public void printBindings(Application application) {
+		  System.out.println("actorProcessorBindings...");
+		  for(Map.Entry<Integer, Binding<Processor>> e :  actorProcessorBindings.entrySet()) {
+			  System.out.println("Binding of "+application.getActors().get(e.getKey()).getName()+" to prorcessor "+e.getValue().getTarget().getName()+" runtime "+e.getValue().getProperties().get("runtime")+" discrete runtime "+e.getValue().getProperties().get("discrete-runtime"));
+		  }
+		  System.out.println("fifoMemoryBindings...");
+		  for(Map.Entry<Integer, Binding<Memory>> e :  fifoMemoryBindings.entrySet()) {
+			  System.out.println("Binding of "+application.getFifos().get(e.getKey()).getName()+" to memory "+e.getValue().getTarget().getName() );
+		  }
+	  }
 }

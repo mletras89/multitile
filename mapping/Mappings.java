@@ -40,6 +40,7 @@ package multitile.mapping;
 import java.util.HashMap;
 import java.util.Map;
 
+import multitile.application.Application;
 import multitile.architecture.Architecture;
 import multitile.architecture.Memory;
 import multitile.architecture.Processor;
@@ -96,6 +97,25 @@ public class Mappings{
 	  }
 	  
 	  return -1;
+  }
+  
+  public void printMappings(Application application) {
+	  System.out.println("actorProcessorMappings...");
+	  for(Map.Entry<Integer, HashMap<Integer,Mapping<Processor>>> e :  actorProcessorMappings.entrySet()) {
+		  System.out.println("Mappings of "+application.getActors().get(e.getKey()).getName() );
+		  HashMap<Integer,Mapping<Processor>> mappingsToProcessor = e.getValue();
+		  for(Map.Entry<Integer, Mapping<Processor>> m : mappingsToProcessor.entrySet()) {
+			  System.out.println("\t To processor "+m.getValue().getTarget().getName()+" runtime "+m.getValue().getProperties().get("runtime")+" discrete runtime "+m.getValue().getProperties().get("discrete-runtime"));
+		  }
+	  }
+	  System.out.println("fifoMemoryMappings...");
+	  for(Map.Entry<Integer, HashMap<Integer,Mapping<Memory>>> e :  fifoMemoryMappings.entrySet()) {
+		  System.out.println("Mappings of "+application.getFifos().get(e.getKey()).getName() );
+		  HashMap<Integer,Mapping<Memory>> mappingsToMemory = e.getValue();
+		  for(Map.Entry<Integer, Mapping<Memory>> m : mappingsToMemory.entrySet()) {
+			  System.out.println("\t To memory "+m.getValue().getTarget().getName());
+		  }
+	  }
   }
   
 }
