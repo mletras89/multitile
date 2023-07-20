@@ -54,7 +54,7 @@ public class Processor {
   public Processor(String name) {
     this.setName(name);
     this.setId(ArchitectureManagement.getProcessorId());
-    localMemory = new LocalMemory(this.name+"_localMemory");
+    localMemory = new LocalMemory("q"+this.name);
     scheduler = new Scheduler(name,this);
     scheduler.setNumberIterations(1); 
     // connecting local memory to processor
