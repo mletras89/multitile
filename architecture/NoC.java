@@ -269,16 +269,17 @@ public class NoC{
   
   public double calculateTransferTime(Transfer transfer){
     int numberofBytes = transfer.getBytes();
-    double processingTime = ((( BytesToGigabytes(numberofBytes) / this.bandwidthPerChannel))); // 8 bits in a byte, 100 000 to convert from secs to microseconds
+    //double processingTime = ((( BytesToGigabytes(numberofBytes) / this.bandwidthPerChannel))); // 8 bits in a byte, 100 000 to convert from secs to microseconds
+    double processingTime = ((( numberofBytes / this.bandwidthPerChannel))); // 8 bits in a byte, 100 000 to convert from secs to microseconds
     return processingTime;
   }
 
-  double BytesToGigabytes(int bytes) {
+  /*double BytesToGigabytes(int bytes) {
     double ToKylo = bytes/1024;
     double ToMega = ToKylo/1024;
     double ToGiga = ToMega/1024;
     return ToGiga;
-  }
+  }*/
 
 public boolean isScale() {
 	return scale;
@@ -297,3 +298,4 @@ public void setScaleFactor(double scaleFactor) {
 }
 
 }
+

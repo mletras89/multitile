@@ -222,17 +222,17 @@ public class Crossbar{
     if (transfer.getTransferWithNoC() != null) {
     	return transfer.getTransferWithNoC().calculateTransferTime(transfer);
     }
-    
-    double processingTime = ((( BytesToGigabytes(numberofBytes) / this.bandwidthPerChannel))); // 8 bits in a byte, 100 000 to convert from secs to microseconds
+    //double processingTime = ((( BytesToGigabytes(numberofBytes) / this.bandwidthPerChannel))); // 8 bits in a byte, 100 000 to convert from secs to microseconds
+    double processingTime = ((( numberofBytes / this.bandwidthPerChannel))); // 8 bits in a byte, 100 000 to convert from secs to microseconds
     return processingTime;
   }
   
-  double BytesToGigabytes(int bytes) {
+  /*double BytesToGigabytes(int bytes) {
     double ToKylo = bytes/1024;
     double ToMega = ToKylo/1024;
     double ToGiga = ToMega/1024;
     return ToGiga;
-  }
+  }*/
 
   public Map<Actor,List<Transfer>> getScheduledReadTransfers(){
     return scheduledReadTransfers;
