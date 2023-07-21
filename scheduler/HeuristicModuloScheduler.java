@@ -66,7 +66,7 @@ import multitile.application.Cycles;
 
 import java.util.*;
 
-public class ModuloSchedulerDiscrete extends BaseScheduler implements Schedule{
+public class HeuristicModuloScheduler extends BaseScheduler implements Schedule{
 
   // first level key is the step,
   // the second level map, key is the id of the tile, 
@@ -74,8 +74,12 @@ public class ModuloSchedulerDiscrete extends BaseScheduler implements Schedule{
   //private HashMap<Integer,HashMap<Integer,HashMap<Integer,Boolean>>> resourceOcupation;
 
   // key is the actor id and the value is the scheduled step
-  private HashMap<Integer,Integer> l;
+  private HashMap<Integer,Integer> startTime;
+  private HashMap<Integer,Integer> endTime;
+  private HashMap<Integer,Integer> lengthTime;
+  
   private int MII;
+  private int P;
   //private int lastStep;
   private HashMap<Integer,List<Integer>> kernel;
   private HashMap<Integer,List<Action>> kernelActions;
@@ -96,9 +100,12 @@ public class ModuloSchedulerDiscrete extends BaseScheduler implements Schedule{
   //key is the <tileid, processor id>, and the val is the next schedulable actors
   private HashMap<MyEntry<Integer,Integer>,Action> nextSchedulableActors;
   
-  public ModuloSchedulerDiscrete(Architecture architecture, Application application, Map<Integer,ArrayList<Integer>> indexCoreTypes, ArrayList<Integer> actorToCoreTypeMapping,Set<String> coreTypes){
+   
+  
+  
+  public HeuristicModuloScheduler(Architecture architecture, Application application, Map<Integer,ArrayList<Integer>> indexCoreTypes, ArrayList<Integer> actorToCoreTypeMapping,Set<String> coreTypes){
 	  super();
-	  this.l = new HashMap<>();
+	  this.startTime = new HashMap<>();
 	  //this.resourceOcupation = new HashMap<>();
 	  this.indexCoreTypes =indexCoreTypes;
 	  countCoresPerType = new HashMap<>();
@@ -120,7 +127,17 @@ public class ModuloSchedulerDiscrete extends BaseScheduler implements Schedule{
 		  }
 	  }
   }
-
+  
+  private int getIndexCoreType(String coreType) {
+	  int counter =0;
+	  for(String s :coreTypes) {
+		  if (s.compareTo(coreType) == 0)
+			  return counter;
+		  counter++;
+	  }
+	  return counter;
+  }
+  
   public HashMap<Integer,List<Integer>> getKernel(){
 	  return this.kernel;
   }
@@ -133,50 +150,122 @@ public class ModuloSchedulerDiscrete extends BaseScheduler implements Schedule{
 	  return this.stepEndKernel;
   }
   
-  public void assingActorBinding(Mappings mappings,Bindings bindings,HashMap<Integer,Integer> actorIdToIndex) {
-	  for(int i = this.stepStartKernel; i < this.stepEndKernel; i++) {
-		  // key is core type
-		  HashMap<Integer,Queue<Processor>> availableCores = this.architecture.getMapTileCoreTypeCores(coreTypes);
-		  /*System.out.println("Kernel step "+kernel.get(i));
-		  for(int actorId : kernel.get(i)) {
-			  int actorIndex = actorIdToIndex.get(actorId);
-			  int coreTypeBinding = actorToCoreTypeMapping.get(actorIndex);
-			  
-			  //System.out.println("Actor "+application.getActors().get(actorId).getName()+" mapped to TIle "+  architecture.getTiles().get( tileIndexToId.get(actorToTileMapping.get(actorIndex)) ).getName() +" actor index "+actorIndex);
-			  //System.out.println("Core type "+coreTypes.get(coreTypeBinding));
-		  }*/
-		  
-		  for(int actorId : kernel.get(i)) {
-			  //System.out.println("\tActor "+application.getActors().get(actorId).getName());
-			  int actorIndex = actorIdToIndex.get(actorId);
-			  int coreTypeBinding = actorToCoreTypeMapping.get(actorIndex);
-			  
-			  Queue<Processor> queueCores = availableCores.get(coreTypeBinding);
-			  Processor selectedCore = queueCores.peek();
-			  
-			  // do the binding
-			  // binding to tile
-			  int tileId = selectedCore.getOwnerTile().getId();
-			  bindings.getActorTileBindings().put(actorId, new Binding<Tile>(architecture.getTiles().get(tileId)));
-	          // assign also the properties to the tile mapping!
-	          bindings.getActorTileBindings().get(actorId).setProperties( mappings.getActorTileMappings().get(actorId).get(tileId).getProperties() );
-			  
-			  // binding to core
-			  Binding<Processor> bindingToCore = new Binding<Processor>(new Processor(selectedCore));
-			  // get the mapping
-			  Mapping<Processor> mappingToCore = mappings.getActorProcessorMappings().get(actorId).get(selectedCore.getId());
-			  bindingToCore.setProperties(mappingToCore.getProperties());
-			  bindings.getActorProcessorBindings().put(actorId, bindingToCore);
-			  
-			  queueCores.remove();
-			  availableCores.put(coreTypeBinding,queueCores);
-			  
-			  //System.out.println("Actor "+application.getActors().get(actorId).getName() +" bound to "+ selectedCore.getName() +" on tile "+selectedCore.getOwnerTile().getName());
+  public void calculateHeuristicModuloSchedule(HashMap<Integer,Integer> actorIdToIndex) {
+	  
+	  System.out.println("actorToCoreTypeMapping "+actorToCoreTypeMapping);
+	  
+	  HashMap<String, HashMap<Integer,Actor> > typeActors = new HashMap<>();
+	  for(String type : coreTypes) {
+		  typeActors.put(type, new HashMap<Integer,Actor>());
+	  }
+	  // split actors per type
+	  for(Map.Entry<Integer, Actor> a : application.getActors().entrySet()) {
+		  int vIndex = actorIdToIndex.get(a.getKey());
+		  int coreTypeBinding = actorToCoreTypeMapping.get(vIndex);
+		  String coreType = coreTypes.get(coreTypeBinding);
+		  HashMap<Integer,Actor> tmp = typeActors.get(coreType);
+		  tmp.put(a.getKey(), a.getValue());
+		  typeActors.put(coreType,  tmp );
+	  }
+	  
+	  ArrayList<Integer> utilization = new ArrayList<>();
+	  
+	  for(Map.Entry<String, HashMap<Integer,Actor>>  e : typeActors.entrySet()) {
+		  int indexCType = getIndexCoreType(e.getKey());
+		  if(e.getValue().size() > 0) {
+			  HashMap<Integer,Actor> actorsInType = e.getValue();
+			  int countTime = 0;
+			  for(Map.Entry<Integer, Actor> a : actorsInType.entrySet()) {
+				  countTime += lengthTime.get(a.getKey());
+			  }
+			  utilization.add( (int) Math.ceil((double)countTime / (double)countCoresPerType.get(indexCType)) );
 		  }
+		  
+	  }
+	  
+	  int MII = Collections.max(utilization);
+	  System.out.println("MII "+MII);
+	  
+	  ArrayList<Integer> listPeriods;
+	  Set<Integer>  period;
+	  do {
+		  listPeriods = new ArrayList<>();
+		  for(Map.Entry<String, HashMap<Integer,Actor>>  e : typeActors.entrySet()) {
+			  int indexCType = getIndexCoreType(e.getKey());
+			  if(e.getValue().size() > 0 ) {
+				  HashMap<Integer,Actor> actorsInType = e.getValue();
+				  HashMap<Integer,Integer> startTimeType = new HashMap<>();
+				  HashMap<Integer,Integer> endTimeType = new HashMap<>();
+				  HashMap<Integer,Integer> lengthTimeType = new HashMap<>();
+				  
+				  for(Map.Entry<Integer, Actor> a : actorsInType.entrySet()) {
+					  startTimeType.put(a.getKey(), startTime.get(a.getKey()));
+					  endTimeType.put(a.getKey(), endTime.get(a.getKey()));
+					  lengthTimeType.put(a.getKey(), lengthTime.get(a.getKey()));
+				  }
+				  
+				  BindingAssignment bd = new BindingAssignment((HashMap<Integer,Actor>)actorsInType, startTimeType, endTimeType, lengthTimeType, countCoresPerType.get(indexCType),MII);
+				  bd.getScheduleAndValidPeriod();
+				  listPeriods.add(bd.getPeriod());
+			  }
+		  }
+		  System.out.println("Periods "+listPeriods);
+		  period = new HashSet<>(listPeriods);
+		  MII = Collections.max(listPeriods);
+	  }while(period.size() != 1);
+	  
+
+  }
+  
+  public void calculateStartTimeAsap(HashMap<Integer,Integer> actorIdToIndex,Mappings mappings) {
+	  HashMap<Integer,HashMap<String,Integer>> runtimePerType 	=  mappings.getDiscreteRuntimeFromType();
+	  startTime							= new HashMap<>();
+	  endTime							= new HashMap<>();
+	  lengthTime						= new HashMap<>();
+	  
+	  
+	  HashMap<Integer,Integer> PCOUNT	= new HashMap<>();
+	  HashMap<Integer,Set<Integer>> SUCC 	= new HashMap<>();
+	  for(Map.Entry<Integer, Actor> actor : application.getActors().entrySet()) {
+		  startTime.put(actor.getKey(), 0);
+		  PCOUNT.put(actor.getKey(), getPCOUNT(actor.getValue()));
+		  SUCC.put(actor.getKey(), getSUCC(actor.getValue()));
+	  }
+	  System.out.println("PCOUNT "+PCOUNT);
+	  System.out.println("SUCC "+SUCC);
+	  List<Integer> V = new ArrayList<>();
+	  for(Map.Entry<Integer,Actor> v : application.getActors().entrySet()){
+		  V.add(v.getKey());
+	  }
+
+	  while(!V.isEmpty()) {
+		  List<Integer> removeV = new ArrayList<>();
+		  for (int k = 0 ; k < V.size();k++) {
+			  int v = V.get(k);
+			  
+			  int vIndex = actorIdToIndex.get(v);
+			  int coreTypeBinding = actorToCoreTypeMapping.get(vIndex);
+			  int discreteRuntime =  runtimePerType.get(v).get(coreTypes.get(coreTypeBinding));
+			  
+			  /* Check whether data dependences are satisfied */
+			  if (PCOUNT.get(v) == 0) {
+				  System.out.println("Scheduling actor "+application.getActors().get(v).getName());
+				  //System.out.println(U);
+				  for (int w : SUCC.get(v)) {
+					  PCOUNT.put(w, PCOUNT.get(w) -1 );
+					  int maxVal = startTime.get(w) > startTime.get(v)+ discreteRuntime ? startTime.get(w) : startTime.get(v)+discreteRuntime;
+					  startTime.put(w,maxVal);
+				  }
+				  endTime.put(v, startTime.get(v)+discreteRuntime);
+				  lengthTime.put(v, discreteRuntime);
+				  removeV.add(v);
+			  }
+		  }
+		  V.removeAll(removeV);
 	  }
   }
 
-  
+/*  
   public void calculateModuloSchedule(HashMap<Integer,Integer> actorIdToIndex, boolean checkRECII,Mappings mappings,Bindings bindings){
 	  // key actor id, value runtime
 	  Map<Integer, Double> execTimes = new HashMap<>();
@@ -308,10 +397,11 @@ public class ModuloSchedulerDiscrete extends BaseScheduler implements Schedule{
 				  else
 					  coreTypeBinding = actorToCoreTypeMapping.get(vIndex);
 				  /* Check whether data dependences are satisfied */
-				  if (PCOUNT.get(v) == 0) {
+ 
+//				  if (PCOUNT.get(v) == 0) {
 				  /* Check that no more than num(r(v)) operations are scheduled on the
                		resources corresponding to *R(r(v)) at the same time modulo MII */
-					  int BU = calcU(l,MII,U,v,coreTypeBinding);
+/*					  int BU = calcU(l,MII,U,v,coreTypeBinding);
 					  while(!(BU<  countCoresPerType.get(coreTypeBinding))) {
 						  l.put(v, l.get(v)+1);
 						  BU = calcU(l,MII,U,v,coreTypeBinding);  
@@ -348,14 +438,14 @@ public class ModuloSchedulerDiscrete extends BaseScheduler implements Schedule{
     //System.out.println("L-> "+l);
 	  }
 
-  }
+  }*/
  
   public void printKernelBody(){
 	  int scheduled = 0;
 	  int step = 0;
 	  while(scheduled < application.getActors().size()){
 		  System.out.println("Scheduling Step: "+step);
-		  for(Map.Entry<Integer,Integer> entryL : l.entrySet()){
+		  for(Map.Entry<Integer,Integer> entryL : startTime.entrySet()){
 			  if(entryL.getValue() == step){
 				  System.out.println("Actor: "+application.getActors().get(entryL.getKey()).getName());
 				  scheduled++;
@@ -392,7 +482,7 @@ public class ModuloSchedulerDiscrete extends BaseScheduler implements Schedule{
   public void findSchedule(){
 	  //List<List<Integer>>	singleIteration     = new ArrayList<>();
 	  this.kernel  = new HashMap<>();
-	  int latency = Collections.max(new ArrayList<>(l.values()))+1;
+	  int latency = Collections.max(new ArrayList<>(startTime.values()))+1;
 	  this.stepStartKernel =  ((int)Math.floor((double)latency/(double)this.MII))*MII; 
 	  this.stepEndKernel = this.stepStartKernel  + this.MII;
 	  // initialize kernel
@@ -402,7 +492,7 @@ public class ModuloSchedulerDiscrete extends BaseScheduler implements Schedule{
 	  for(Map.Entry<Integer, Actor> a  :  application.getActors().entrySet()) {
 		  // key is the actor id and the value is the scheduled step
 		  //private HashMap<Integer,Integer> l;
-		  int stepAction = l.get(a.getKey());
+		  int stepAction = startTime.get(a.getKey());
 		  // put step at intervals MII from 0 to end step
 		  do{
 			  List<Integer> actionsAtStep = kernel.get(stepAction);
@@ -804,48 +894,37 @@ public class ModuloSchedulerDiscrete extends BaseScheduler implements Schedule{
   
   // PCOUNT: is the number of immediate predecessors of v not yet scheduled  
   private int getPCOUNT(Actor v) {
-	  int pCount=0;
+	  Set<Integer> predecessors = new HashSet<Integer>();
 	  
 	  if (v.getType() == ACTOR_TYPE.READ_ACTION || v.getType() == ACTOR_TYPE.WRITE_ACTION)
 		  return 1;
 	  
 	  for(Fifo fifo : v.getInputFifos()) {
-		  if(!fifo.isFifoRecurrence())
-			  pCount++;
+		  if(!fifo.isFifoRecurrence()) {
+			  predecessors.add( fifo.getSource().getId() );
+		  }
 	  }
-	  return pCount;
+	  return predecessors.size();
   }
     
   // SUCC: is the set of all immediate successors of v
   //  the set is composed of the ids
   private Set<Integer> getSUCC(Actor v) {
 	  Set<Integer> SUCC = new HashSet<Integer>();
-	  
-	  if (v.getType() == ACTOR_TYPE.READ_ACTION) {
-		  Fifo fifo = this.application.getTransferReads().get(v.getId());
-		  Integer targetActor = fifo.getDestination().getId();
-		  SUCC.add(targetActor);
-		  return SUCC;
-	  }
-	  if(v.getType() == ACTOR_TYPE.WRITE_ACTION) {
-		  Fifo fifo = this.application.getTransferWrites().get(v.getId());
-		  for(Map.Entry<Integer, Fifo> f : this.application.getTransferReads().entrySet()) {
-			  int fId = f.getValue().getId();
-			  int actorId = f.getKey();
-			  Actor dst = application.getActors().get(actorId);
-			  if (fId == fifo.getId())
-				  SUCC.add(dst.getId());
-		  }
-		  return SUCC;
-	  }
-	  // if this is an regular actor, I have to connect actor to writer
 	  for(Fifo fifo: v.getOutputFifos()) {
-		  for(Map.Entry<Integer, Fifo> f : this.application.getTransferWrites().entrySet()) {
-			  int fId = f.getValue().getId();
-			  int actorId = f.getKey();
-			  Actor dst = application.getActors().get(actorId);
-			  if (fId == fifo.getId())
-				  SUCC.add(dst.getId());
+		  //System.out.println("Fifo "+fifo.getName()+" is composite "+fifo.isCompositeChannel());
+		  if(fifo.isCompositeChannel()) {
+			  CompositeFifo cf = (CompositeFifo) fifo;
+			  if (!cf.isFifoRecurrence()){
+				  for(Actor a : cf.getDestinations()) {
+					  Integer targetActor = a.getId();
+					  SUCC.add(targetActor);
+				  }
+			  }
+		  }else {
+			  Integer targetActor = fifo.getDestination().getId();
+			  if (!fifo.isFifoRecurrence())
+				  SUCC.add(targetActor);
 		  }
 	  }
 	  return SUCC;
