@@ -66,6 +66,9 @@ public class Mappings{
   //<IdFifo, Map <tileId,ExecutionTime>
   private HashMap<Integer,HashMap<Integer,Mapping<Memory>>> fifoMemoryMappings;
 
+  
+  HashMap<Integer,HashMap<String,Integer>> discreteRuntime;
+  
   public Mappings(){
 	this.actorProcessorMappings = new HashMap<>();
 	this.actorTileMappings = new HashMap<>();
@@ -84,6 +87,29 @@ public class Mappings{
 	return fifoMemoryMappings;
   }
   
+  
+  public HashMap<Integer,HashMap<String,Integer>>  getDiscreteRuntimeFromType() {
+	  return discreteRuntime;
+  }
+  
+  public void fillUsefulMaps() {
+	  // key: actor
+	  // value:
+	  //	key: type
+	  //	value: discrete runtime
+	  discreteRuntime = new HashMap<>();
+	  
+	  for(Map.Entry<Integer, HashMap<Integer,Mapping<Processor>>> e :  actorProcessorMappings.entrySet()) {
+		  HashMap<String,Integer> typeRuntime = new HashMap<>();
+		  HashMap<Integer,Mapping<Processor>> mappingsToProcessor = e.getValue();
+		  for(Map.Entry<Integer, Mapping<Processor>> m : mappingsToProcessor.entrySet()) {
+			  double d = (double)m.getValue().getProperties().get("discrete-runtime");
+			  typeRuntime.put(m.getValue().getTarget().getProcesorType(), (int)(d));
+		  }
+		  discreteRuntime.put(e.getKey(), typeRuntime);
+	  }
+	  
+  }
   
   public double getExecTimeToProcMapping(String type, int actorId, Architecture architecture) {
 	  
