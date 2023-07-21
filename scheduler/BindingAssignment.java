@@ -1,4 +1,4 @@
-package multitile.tests;
+package multitile.scheduler;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -22,20 +22,25 @@ public class BindingAssignment {
 	int P;
 	int R;
 	
-	public BindingAssignment(HashMap<Integer,Actor> actors, HashMap<Integer,Integer> startTime, HashMap<Integer,Integer> endTime,HashMap<Integer, Integer> length, int R) {
+	public BindingAssignment(HashMap<Integer,Actor> actors, HashMap<Integer,Integer> startTime, HashMap<Integer,Integer> endTime,HashMap<Integer, Integer> length, int R, int MII) {
 		this.actors		= actors;
 		this.initStartTime 	= new HashMap<Integer,Integer>(startTime);
 		this.initEndTime 	= new HashMap<Integer,Integer>(endTime);
 		this.length		= new HashMap<Integer,Integer>(length);
 		this.R			= R;
-		int totalUse = 0;
+		this.P			= MII;
+		/*int totalUse = 0;
 		for(Map.Entry<Integer, Integer> e : length.entrySet()) {
 			totalUse += e.getValue();
 		}
 		
 		// initial period that might be adjusted
-		this.P			=	(int)Math.ceil((double)totalUse/(double)R);
+		this.P			=	(int)Math.ceil((double)totalUse/(double)R);*/
 		//System.out.println("Period "+P);
+	}
+	
+	public int getPeriod() {
+		return P;
 	}
 	
 	public void getScheduleAndValidPeriod() {
@@ -131,7 +136,6 @@ public class BindingAssignment {
             
 			// alpha is the binding
 			Map<Integer,Map<Integer,IloNumVar>> alpha = new HashMap<>();
-			
 			for (int r=0; r<R; r++) {
 				Map<Integer,IloNumVar> mapBoolVar = new HashMap<>();
 				for(Map.Entry<Integer, Actor> a : scheduledActors.entrySet()) {
@@ -206,7 +210,7 @@ public class BindingAssignment {
 				return binding;
 			}
 			else {
-				System.out.println("Model not solved");
+				//System.out.println("Model not solved");
 			}
 			
 			cplex.end();
