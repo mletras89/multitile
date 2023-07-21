@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import multitile.application.Actor;
+import multitile.scheduler.BindingAssignment;
 import multitile.scheduler.UtilizationTable.TimeSlot;
 import ilog.concert.*;
 import ilog.cplex.*;
@@ -95,7 +96,7 @@ public class testILPBindingAssigment {
 		length.put(a8.getId(), 3);
 		
 		//HashMap<Integer,Actor> actors, HashMap<Integer,Integer> startTime, HashMap<Integer,Integer> endTime,HashMap<Integer, Integer> length, int R
-		BindingAssignment bd = new BindingAssignment(actors, startTime, endTime, length, R);
+		BindingAssignment bd = new BindingAssignment(actors, startTime, endTime, length, R,10);
 		bd.getScheduleAndValidPeriod();
 		//bd.solveBinding();
 		

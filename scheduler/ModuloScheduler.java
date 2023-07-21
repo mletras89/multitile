@@ -60,6 +60,7 @@ import multitile.application.Actor;
 import multitile.application.Application;
 import multitile.application.Fifo;
 import multitile.application.MyEntry;
+import multitile.application.Actor.ACTOR_TYPE;
 //import multitile.application.MyEntry;
 import multitile.application.Cycles;
 
@@ -766,14 +767,15 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
   
   // PCOUNT: is the number of immediate predecessors of v not yet scheduled  
   private int getPCOUNT(Actor v) {
-	  int pCount=0;
+	  Set<Integer> predecessors = new HashSet<Integer>();
 	  for(Fifo fifo : v.getInputFifos()) {
 		  if(!fifo.isFifoRecurrence())
-			  pCount++;
+			  predecessors.add( fifo.getSource().getId() );
 	  }
-	  return pCount;
+	  return predecessors.size();
   }
     
+  
   // SUCC: is the set of all immediate successors of v
   //  the set is composed of the ids
   private Set<Integer> getSUCC(Actor v) {
