@@ -21,21 +21,21 @@ public class testILPBindingAssigment {
 		
 		// List of sorted actions
 		ArrayList<TimeSlot> actions = new ArrayList<TimeSlot>(); 
-		TimeSlot ta1 = new TimeSlot("a1",0,3);
+		TimeSlot ta1 = new TimeSlot(1,0,3);
 		actions.add(ta1);
-		TimeSlot ta2 = new TimeSlot("a2",3,4);
+		TimeSlot ta2 = new TimeSlot(2,3,4);
 		actions.add(ta2);
-		TimeSlot ta3 = new TimeSlot("a3",4,7);
+		TimeSlot ta3 = new TimeSlot(3,4,7);
 		actions.add(ta3);
-		TimeSlot ta4 = new TimeSlot("a4",7,9);
+		TimeSlot ta4 = new TimeSlot(4,7,9);
 		actions.add(ta4);
-		TimeSlot ta5 = new TimeSlot("a5",9,12);
+		TimeSlot ta5 = new TimeSlot(5,9,12);
 		actions.add(ta5);
-		TimeSlot ta6 = new TimeSlot("a6",9,11);
+		TimeSlot ta6 = new TimeSlot(6,9,11);
 		actions.add(ta6);
-		TimeSlot ta7 = new TimeSlot("a7",12,15);
+		TimeSlot ta7 = new TimeSlot(7,12,15);
 		actions.add(ta7);
-		TimeSlot ta8 = new TimeSlot("a8",18,21);
+		TimeSlot ta8 = new TimeSlot(8,18,21);
 		actions.add(ta8);
 		
 		
@@ -96,8 +96,8 @@ public class testILPBindingAssigment {
 		length.put(a8.getId(), 3);
 		
 		//HashMap<Integer,Actor> actors, HashMap<Integer,Integer> startTime, HashMap<Integer,Integer> endTime,HashMap<Integer, Integer> length, int R
-		BindingAssignment bd = new BindingAssignment(actors, startTime, endTime, length, R,10);
-		bd.getScheduleAndValidPeriod();
+		//BindingAssignment bd = new BindingAssignment(actors, startTime, endTime, length, R,10);
+		//bd.getScheduleAndValidPeriod();
 		//bd.solveBinding();
 		
 		
