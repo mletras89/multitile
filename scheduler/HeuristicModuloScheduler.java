@@ -43,7 +43,9 @@ package multitile.scheduler;
 
 import multitile.architecture.Processor;
 import multitile.architecture.Tile;
+import multitile.mapping.Binding;
 import multitile.mapping.Bindings;
+import multitile.mapping.Mapping;
 import multitile.mapping.Mappings;
 import multitile.scheduler.UtilizationTable.TimeSlot;
 import multitile.architecture.Architecture;
@@ -93,7 +95,44 @@ public class HeuristicModuloScheduler extends BaseScheduler implements Schedule{
 	  this.actorIdToIndex = new HashMap<Integer,Integer>(actorIdToIndex);
 
   }
-
+  
+  public int getPeriod() {
+	  return this.P;
+  }
+  
+  public void calculateFifosCapacities() {
+	  assert timeInfoActors != null || timeInfoActors.size() == 0 : "First generate the timeInfoActors";
+	  int latency = this.getLantency();
+	  assert latency != -1 : "First calculate the schedule";
+	  
+	  
+	  int nIterations = Math.floorDiv(latency, this.P);
+	  int startKernel = nIterations * this.P;
+	  int endKernel = startKernel + this.P;
+	  
+	  
+	  
+	  System.out.println("\t\tITERATIONS :"+nIterations);
+	  System.out.println("\t\tKernel starts at :"+startKernel);
+	  
+	  System.out.println("\t\tKernel ends at :"+endKernel);
+  }
+  
+  
+  public HashMap<Integer,TimeSlot> getTimeInfoActors() {
+	  return this.timeInfoActors;
+  }
+  
+  public int getLantency() {
+	  // get the max end time in the timeInfoActors to determine the latency
+	  int latency = Integer.MIN_VALUE;
+	  if (timeInfoActors == null || timeInfoActors.size() == 0)
+		  return -1;  // the schedule has not been calculated
+	  for(Map.Entry<Integer, TimeSlot> t : timeInfoActors.entrySet())
+		latency = latency <= t.getValue().getEndTime() ? t.getValue().getEndTime() : latency; 
+	  
+	  return latency;
+  }
   
   public void tryToSchedule(Mappings mappings) {
 	  // calculate the MII
@@ -106,7 +145,15 @@ public class HeuristicModuloScheduler extends BaseScheduler implements Schedule{
 		  this.P++;
 	  }
 	  System.out.println("ACTUAL PERIOD "+P);
-	  //U.printUtilizationTable(application.getActors(), coreTypes);
+	  System.out.println("ACTUAL LATENCY "+this.getLantency());
+	  U.printUtilizationTable(application.getActors(), coreTypes);
+	  printTimeInfoActors();
+  }
+  
+  public void printTimeInfoActors() {
+	  for(Map.Entry<Integer,TimeSlot> t : timeInfoActors.entrySet()) {
+		  System.out.println("Actor "+application.getActors().get(t.getValue().getActorId()).getName()+" STARTS AT "+t.getValue().getStartTime()+" ENDS AT "+t.getValue().getEndTime());
+	  }
   }
   
   // method to initialize the initial startTimes, endTimes and lengthTimes
@@ -169,9 +216,11 @@ public class HeuristicModuloScheduler extends BaseScheduler implements Schedule{
 				  
 				  //U.printUtilizationTable(application.getActors(), coreTypes);
 				  timeInfoActors.put(v, new TimeSlot(v, startTime.get(v),startTime.get(v) + discreteRuntime ));
+				  
 				  for (int w : SUCC.get(v)) {
 					  PCOUNT.put(w, PCOUNT.get(w) -1 );
-					  int maxVal = startTime.get(w) > (startTime.get(v)+ discreteRuntime) % this.P   ? startTime.get(w) : (startTime.get(v)+discreteRuntime) % this.P;
+					  //int maxVal = startTime.get(w) > (startTime.get(v)+ discreteRuntime) % this.P   ? startTime.get(w) : (startTime.get(v)+discreteRuntime) % this.P;
+					  int maxVal = startTime.get(w) > (startTime.get(v)+ discreteRuntime)  ? startTime.get(w) : (startTime.get(v)+discreteRuntime);
 					  startTime.put(w,maxVal);
 				  }
 				  
@@ -287,5 +336,43 @@ public class HeuristicModuloScheduler extends BaseScheduler implements Schedule{
 	public UtilizationTable getScheduler() {
 		return U;
 	}
+	
+	
+	public void assingActorBinding(Mappings mappings,Bindings bindings) {
+		// key: is the core type
+		// value:
+		// 		key: is the core enumeration
+		// 		value: is the occupation list of time slots
+		Map<Integer,Map<Integer,LinkedList<TimeSlot>>> uTable = U.getUtilizationTable();
+		HashMap<Integer,ArrayList<Processor>> availableCores = this.architecture.getMapTileCoreTypeCoresAsList(coreTypes);
+		
+		for(Map.Entry<Integer,Map<Integer,LinkedList<TimeSlot>>>  e : uTable.entrySet()) {
+			int coreType = e.getKey();
+			Map<Integer,LinkedList<TimeSlot>> util = e.getValue();
+			for(Map.Entry<Integer,LinkedList<TimeSlot>> u : util.entrySet()) {
+				LinkedList<TimeSlot> slots = u.getValue();
+				//System.out.println("\tCore # "+u.getKey()+" : ");
+				int coreIndex = u.getKey();
+				// get the actual core
+				Processor p  = availableCores.get(coreType).get(coreIndex);
+				for(TimeSlot ts : slots) {
+					// do the binding
+					int actorId = ts.getActorId();
+					// binding the tile
+					int tileId = p.getOwnerTile().getId();
+					bindings.getActorTileBindings().put(actorId, new Binding<Tile>(architecture.getTiles().get(tileId)));
+			        // assign also the properties to the tile mapping!
+			        bindings.getActorTileBindings().get(actorId).setProperties( mappings.getActorTileMappings().get(actorId).get(tileId).getProperties() );
+					// binding to core
+					Binding<Processor> bindingToCore = new Binding<Processor>(new Processor(p));
+					// get the mapping
+					Mapping<Processor> mappingToCore = mappings.getActorProcessorMappings().get(actorId).get(p.getId());
+					bindingToCore.setProperties(mappingToCore.getProperties());
+					bindings.getActorProcessorBindings().put(actorId, bindingToCore);
+			    }
+			}
+		}
+	}
+	
 
   }
