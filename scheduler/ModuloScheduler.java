@@ -60,8 +60,6 @@ import multitile.application.Actor;
 import multitile.application.Application;
 import multitile.application.Fifo;
 import multitile.application.MyEntry;
-import multitile.application.Actor.ACTOR_TYPE;
-//import multitile.application.MyEntry;
 import multitile.application.Cycles;
 
 import java.util.*;
@@ -687,20 +685,6 @@ public class ModuloScheduler extends BaseScheduler implements Schedule{
 			  endTime = a.getDue_time();
 	  }
 	  return endTime - startTime;
-  }
-  
-  public double getOverallDelay() {
-	  double delay = Double.MIN_VALUE;
-	  for(Map.Entry<Integer, Tile> t : architecture.getTiles().entrySet()) {
-		  for(Map.Entry<Integer, Processor> p :t.getValue().getProcessors().entrySet()) {
-			  if (p.getValue().getScheduler().getScheduledActions().size() > 0) {
-				  Action a = p.getValue().getScheduler().getScheduledActions().getLast();
-				  if (a.getDue_time() > delay)
-					  delay = a.getDue_time();
-			  }
-		  }
-	  }
-	  return delay;
   }
 
   public int getNextAvailableProcessor(HashMap<Integer,Boolean> processorUtilization){
