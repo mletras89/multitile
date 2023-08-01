@@ -116,6 +116,10 @@ public class UtilizationTable {
 		}
 	}
 	
+	
+	public Map<Integer,Map<Integer,LinkedList<TimeSlot>>> getUtilizationTable(){
+		return this.utilizationTab;
+	}
 
 	public void saveStats(String path, Map<Integer, Actor> actors, ArrayList<String> coreTypes) throws IOException{
 		try{
