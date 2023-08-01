@@ -94,14 +94,13 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 		// here we perform the scheduling including the communication overheads
 		architecture.resetArchitecture();
 		application.resetApplication(architecture, bindings, application);
-		while( ! scheduleHeuristicModulo(bindings)) {
+		while(!scheduleHeuristicModulo(bindings)) {
 			architecture.resetArchitecture();
 			application.resetApplication(architecture, bindings, application);
 		}
 	}	
 
 	private boolean scheduleHeuristicModulo(Bindings bindings) {
-		
 		Map<Actor,List<Transfer>> processorReadTransfers = new HashMap<>();
     	Map<Actor,List<Transfer>> processorWriteTransfers = new HashMap<>();
 		
@@ -120,8 +119,7 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 	        }
 	        
 	        // schedule each of the actions
-	        
-			//schedule all the reads
+	        // schedule all the reads
 			for(Map.Entry<Integer, Tile> tile : architecture.getTiles().entrySet()) {
 			  for(Map.Entry<Integer, Processor> proc : tile.getValue().getProcessors().entrySet()) {
 				  Processor p = proc.getValue();
@@ -209,8 +207,7 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 			      }
 			  }
 			}
-			
-			// update the fifos
+			// update the fifo
 			for(Map.Entry<Integer, Tile> tile : architecture.getTiles().entrySet()) {
 				for(Map.Entry<Integer, Processor> proc : tile.getValue().getProcessors().entrySet()) {
 					Processor p = proc.getValue();
@@ -224,9 +221,7 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 					}
 				}
 			}
-			
 		}
-		
 		return true;
 	}
 	
@@ -261,7 +256,6 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 	
 	public void getNextSchedulableActors(Bindings bindings){
 		nextSchedulableActors.clear();
-		
 		// check if the actor in the top of each queue is fire able
 		for(Map.Entry<Integer,HashMap<Integer,Queue<Action>>> e : schedule.entrySet() ) {
 			// here the key is the core type
@@ -317,6 +311,7 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 		UtilizationTable scheduler = heuristic.getScheduler();
 		Map<Integer,Map<Integer,LinkedList<TimeSlot>>> U = scheduler.getUtilizationTable();
 		scheduleTs = new HashMap<>();
+		
 		// filling auxiliary maps and initializing schedule
 		for(Map.Entry<Integer,Map<Integer,LinkedList<TimeSlot>>> u : U.entrySet()) {
 			HashMap<Integer,Queue<TimeSlot>> mapCoreQueues = new HashMap<>();
@@ -375,7 +370,6 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 		
 		
 	public void createScheduler(Bindings bindings) {
-		
 		// I need a map to store the runtime
 		HashMap<Integer,Double> toScheduleRuntime = new HashMap<>();
 		for(Map.Entry<Integer, Binding<Processor>>  b :  bindings.getActorProcessorBindings().entrySet()) {
@@ -386,6 +380,7 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 		
 		UtilizationTable scheduler = heuristic.getScheduler();
 		Map<Integer,Map<Integer,LinkedList<TimeSlot>>> U = scheduler.getUtilizationTable();
+		
 		schedule = new HashMap<>();
 		
 		for(Map.Entry<Integer,Map<Integer,LinkedList<TimeSlot>>> u : U.entrySet()) {
@@ -423,7 +418,7 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 							toScheduleRuntime.put(t.getActorId(), 0.0);
 						}
 					}
-					
+					listActions.add(action);  
 				}
 				mapCoreQueues.put(ts.getKey(), listActions);
 			}
