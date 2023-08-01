@@ -48,13 +48,18 @@ public class Action {
   private double processingTime;
   private Tile tile;
   private Processor processor;
-
+  private boolean splitNoReads = false;
+  private boolean splitNoWrites = false;
+  
+  
   public Action(Actor actor) {
       this.setStart_time(0.0);
       this.setDue_time(0.0);
       this.actor = actor;
       this.step = 0;
       this.processingTime = -1;
+      this.splitNoReads = false;
+      this.splitNoWrites = false;
   }
   
   
@@ -64,6 +69,8 @@ public class Action {
       this.actor = actor;
       this.step = 0;
       this.processingTime = processingTime;
+      this.splitNoReads = false;
+      this.splitNoWrites = false;
   }
   
   public Action(Action other) {
@@ -74,6 +81,24 @@ public class Action {
     this.processingTime = other.getProcessingTime();
     this.processor = other.getProcessor();
     this.tile = other.getTile();
+    this.splitNoReads = other.isSplitNoReads();
+    this.splitNoWrites = other.isSplitNoWrites();
+  }
+  
+  public void setSplitNoReads(boolean split) {
+	  this.splitNoReads = split;
+  }
+  
+  public void setSplitNoWrites(boolean split) {
+	  this.splitNoWrites = split;
+  }
+  
+  public boolean isSplitNoReads() {
+	  return this.splitNoReads;
+  }
+  
+  public boolean isSplitNoWrites() {
+	  return this.splitNoWrites;
   }
   
   public void setProcessor(Processor p){

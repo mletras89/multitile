@@ -38,6 +38,8 @@ package multitile.application;
 
 import java.util.*;
 
+import multitile.Action;
+
 public class Actor{
   private int id;
   private String name;
@@ -122,6 +124,30 @@ public class Actor{
     return true;
   }
   
+  //method for checking if an actor can FIRE
+  public boolean canFire(Map<Integer,Fifo> fifos,Action action){
+	  assert action.getActor().getId() == this.getId(): "SOMETHING WRONG, ids must be the same";
+
+	  if (!action.isSplitNoWrites()){
+		  //System.out.println("Checking reads of "+action.getActor().getName());
+		  for(Fifo fifo : this.outputFifos){
+			  Fifo selectedFifo = fifos.get(fifo.getId());
+			  //System.out.println("Checking fifo "+selectedFifo.getName()+" ?");
+			  if (!selectedFifo.fifoCanBeWritten())
+				  return false;
+		  }
+	  }
+	  if(!action.isSplitNoReads()) {
+		  //System.out.println("Checking writes of "+action.getActor().getName());
+		  for(Fifo fifo : this.inputFifos){
+			  Fifo selectedFifo = fifos.get(fifo.getId());
+			  if(!selectedFifo.fifoCanBeRead(this.getId()))
+				  return false; 
+		  }
+	  }
+	  return true;
+ }
+  
   // method that fires the actor
   public boolean fire(Map<Integer,Fifo> fifos){
     //System.out.println("Firing actor "+this.name);
@@ -137,6 +163,27 @@ public class Actor{
     return true;
   }
 
+  	// method that fires the actor
+  	public boolean fire(Map<Integer,Fifo> fifos,Action action){
+    //System.out.println("Firing actor "+this.name);
+  		assert action.getActor().getId() == this.getId(): "SOMETHING WRONG, ids must be the same";
+  		
+  		if (!action.isSplitNoReads()){
+  			for(Fifo fifo: inputFifos){
+  				fifos.get(fifo.getId()).fifoRead(this.getId());
+  			}
+  		}
+  		
+  		if (!action.isSplitNoWrites()) {
+  			for(Fifo fifo : outputFifos){
+  				fifos.get(fifo.getId()).fifoWrite();
+  			}                                   
+  		}
+    //System.out.println("Firing done!");
+    return true;
+  }
+  
+  
   public int getInputs() {
     return inputs;
   }
