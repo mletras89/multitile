@@ -370,6 +370,27 @@ public class Scheduler{
   }
 
 
+  public void commitSingleAction(Action commitAction,Architecture architecture,Application application,Bindings bindings){
+	    //this.syncTimeOfSrcActors(commitAction,architecture,application,bindings);
+	    // proceed to schedule the Action
+	    double ActionTime = commitAction.getProcessingTime();
+
+	    double startTime;
+	    
+	    startTime= Collections.max(Arrays.asList(this.lastEventinProcessor,commitAction.getStart_time(),this.getTimeLastReadofActor(commitAction.getActor()), this.lastReadToken));
+	    
+	    double endTime = startTime + ActionTime;
+	    // update now the commit Action
+	    commitAction.setStart_time(startTime);
+	    commitAction.setDue_time(endTime);
+	    // update the last event in processor
+	    this.lastEventinProcessor = endTime;
+	    // commit the Action
+	    this.scheduledActions.addLast(commitAction);
+	    //System.out.println("COMITTING:"+commitAction.getActor().getName());
+
+  }
+  
 
 
   public void commitSingleAction(Action commitAction,Architecture architecture,Application application,Bindings bindings,int step){

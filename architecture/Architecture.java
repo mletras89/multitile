@@ -345,6 +345,28 @@ public class Architecture{
 	  return mapCoreTypeToCores;
   }
   
+  public HashMap<Integer,ArrayList<Processor>> getMapTileCoreTypeCoresAsList(ArrayList<String> coreTypes) {
+	  
+	  // key Int is the core type
+	  // content a list of cores allocated in tile T of type s
+	  HashMap<Integer,ArrayList<Processor>> mapCoreTypeToCores = new HashMap<>();
+	  for(int i = 0; i < coreTypes.size(); i++) {
+		  mapCoreTypeToCores.put(i, new ArrayList<> ());
+	  }
+	  
+	  for(Map.Entry<Integer, Tile > t: this.getTiles().entrySet()) {
+		  for(Map.Entry<Integer,Processor> p : t.getValue().getProcessors().entrySet()) {
+			  String coreType = p.getValue().getProcesorType();
+			  int indexCoreType = coreTypes.indexOf(coreType);
+			  
+			  ArrayList<Processor> currentList = mapCoreTypeToCores.get(indexCoreType);
+			  currentList.add(new Processor(p.getValue()));
+			  mapCoreTypeToCores.put(indexCoreType, currentList);
+		  }
+	  }
+	  return mapCoreTypeToCores;
+  }
+  
   
 
   public Processor getProcessor(int processorId) {
