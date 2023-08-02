@@ -146,8 +146,8 @@ public class HeuristicModuloScheduler extends BaseScheduler implements Schedule{
 	  }
 	  System.out.println("ACTUAL PERIOD "+P);
 	  System.out.println("ACTUAL LATENCY "+this.getLantency());
-	  U.printUtilizationTable(application.getActors(), coreTypes);
-	  printTimeInfoActors();
+	  //U.printUtilizationTable(application.getActors(), coreTypes);
+	  //printTimeInfoActors();
   }
   
   public void printTimeInfoActors() {
@@ -201,13 +201,14 @@ public class HeuristicModuloScheduler extends BaseScheduler implements Schedule{
 					/* Check that no more than num(r(v)) operations are scheduled on the
            			resources corresponding to *R(r(v)) at the same time modulo MII */
 				  int start = startTime.get(v);
-				  int upperBound = (Math.floorDiv(start,this.P) + 1) * P; 
+				  //int upperBound = (Math.floorDiv(start,this.P) + 1) * P; 
+				  int upperBound = start % this.P;
 				  
 				  //System.out.println("actor "+application.getActors().get(v).getName()+ " lenght "+discreteRuntime);
 				  while(!U.insertIntervalUtilizationTable(v, coreTypeBinding, startTime.get(v), startTime.get(v)+discreteRuntime ,discreteRuntime)) {
 					  //System.out.println("Trying to insert"+application.getActors().get(v).getName()+" at "+startTime.get(v)+" to "+((startTime.get(v) + discreteRuntime) % this.P ));
 					  startTime.put(v, startTime.get(v)+1 );
-					  if (upperBound == startTime.get(v) ) {
+					  if (upperBound == startTime.get(v) % P ) {
 						  // if it not possible to schedule with this P, you have to increase P
 						  return false;
 						  //System.exit(1);  // here I have to increase the MII

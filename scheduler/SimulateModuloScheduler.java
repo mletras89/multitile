@@ -60,6 +60,9 @@ import multitile.application.Application;
 //import multitile.application.Fifo;
 import multitile.application.MyEntry;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
 
 public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
@@ -68,11 +71,16 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 	// key: core type
 	// value:
 	//		Key: processor index
-	//		Value: queue ofd actions
-	private HashMap<Integer,HashMap<Integer,Queue<Action>>> schedule;
-	private HashMap<Integer,HashMap<Integer,Queue<TimeSlot>>> scheduleTs;
-	private double scaleFactor;
+	//		Value: queue of actions
+	//private HashMap<Integer,HashMap<Integer,Queue<Action>>> schedule;
+	private HashMap<Integer,HashMap<Integer,Queue<TimeSlot>>> scheduleAnalysis;
+	private HashMap<Integer,HashMap<Integer,Queue<TimeSlot>>> schedulePrologue;
 	
+	private HashMap<Integer,HashMap<Integer,Queue<Action>>> scheduleActionAnalysis;
+	private HashMap<Integer,HashMap<Integer,Queue<Action>>> scheduleActionPrologue;
+	
+	private double scaleFactor;
+	private int startKernel;
 	// key: pair <tileid, processor id>
 	// value: next schedulable actor in such core
 	private HashMap<MyEntry<Integer,Integer>,Action> nextSchedulableActors;
@@ -85,7 +93,7 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 		this.heuristic = heuristic;
 		this.scaleFactor = scaleFactor;
 		// create the scheduler from the bindings and the utilization table
-		this.createScheduler(bindings);
+		//this.createScheduler(bindings);
 		nextSchedulableActors = new HashMap<>();
 	}
 
@@ -94,18 +102,18 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 		// here we perform the scheduling including the communication overheads
 		architecture.resetArchitecture();
 		application.resetApplication(architecture, bindings, application);
-		while(!scheduleHeuristicModulo(bindings)) {
+		while(!scheduleHeuristicModulo(scheduleActionPrologue, bindings)) {
 			architecture.resetArchitecture();
 			application.resetApplication(architecture, bindings, application);
 		}
 	}	
 
-	private boolean scheduleHeuristicModulo(Bindings bindings) {
+	private boolean scheduleHeuristicModulo(HashMap<Integer,HashMap<Integer,Queue<Action>>> schedule, Bindings bindings) {
 		Map<Actor,List<Transfer>> processorReadTransfers = new HashMap<>();
     	Map<Actor,List<Transfer>> processorWriteTransfers = new HashMap<>();
 		
-		while(!this.isEmptySchedule()) {
-			getNextSchedulableActors(bindings);
+		while(!this.isEmptySchedule(schedule)) {
+			getNextSchedulableActors(schedule, bindings);
 			this.cleanQueueProcessors();
 	    	assert this.nextSchedulableActors.size() > 0 : "THIS SHOULD NO HAPPEN!!!";  // paranoia assert
 	    	// assign the actions to the processor
@@ -166,7 +174,7 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 			  	  if (p.getScheduler().getQueueActions().size()==0)
 			  		  continue;
 			  	  for(Action action : p.getScheduler().getQueueActions()) {
-			  		  System.out.println("Scheduling actor "+action.getActor().getName());
+			  		  //System.out.println("Scheduling actor "+action.getActor().getName());
 			  		  p.getScheduler().commitSingleAction(action,architecture,application, bindings);  
 			  	  }
 			  }
@@ -214,10 +222,11 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 					if (p.getScheduler().getQueueActions().size()==0)
 						continue;
 					for(Action action : p.getScheduler().getQueueActions()) {
-						System.out.println("Firing actor "+action.getActor().getName());
+						//System.out.println("Firing actor "+action.getActor().getName()+" starts "+action.getStart_time()+" ends "+action.getDue_time());
 						application.getActors().get(action.getActor().getId()).fire( application.getFifos(), action );
 						// and remove the action from the scheduler
-						removeActionFromSchedule(action);
+						boolean state = removeActionFromSchedule(schedule, action);
+						assert state : "ERROOOOOOOR";
 					}
 				}
 			}
@@ -225,7 +234,7 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 		return true;
 	}
 	
-	private boolean isEmptySchedule() {
+	private boolean isEmptySchedule(HashMap<Integer,HashMap<Integer,Queue<Action>>> schedule) {
 		
 		for(Map.Entry<Integer,HashMap<Integer,Queue<Action>>> e : schedule.entrySet() ) {
 			HashMap<Integer,Queue<Action>> localMap = e.getValue();
@@ -238,7 +247,7 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 		return true;
 	}
 	
-	public boolean removeActionFromSchedule(Action action) {
+	public boolean removeActionFromSchedule(HashMap<Integer,HashMap<Integer,Queue<Action>>> schedule, Action action) {
 		for(Map.Entry<Integer,HashMap<Integer,Queue<Action>>> e : schedule.entrySet() ) {
 			HashMap<Integer,Queue<Action>> localMap = e.getValue();
 			for(Map.Entry<Integer, Queue<Action>> t : localMap.entrySet()) {
@@ -254,7 +263,7 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 		return false;
 	}
 	
-	public void getNextSchedulableActors(Bindings bindings){
+	public void getNextSchedulableActors(HashMap<Integer,HashMap<Integer,Queue<Action>>> schedule, Bindings bindings){
 		nextSchedulableActors.clear();
 		// check if the actor in the top of each queue is fire able
 		for(Map.Entry<Integer,HashMap<Integer,Queue<Action>>> e : schedule.entrySet() ) {
@@ -266,7 +275,7 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 				if (t.getValue().size() > 0) {
 					// only check the top of each list
 					Action candidate = t.getValue().peek();
-					System.out.println("\tCandidate "+candidate.getActor().getName());
+					//System.out.println("\tCandidate "+candidate.getActor().getName());
 					Actor candidateActor = application.getActors().get(candidate.getActor().getId());
 					if(candidateActor.canFire(application.getFifos(),candidate)) {
 						// put in the list of next schedulableActors
@@ -281,7 +290,7 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 	}
 
 	// the bindings must be given
-	public void createPipeliningScheduler(Bindings bindings) {
+	public void createPrologueScheduler(Bindings bindings) {
 		HashMap<Integer,TimeSlot> timeInfoActors = heuristic.getTimeInfoActors();
 		assert timeInfoActors != null: "First generate the timeInfoActors";
 		assert timeInfoActors.size() != 0 : "First generate the timeInfoActors";
@@ -289,17 +298,14 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 		int latency = heuristic.getLantency();
 		assert latency != -1 : "First calculate the schedule";
 		  
-		  
-		
-		int startKernel = Math.floorDiv(latency, heuristic.getPeriod()) * heuristic.getPeriod();
+		this.startKernel = ((int)Math.ceil((double)latency/(double)heuristic.getPeriod()))*heuristic.getPeriod(); //   .floorDiv(latency, heuristic.getPeriod()) * heuristic.getPeriod();
 		int endKernel = startKernel + heuristic.getPeriod();
-		int nIterations = (startKernel / heuristic.getPeriod()) -1 ;
+		int nIterations = (startKernel / heuristic.getPeriod()) + 40;
 		
 		System.out.println("\t\tPERIOD :"+heuristic.getPeriod());
 		System.out.println("\t\tITERATIONS :"+nIterations);
 		System.out.println("\t\tKernel starts at :"+startKernel);
 		System.out.println("\t\tKernel ends at :"+endKernel);
-		
 		
 		// key  : actor id
 		// value: core type
@@ -310,66 +316,145 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 		
 		UtilizationTable scheduler = heuristic.getScheduler();
 		Map<Integer,Map<Integer,LinkedList<TimeSlot>>> U = scheduler.getUtilizationTable();
-		scheduleTs = new HashMap<>();
+		schedulePrologue 		= new HashMap<>();
+		scheduleActionPrologue 	= new HashMap<>();
 		
 		// filling auxiliary maps and initializing schedule
 		for(Map.Entry<Integer,Map<Integer,LinkedList<TimeSlot>>> u : U.entrySet()) {
 			HashMap<Integer,Queue<TimeSlot>> mapCoreQueues = new HashMap<>();
+			HashMap<Integer,Queue<Action>> mapCoreQueuesActions = new HashMap<>();
 			for(Map.Entry<Integer,LinkedList<TimeSlot>> ts : u.getValue().entrySet()) {
 				Queue<TimeSlot> listActions = new LinkedList<>();
+				Queue<Action> lActions = new LinkedList<>();
+				int coreId = -1;
 				for(TimeSlot t : ts.getValue()) {
+					Processor p = bindings.getActorProcessorBindings().get(t.getActorId()).getTarget();
+					coreId = p.getId();
 					actorToCoreType.put(t.getActorId(), u.getKey());
-					actorToCoreId.put(t.getActorId(), ts.getKey());
+					actorToCoreId.put(t.getActorId(), p.getId());
 				}
-				mapCoreQueues.put(ts.getKey(), listActions);
+				if (coreId!=-1) {
+					mapCoreQueues.put(coreId, listActions);
+					mapCoreQueuesActions.put(coreId, lActions);
+				}
 			}
-			scheduleTs.put(u.getKey(), mapCoreQueues);
+			schedulePrologue.put(u.getKey(), mapCoreQueues);
+			scheduleActionPrologue.put(u.getKey(), mapCoreQueuesActions);
 		}
-		
 		// filling the scheduler
-		for(int i = 0; i < nIterations+1; i++) {
+		for(int i = 0; i < nIterations; i++) {
 			for(Map.Entry<Integer, TimeSlot> t : timeInfoActors.entrySet()) {
 				int actorId 	= t.getValue().getActorId();
 				int coreId 		= actorToCoreId.get(actorId);
 				int coreType 	= actorToCoreType.get(actorId);
-				Queue<TimeSlot> queue = scheduleTs.get(coreType).get(coreId);
 				
+				Queue<TimeSlot> queue = schedulePrologue.get(coreType).get(coreId);
 				//System.out.println("ACTOR "+application.getActors().get(actorId)+" STARTS "+t.getValue().getStartTime()+" ENDS "+t.getValue().getEndTime());
 				TimeSlot nTs = new TimeSlot(actorId, t.getValue().getStartTime() + heuristic.getPeriod()*i,t.getValue().getEndTime() + heuristic.getPeriod()*i);
+				nTs.setIteration(i);
 				queue.add(nTs);
 				
-				scheduleTs.get(coreType).put(coreId, queue);
+				schedulePrologue.get(coreType).put(coreId, queue);
 			}
 		}
-		
-		//HashMap<Integer,HashMap<Integer,Queue<TimeSlot>>> scheduleTs;
-		for(Map.Entry<Integer,HashMap<Integer, Queue<TimeSlot>>>  s : scheduleTs.entrySet()) {
+		// order map
+		for(Map.Entry<Integer,HashMap<Integer, Queue<TimeSlot>>>  s : schedulePrologue.entrySet()) {
 			HashMap<Integer, Queue<TimeSlot>> mapCore = s.getValue();
 			for(Map.Entry<Integer, Queue<TimeSlot>>  m : mapCore.entrySet()) {
 				ArrayList<TimeSlot> q = new ArrayList<TimeSlot>(m.getValue());
 				// sort the q
 				q.sort((o1,o2) -> o1.getStartTime() - o2.getStartTime());
 				Queue<TimeSlot> orderedResult = new LinkedList<TimeSlot>(q);
-				scheduleTs.get(s.getKey()).put(m.getKey(),orderedResult);     // ordering the schedule PARANOIA
+				schedulePrologue.get(s.getKey()).put(m.getKey(),orderedResult);     // ordering the schedule PARANOIA
 			}
 		}
-		
-		
-		// print the schedule
-		for(Map.Entry<Integer,HashMap<Integer, Queue<TimeSlot>>>  s : scheduleTs.entrySet()) {
+		// fill the action map
+		for(Map.Entry<Integer,HashMap<Integer, Queue<TimeSlot>>>  s : schedulePrologue.entrySet()) {
 			HashMap<Integer, Queue<TimeSlot>> mapCore = s.getValue();
 			for(Map.Entry<Integer, Queue<TimeSlot>>  m : mapCore.entrySet()) {
-				ArrayList<TimeSlot> q = new ArrayList<TimeSlot>(m.getValue());
-				for(TimeSlot t: q) {
-					System.out.println("Actor "+application.getActors().get(t.getActorId()).getName()+"\t"+t.getStartTime()+"\t"+t.getEndTime()+"\tϑ"+(s.getKey()+1)+","+m.getKey()  );
+				int coreType = s.getKey();
+				int coreId   = m.getKey();
+				for(TimeSlot t : m.getValue()) {
+					int actorId 	= t.getActorId();
+					double runtime = (double)bindings.getActorProcessorBindings().get(actorId).getProperties().get("runtime"); 
+					Processor p = bindings.getActorProcessorBindings().get(actorId).getTarget();
+					Action action = new Action(application.getActors().get(actorId),runtime);
+					action.setProcessor(p);
+					action.setIteration(t.getIteration());
+					Queue<Action> queue = scheduleActionPrologue.get(coreType).get(coreId);
+					queue.add(action);
+					scheduleActionPrologue.get(coreType).put(coreId, queue);					
 				}
 			}
 		}
 	}	
 		
+	public void savePrologue(String path, ArrayList<String> coreTypes) throws IOException{
+		try{
+			File memUtilStatics = new File(path+"/heuristicSchedule-Prologue.csv");
+			if (memUtilStatics.createNewFile()) {
+				System.out.println("File created: " + memUtilStatics.getName());
+			} else {
+				System.out.println("File already exists.");
+			}
+		}
+		catch (IOException e) {
+			System.out.println("An error occurred.");
+			e.printStackTrace();
+		}
+	
+		FileWriter myWriter = new FileWriter(path+"/heuristicSchedule-Prologue.csv"); 
+		myWriter.write("Job\tStart\tFinish\tResource\n");
+		savePrologueStats(myWriter, coreTypes);
+	
+	    myWriter.close();
+	}
+	
+	public void savePrologueStats(FileWriter myWriter, ArrayList<String> coreTypes) throws IOException{
+		
+		// print the prologue
+		for(Map.Entry<Integer,HashMap<Integer, Queue<TimeSlot>>>  s : schedulePrologue.entrySet()) {
+			HashMap<Integer, Queue<TimeSlot>> mapCore = s.getValue();
+			for(Map.Entry<Integer, Queue<TimeSlot>>  m : mapCore.entrySet()) {
+				ArrayList<TimeSlot> q = new ArrayList<TimeSlot>(m.getValue());
+				for(TimeSlot t: q) {
+					myWriter.write(application.getActors().get(t.getActorId()).getName()+"\t"+t.getStartTime()+"\t"+t.getEndTime()+"\t"+coreTypes.get(s.getKey())+","+m.getKey()+"\n");
+				}
+			}
+		}
+	}
+	
+	// here we calculate the distance between two iterations to determine the actual period
+	public void calculatePeriod() {
+		// key :actor id
+		// value : start time
+		HashMap<Integer,Double> iterationN  = new HashMap<>();
+		HashMap<Integer,Double> iterationN1 = new HashMap<>();
+		
+		int startIteration = (this.startKernel / heuristic.getPeriod())+1;
+		System.out.println("Start iteration "+startIteration);
+		for(Map.Entry<Integer, Tile> t : architecture.getTiles().entrySet()) {
+			Tile tile = t.getValue();
+			for(Map.Entry<Integer, Processor> p : tile.getProcessors().entrySet()) {
+				Processor processor = p.getValue();
+				LinkedList<Action> scheduledActions = processor.getScheduler().getScheduledActions();
+				for(Action action : scheduledActions) {
+					if (action.getIteration() == startIteration)
+						iterationN.put(action.getActor().getId(), action.getStart_time());
+					if (action.getIteration()  == startIteration+1)
+						iterationN1.put(action.getActor().getId(), action.getStart_time());
+				}
+			}
+		}
+		for(Map.Entry<Integer, Double> i : iterationN.entrySet()) {
+			System.out.println("Actor "+application.getActors().get(i.getKey()).getName()+" n: "+i.getValue()+" n+1: "+iterationN1.get(i.getKey())+" diff "+(iterationN1.get(i.getKey())- i.getValue()));
+		}
 		
 		
-	public void createScheduler(Bindings bindings) {
+		
+	}
+	
+	/*public void createScheduler(HashMap<Integer,HashMap<Integer,Queue<Action>>> schedule, Bindings bindings) {
 		// I need a map to store the runtime
 		HashMap<Integer,Double> toScheduleRuntime = new HashMap<>();
 		for(Map.Entry<Integer, Binding<Processor>>  b :  bindings.getActorProcessorBindings().entrySet()) {
@@ -428,6 +513,91 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 		for(Map.Entry<Integer, Double> t : toScheduleRuntime.entrySet()) {
 			assert t.getValue() == 0: "All values should be zero";
 		}
+	}*/
+	
+	// the bindings must be given
+	public void createAnalysisScheduler(Bindings bindings) {
+		HashMap<Integer,TimeSlot> timeInfoActors = heuristic.getTimeInfoActors();
+		assert timeInfoActors != null: "First generate the timeInfoActors";
+		assert timeInfoActors.size() != 0 : "First generate the timeInfoActors";
+		
+		int latency = heuristic.getLantency();
+		assert latency != -1 : "First calculate the schedule";
+		  
+		// key  : actor id
+		// value: core type
+		HashMap<Integer,Integer> actorToCoreType = new HashMap<>();
+		// key:   actor id
+		// value: core id
+		HashMap<Integer,Integer> actorToCoreId = new HashMap<>();
+		
+		UtilizationTable scheduler = heuristic.getScheduler();
+		Map<Integer,Map<Integer,LinkedList<TimeSlot>>> U = scheduler.getUtilizationTable();
+		scheduleAnalysis = new HashMap<>();
+		
+		// filling auxiliary maps and initializing schedule
+		for(Map.Entry<Integer,Map<Integer,LinkedList<TimeSlot>>> u : U.entrySet()) {
+			HashMap<Integer,Queue<TimeSlot>> mapCoreQueues = new HashMap<>();
+			for(Map.Entry<Integer,LinkedList<TimeSlot>> ts : u.getValue().entrySet()) {
+				Queue<TimeSlot> listActions = new LinkedList<>();
+				for(TimeSlot t : ts.getValue()) {
+					actorToCoreType.put(t.getActorId(), u.getKey());
+					actorToCoreId.put(t.getActorId(), ts.getKey());
+				}
+				mapCoreQueues.put(ts.getKey(), listActions);
+			}
+			scheduleAnalysis.put(u.getKey(), mapCoreQueues);
+		}
+		
+		// filling the scheduler
+		for(int i = this.startKernel/heuristic.getPeriod(); i < ((this.startKernel/heuristic.getPeriod())+2); i++) {
+			for(Map.Entry<Integer, TimeSlot> t : timeInfoActors.entrySet()) {
+				int actorId 	= t.getValue().getActorId();
+				int coreId 		= actorToCoreId.get(actorId);
+				int coreType 	= actorToCoreType.get(actorId);
+				Queue<TimeSlot> queue = scheduleAnalysis.get(coreType).get(coreId);
+				
+				//System.out.println("ACTOR "+application.getActors().get(actorId)+" STARTS "+t.getValue().getStartTime()+" ENDS "+t.getValue().getEndTime());
+				//double runtime = (double)bindings.getActorProcessorBindings().get(actorId).getProperties().get("runtime");
+				TimeSlot action =  new TimeSlot(actorId, t.getValue().getStartTime() + heuristic.getPeriod()*i,t.getValue().getEndTime() + heuristic.getPeriod()*i);// new Action(application.getActors().get(actorId),runtime); 
+				queue.add(action);
+				scheduleAnalysis.get(coreType).put(coreId, queue);
+			}
+		}
 	}
-  
+	
+	public void saveScheduleAnalysis(String path, ArrayList<String> coreTypes) throws IOException{
+		try{
+			File memUtilStatics = new File(path+"/heuristicSchedule-ScheduleAnalysis.csv");
+			if (memUtilStatics.createNewFile()) {
+				System.out.println("File created: " + memUtilStatics.getName());
+			} else {
+				System.out.println("File already exists.");
+			}
+		}
+		catch (IOException e) {
+			System.out.println("An error occurred.");
+			e.printStackTrace();
+		}
+	
+		FileWriter myWriter = new FileWriter(path+"/heuristicSchedule-ScheduleAnalysis.csv"); 
+		myWriter.write("Job\tStart\tFinish\tResource\n");
+		saveScheduleAnalysisStats(myWriter, coreTypes);
+	
+	    myWriter.close();
+	}
+	
+	public void saveScheduleAnalysisStats(FileWriter myWriter, ArrayList<String> coreTypes) throws IOException{
+		
+		// print the prologue
+		for(Map.Entry<Integer,HashMap<Integer, Queue<TimeSlot>>>  s : scheduleAnalysis.entrySet()) {
+			HashMap<Integer, Queue<TimeSlot>> mapCore = s.getValue();
+			for(Map.Entry<Integer, Queue<TimeSlot>>  m : mapCore.entrySet()) {
+				ArrayList<TimeSlot> q = new ArrayList<TimeSlot>(m.getValue());
+				for(TimeSlot t: q) {
+					myWriter.write(application.getActors().get(t.getActorId()).getName()+"\t"+t.getStartTime()+"\t"+t.getEndTime()+"\t"+coreTypes.get(s.getKey())+","+m.getKey()+"\n");
+				}
+			}
+		}
+	}
 }

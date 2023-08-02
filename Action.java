@@ -50,7 +50,7 @@ public class Action {
   private Processor processor;
   private boolean splitNoReads = false;
   private boolean splitNoWrites = false;
-  
+  private int iteration;
   
   public Action(Actor actor) {
       this.setStart_time(0.0);
@@ -83,6 +83,7 @@ public class Action {
     this.tile = other.getTile();
     this.splitNoReads = other.isSplitNoReads();
     this.splitNoWrites = other.isSplitNoWrites();
+    this.iteration = other.getIteration();
   }
   
   public void setSplitNoReads(boolean split) {
@@ -157,5 +158,13 @@ public class Action {
   public void setActor(Actor actor){
     this.actor = actor;
   }
-   
+  
+  public void setIteration(int iteration) {
+	  this.iteration = iteration;
+  }
+  
+  public int getIteration() {
+	  return this.iteration;
+  }
+  
 }

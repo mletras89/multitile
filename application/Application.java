@@ -477,6 +477,12 @@ public class Application{
 	        //System.exit(1);
 	        return memory_footprint;
 	    }
+	    
+	    public void setUnboundedFifos() {
+	    	for (Map.Entry<Integer, Fifo> f : fifos.entrySet()) {
+	    		f.getValue().set_capacity(Integer.MAX_VALUE);
+	    	}
+	    }
 	  
 }
 

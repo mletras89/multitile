@@ -17,7 +17,7 @@ public class UtilizationTable {
 		private int endTime;
 		private int length;
 		private boolean split = false;
-		
+		private int iteration;
 		
 		public TimeSlot(int actorId, int startTime, int endTime) {
 			assert endTime > startTime : "This should not happen";
@@ -72,6 +72,14 @@ public class UtilizationTable {
 			return split;
 		}
 		
+		public void setIteration(int iteration) {
+			this.iteration = iteration;
+		}
+		
+		public int getIteration() {
+			return this.iteration;
+		}
+		
 	};
 	// key: is the core type
 	// value:
@@ -121,9 +129,9 @@ public class UtilizationTable {
 		return this.utilizationTab;
 	}
 
-	public void saveStats(String path, Map<Integer, Actor> actors, ArrayList<String> coreTypes) throws IOException{
+	public void saveKernel(String path, Map<Integer, Actor> actors, ArrayList<String> coreTypes) throws IOException{
 		try{
-			File memUtilStatics = new File(path+"/heuristicSchedule.csv");
+			File memUtilStatics = new File(path+"/heuristicSchedule-RepetitionKernel.csv");
 			if (memUtilStatics.createNewFile()) {
 				System.out.println("File created: " + memUtilStatics.getName());
 			} else {
@@ -135,14 +143,14 @@ public class UtilizationTable {
 			e.printStackTrace();
 		}
 	
-		FileWriter myWriter = new FileWriter(path+"/heuristicSchedule.csv"); 
+		FileWriter myWriter = new FileWriter(path+"/heuristicSchedule-RepetitionKernel.csv"); 
 		myWriter.write("Job\tStart\tFinish\tResource\n");
-		saveScheduleStats(myWriter, actors, coreTypes);
+		saveScheduleKernelStats(myWriter, actors, coreTypes);
 	
 	    myWriter.close();
 	}
 	
-	public void saveScheduleStats(FileWriter myWriter, Map<Integer, Actor> actors, ArrayList<String> coreTypes) throws IOException{
+	public void saveScheduleKernelStats(FileWriter myWriter, Map<Integer, Actor> actors, ArrayList<String> coreTypes) throws IOException{
 		for(Map.Entry<Integer,Map<Integer,LinkedList<TimeSlot>>>  e : utilizationTab.entrySet()) {
 			//System.out.println("Core Type "+e.getKey());
 			Map<Integer,LinkedList<TimeSlot>> util = e.getValue();
