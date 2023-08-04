@@ -51,7 +51,6 @@ import multitile.scheduler.UtilizationTable.TimeSlot;
 import multitile.architecture.Architecture;
 import multitile.application.CompositeFifo;
 import multitile.application.Actor;
-import multitile.application.Actor.ACTOR_TYPE;
 import multitile.application.Application;
 import multitile.application.Fifo;
 import java.util.*;
@@ -252,10 +251,6 @@ public class HeuristicModuloScheduler extends BaseScheduler implements Schedule{
 	// PCOUNT: is the number of immediate predecessors of v not yet scheduled  
 	private int getPCOUNT(Actor v) {
 	  Set<Integer> predecessors = new HashSet<Integer>();
-	  
-	  if (v.getType() == ACTOR_TYPE.READ_ACTION || v.getType() == ACTOR_TYPE.WRITE_ACTION)
-		  return 1;
-	  
 	  for(Fifo fifo : v.getInputFifos()) {
 		  if(!fifo.isFifoRecurrence()) {
 			  predecessors.add( fifo.getSource().getId() );
