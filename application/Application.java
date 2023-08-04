@@ -37,6 +37,9 @@
 */
 package multitile.application;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
 
 import multitile.architecture.Processor;
@@ -80,34 +83,6 @@ public class Application{
 		}
   }
 
-  
-  public void fillTransferActions(Map<Integer, Integer> commsTime,Bindings bindings) {
-	  transferWrites = new HashMap<>();
-	  transferReads = new HashMap<>();
-	  for(Map.Entry<Integer, Fifo> f: fifos.entrySet()) {
-		  Actor actorWrite = new Actor("w:"+f.getValue().getName());
-		  actorWrite.setType(ACTOR_TYPE.WRITE_ACTION);
-		  Actor actorRead  = new Actor("r:"+f.getValue().getName());
-		  actorRead.setType(ACTOR_TYPE.READ_ACTION);
-		  
-		  Binding<NoC> wBinding = new Binding<NoC>();
-		  wBinding.getProperties().put("runtime-discrete", commsTime.get(f.getKey()));
-		  
-		  Binding<NoC> rBinding = new Binding<NoC>();
-		  rBinding.getProperties().put("runtime-discrete", commsTime.get(f.getKey()));
-		  
-		  bindings.getCommTaskToNoCBinding().put(actorWrite.getId(), wBinding);
-		  bindings.getCommTaskToNoCBinding().put(actorRead.getId(), rBinding);
-		  
-		  actors.put(actorRead.getId(), actorRead);
-		  actors.put(actorWrite.getId(), actorWrite);
-		  
-		  transferWrites.put(actorWrite.getId(), f.getValue());
-		  transferReads.put(actorRead.getId(), f.getValue());
-		  
-	  }
-  }
-  
   public void fillTokensAtState(HashMap<Integer,Integer> stateChannels, HashMap<Integer,Integer> nReads) {
 	  for(Map.Entry<Integer,Integer> state : stateChannels.entrySet()) {
 		  int fifoId = state.getKey();
@@ -483,7 +458,60 @@ public class Application{
 	    		f.getValue().set_capacity(Integer.MAX_VALUE);
 	    	}
 	    }
-	  
+	    
+	    public void dumpToDotty(String path, String name) {
+			try{
+				File memUtilStatics = new File(path+"/"+name+".dot");
+				if (memUtilStatics.createNewFile()) {
+					System.out.println("File created: " + memUtilStatics.getName());
+				} else {
+					System.out.println("File already exists.");
+				}
+				
+				FileWriter myWriter = new FileWriter(path+"/"+name+".dot"); 
+				myWriter.write("digraph graphname{\n");
+				
+				HashMap<Integer,String> actorNames = new HashMap<>();
+				HashMap<Integer,String> fifoNames = new HashMap<>();
+				int counter=0;
+				for(Map.Entry<Integer, Actor> a : actors.entrySet()) {
+		    		actorNames.put(a.getKey(), "a"+counter);
+		    		counter++;
+		    	}
+				counter = 0;
+				for(Map.Entry<Integer, Fifo> f: fifos.entrySet()) {
+					fifoNames.put(f.getKey(), "f"+counter);
+					counter++;
+				}
+				for(Map.Entry<Integer, Actor> a : actors.entrySet()) {
+					String color= "#EF435E";
+					String shape = "circle";
+					ACTOR_TYPE type = a.getValue().getType();
+					if (type == ACTOR_TYPE.MULTICAST) {
+						color="#FBA4FF";
+					}
+					if(type == ACTOR_TYPE.READ_COMMUNICATION_TASK || type==ACTOR_TYPE.WRITE_COMMUNICATION_TASK) {
+						shape="box";
+						if (type==ACTOR_TYPE.WRITE_COMMUNICATION_TASK)
+							color="#18C3CE";
+						if (type == ACTOR_TYPE.READ_COMMUNICATION_TASK)
+							color="#18C396";
+					}
+					myWriter.write(actorNames.get(a.getKey())+" [label=\""+a.getValue().getName()+"\" style=filled fillcolor=\""+color+"\" shape="+shape+"];\n");
+		    	}
+				for(Map.Entry<Integer, Fifo> f : fifos.entrySet()) {
+					myWriter.write(actorNames.get(f.getValue().getSource().getId())+" -> "+actorNames.get(f.getValue().getDestination().getId())+"\n");
+				}
+				
+				myWriter.write("}");
+			    myWriter.close();	
+				
+			}
+			catch (IOException e) {
+				System.out.println("An error occurred.");
+				e.printStackTrace();
+			}
+		}
 }
 
 
