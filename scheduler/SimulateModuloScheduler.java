@@ -43,23 +43,14 @@ package multitile.scheduler;
 
 import multitile.Action;
 import multitile.Transfer;
-
 import multitile.architecture.Processor;
 import multitile.architecture.Tile;
-import multitile.mapping.Binding;
 import multitile.mapping.Bindings;
 import multitile.scheduler.UtilizationTable.TimeSlot;
 import multitile.architecture.Architecture;
-//import multitile.architecture.ArchitectureManagement;
-//import multitile.architecture.Memory;
-
-//import multitile.application.ApplicationManagement;
-//import multitile.application.CompositeFifo;
 import multitile.application.Actor;
 import multitile.application.Application;
-//import multitile.application.Fifo;
 import multitile.application.MyEntry;
-
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -75,25 +66,17 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 	//private HashMap<Integer,HashMap<Integer,Queue<Action>>> schedule;
 	private HashMap<Integer,HashMap<Integer,Queue<TimeSlot>>> scheduleAnalysis;
 	private HashMap<Integer,HashMap<Integer,Queue<TimeSlot>>> schedulePrologue;
-	
-	private HashMap<Integer,HashMap<Integer,Queue<Action>>> scheduleActionAnalysis;
 	private HashMap<Integer,HashMap<Integer,Queue<Action>>> scheduleActionPrologue;
-	
-	private double scaleFactor;
 	private int startKernel;
 	// key: pair <tileid, processor id>
 	// value: next schedulable actor in such core
 	private HashMap<MyEntry<Integer,Integer>,Action> nextSchedulableActors;
 	
-	
-	public SimulateModuloScheduler(Architecture architecture, Application application,HeuristicModuloScheduler heuristic, double scaleFactor, Bindings bindings){
+	public SimulateModuloScheduler(Architecture architecture, Application application,HeuristicModuloScheduler heuristic, Bindings bindings){
 		super();
 		this.setApplication(application);
 		this.setArchitecture(architecture);
 		this.heuristic = heuristic;
-		this.scaleFactor = scaleFactor;
-		// create the scheduler from the bindings and the utilization table
-		//this.createScheduler(bindings);
 		nextSchedulableActors = new HashMap<>();
 	}
 
