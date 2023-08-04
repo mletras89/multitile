@@ -512,6 +512,15 @@ public class Application{
 				e.printStackTrace();
 			}
 		}
+	    
+	    public Actor getActor(String actorName) {
+	    	Actor actor = null;
+	    	for(Map.Entry<Integer, Actor> a : actors.entrySet()) {
+	    		if (a.getValue().getName().compareTo(actorName) == 0 )
+	    			return a.getValue();
+	    	}
+	    	return actor;
+	    }
 }
 
 
