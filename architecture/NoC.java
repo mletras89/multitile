@@ -57,7 +57,6 @@ public class NoC{
   private List<LinkedList<Transfer>> channels;
   private List<Transfer> queueTransfers;
   private List<Double> timeEachChannel;
-
   private int numberofParallelChannels=4;
   private double bandwidth;  
   private double bandwidthPerChannel;
