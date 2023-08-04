@@ -209,15 +209,15 @@ public class HeuristicModuloSchedulerWithCommunications extends BaseScheduler im
 		  // we increase the period
 		  this.P++;
 	  }
-	  System.out.println("ACTUAL PERIOD "+P);
-	  //System.out.println("ACTUAL LATENCY "+this.getLantency());
-	  //U.printUtilizationTable(application.getActors(), coreTypes);
-	  //printTimeInfoActors();
+	  System.out.println("HEURISTIC WITH COMMS:: ACTUAL PERIOD "+P);
+	  System.out.println("HEURISTIC WITH COMMS:: ACTUAL LATENCY "+this.getLantency());
+	  U.printUtilizationTable(applicationWithMessages.getActors(), coreTypes);
+	  printTimeInfoActors();
   }
   
   public void printTimeInfoActors() {
 	  for(Map.Entry<Integer,TimeSlot> t : timeInfoActors.entrySet()) {
-		  System.out.println("Actor "+application.getActors().get(t.getValue().getActorId()).getName()+" STARTS AT "+t.getValue().getStartTime()+" ENDS AT "+t.getValue().getEndTime());
+		  System.out.println("Actor "+applicationWithMessages.getActors().get(t.getValue().getActorId()).getName()+" STARTS AT "+t.getValue().getStartTime()+" ENDS AT "+t.getValue().getEndTime());
 	  }
   }
   
@@ -227,7 +227,7 @@ public class HeuristicModuloSchedulerWithCommunications extends BaseScheduler im
 
 	  HashMap<Integer,Integer> startTime = new HashMap<>();
 	  List<Integer> V = new ArrayList<>();
-	  for(Map.Entry<Integer,Actor> v : application.getActors().entrySet()){
+	  for(Map.Entry<Integer,Actor> v : applicationWithMessages.getActors().entrySet()){
 		  V.add(v.getKey());
 		  startTime.put(v.getKey(), 0);
 	  }
@@ -239,13 +239,32 @@ public class HeuristicModuloSchedulerWithCommunications extends BaseScheduler im
 	  //             i and j are stored in a list which serves as key in a map
 	  // key core type - step
 	  
-	  // key is the core type
-	  HashMap<Integer,Integer> countResourcessPerType = new HashMap<>(); // here all the resources are treated as different types, so I use the id of the resources as Key
-	  /*for() {
-		  
-	  }*/
+	  // key is the resource
+	  HashMap<Integer,Integer> countResourcesPerType = new HashMap<>(); // here all the resources are treated as different types, so I use the id of the resources as Key
+	  for(Map.Entry<Integer, Actor> a : applicationWithMessages.getActors().entrySet()) {
+		  Actor actor = a.getValue();
+		  Actor origActor = application.getActor(actor.getName());
+		  if (actor.getType() == ACTOR_TYPE.ACTOR || actor.getType() == ACTOR_TYPE.MULTICAST) {
+			  // mapped to core
+			  System.out.println("actor "+actor.getName());
+			  int coreId = bindings.getActorProcessorBindings().get(origActor.getId()).getTarget().getId();
+			  countResourcesPerType.put(coreId, 1);
+		  }
+		  if (actor.getType() == ACTOR_TYPE.READ_COMMUNICATION_TASK || actor.getType() == ACTOR_TYPE.WRITE_COMMUNICATION_TASK) {
+			  System.out.println("actor comm "+actor.getName());
+			  // cast to communication task
+			  CommunicationTask comm = (CommunicationTask)actor;
+			  // mapped to interconnect
+			  if(comm.getUsedNoc() != null) {
+				  countResourcesPerType.put(comm.getUsedNoc().getId(), 1);
+			  }
+			  for(Crossbar c : comm.getUsedCrossbars()) {
+				  countResourcesPerType.put(c.getId(), 1);
+			  }
+		  }
+	  }
 	  
-	  U = new UtilizationTable(countCoresPerType,P);
+	  U = new UtilizationTable(countResourcesPerType,P);
 	  // compute PCOUNT and SUCC
 	  // PCOUNT: is the number of immediate predecessors of v not yet scheduled  
 	  // SUCC: is the set of all immediate successors of v
@@ -254,7 +273,7 @@ public class HeuristicModuloSchedulerWithCommunications extends BaseScheduler im
 	  HashMap<Integer,Integer> PCOUNT	= new HashMap<>();
 	  // succesors
 	  HashMap<Integer,Set<Integer>> SUCC 	= new HashMap<>();
-	  for(Map.Entry<Integer, Actor> actor : application.getActors().entrySet()) {
+	  for(Map.Entry<Integer, Actor> actor : applicationWithMessages.getActors().entrySet()) {
 		  PCOUNT.put(actor.getKey(), getPCOUNT(actor.getValue()));
 		  SUCC.put(actor.getKey(), getSUCC(actor.getValue()));
 	  }
@@ -263,13 +282,15 @@ public class HeuristicModuloSchedulerWithCommunications extends BaseScheduler im
 		  List<Integer> removeV = new ArrayList<>();
 		  for (int k = 0 ; k < V.size();k++) {
 			  int v = V.get(k);
-			  int vIndex = actorIdToIndex.get(v);
-			  int coreTypeBinding = actorToCoreTypeMapping.get(vIndex);
-			  int discreteRuntime =  100;
-			  //int discreteRuntime =  runtimePerType.get(v).get(coreTypes.get(coreTypeBinding));
+			  MyEntry<Integer,ArrayList<Integer>> infoBoundResources = this.getBoundResources(bindings, v);
+			  ArrayList<Integer> boundResources = infoBoundResources.getValue();
+			  int discreteRuntime = infoBoundResources.getKey();
+			  
+			  
 			  
 			  /* Check whether data dependences are satisfied */
 			  if (PCOUNT.get(v) == 0) {
+				  System.out.println("scheduling "+applicationWithMessages.getActors().get(v).getName()+" runtime "+discreteRuntime);
 					/* Check that no more than num(r(v)) operations are scheduled on the
            			resources corresponding to *R(r(v)) at the same time modulo MII */
 				  int start = startTime.get(v);
@@ -277,7 +298,7 @@ public class HeuristicModuloSchedulerWithCommunications extends BaseScheduler im
 				  int upperBound = start % this.P;
 				  
 				  //System.out.println("actor "+application.getActors().get(v).getName()+ " lenght "+discreteRuntime);
-				  while(!U.insertIntervalUtilizationTable(v, coreTypeBinding, startTime.get(v), startTime.get(v)+discreteRuntime ,discreteRuntime)) {
+				  while(!U.insertIntervalUtilizationTable(v, boundResources, startTime.get(v), startTime.get(v)+discreteRuntime ,discreteRuntime)) {
 					  //System.out.println("Trying to insert"+application.getActors().get(v).getName()+" at "+startTime.get(v)+" to "+((startTime.get(v) + discreteRuntime) % this.P ));
 					  startTime.put(v, startTime.get(v)+1 );
 					  if (upperBound == startTime.get(v) % P ) {
@@ -287,12 +308,11 @@ public class HeuristicModuloSchedulerWithCommunications extends BaseScheduler im
 					  }  
 				  }
 				  
-				  //U.printUtilizationTable(application.getActors(), coreTypes);
+				  //U.printUtilizationTable(applicationWithMessages.getActors(), coreTypes);
 				  timeInfoActors.put(v, new TimeSlot(v, startTime.get(v),startTime.get(v) + discreteRuntime ));
 				  
 				  for (int w : SUCC.get(v)) {
 					  PCOUNT.put(w, PCOUNT.get(w) -1 );
-					  //int maxVal = startTime.get(w) > (startTime.get(v)+ discreteRuntime) % this.P   ? startTime.get(w) : (startTime.get(v)+discreteRuntime) % this.P;
 					  int maxVal = startTime.get(w) > (startTime.get(v)+ discreteRuntime)  ? startTime.get(w) : (startTime.get(v)+discreteRuntime);
 					  startTime.put(w,maxVal);
 				  }
@@ -363,10 +383,11 @@ public class HeuristicModuloSchedulerWithCommunications extends BaseScheduler im
 		  HashMap<Integer,Integer> usageCrossbar = new HashMap<>();
 		  
 		  // initialize
-		  for(Map.Entry<Integer, Actor > actor : application.getActors().entrySet()) {
+		  for(Map.Entry<Integer, Actor > actor : applicationWithMessages.getActors().entrySet()) {
+			  Actor origActor = application.getActor(actor.getValue().getName());
 			  //System.out.println("actor "+actor.getValue().getName()+" id "+actor.getKey());
 			  if(actor.getValue().getType() == ACTOR_TYPE.ACTOR || actor.getValue().getType() == ACTOR_TYPE.MULTICAST) {
-				  Processor p = bindings.getActorProcessorBindings().get(actor.getKey()).getTarget();
+				  Processor p = bindings.getActorProcessorBindings().get(origActor.getId()).getTarget();
 				  int coreTypeIx = coreTypes.indexOf(p.getProcesorType());
 				  MyEntry<Integer,Integer> key = new MyEntry<Integer,Integer>(coreTypeIx, p.getId());
 				  usageCores.put(key, 0);
@@ -388,13 +409,14 @@ public class HeuristicModuloSchedulerWithCommunications extends BaseScheduler im
 		  // <K,V> here the key is the id of the tile and the value is the usage of cpus in the tile
 		  // update the usage
 		  int maxExTime = 0;
-		  for(Map.Entry<Integer, Actor > actor : application.getActors().entrySet()) {
+		  for(Map.Entry<Integer, Actor > actor : applicationWithMessages.getActors().entrySet()) {
+			  Actor origActor = application.getActor(actor.getValue().getName());
 			  if(actor.getValue().getType() == ACTOR_TYPE.ACTOR || actor.getValue().getType() == ACTOR_TYPE.MULTICAST) {
-				  Processor p = bindings.getActorProcessorBindings().get(actor.getKey()).getTarget();
+				  Processor p = bindings.getActorProcessorBindings().get(origActor.getId()).getTarget();
 				  int coreTypeIx = coreTypes.indexOf(p.getProcesorType());
 				  MyEntry<Integer,Integer> key = new MyEntry<Integer,Integer>(coreTypeIx, p.getId());
 				  int val = usageCores.get(key);
-				  int discreteRuntime = (int)bindings.getActorProcessorBindings().get(actor.getKey()).getProperties().get("discrete-runtime");
+				  int discreteRuntime = (int)bindings.getActorProcessorBindings().get(origActor.getId()).getProperties().get("discrete-runtime");
 				  maxExTime = (discreteRuntime > maxExTime) ? discreteRuntime : maxExTime;
 				  usageCores.put(key, val+discreteRuntime);
 			  }
@@ -435,6 +457,47 @@ public class HeuristicModuloSchedulerWithCommunications extends BaseScheduler im
 		  maxExTime = (this.MII > maxExTime) ? this.MII : maxExTime;
 		  System.out.println("Heuristic with Communications MII "+MII);
 	}
-  
 
+	
+	public MyEntry<Integer,ArrayList<Integer>> getBoundResources(Bindings bindings, int actorId) {
+		Actor actor = applicationWithMessages.getActors().get(actorId);
+		ArrayList<Integer> boundResources = new ArrayList<>();
+		int discreteRuntime = -1;
+		Actor origActor = application.getActor(actor.getName());
+		
+		if (actor.getType() == ACTOR_TYPE.ACTOR || actor.getType() == ACTOR_TYPE.MULTICAST) {
+			// mapped to core
+			int coreId = bindings.getActorProcessorBindings().get(origActor.getId()).getTarget().getId();
+			boundResources.add(coreId);
+			discreteRuntime = (int)bindings.getActorProcessorBindings().get(origActor.getId()).getProperties().get("discrete-runtime");
+		}
+		if (actor.getType() == ACTOR_TYPE.READ_COMMUNICATION_TASK || actor.getType() == ACTOR_TYPE.WRITE_COMMUNICATION_TASK) {
+			// cast to communication task
+			CommunicationTask comm = (CommunicationTask)actor;
+			discreteRuntime = comm.getDiscretizedRuntime();
+			// mapped to interconnect
+			if(comm.getUsedNoc() != null) {
+				boundResources.add(comm.getUsedNoc().getId());
+			}
+			for(Crossbar c : comm.getUsedCrossbars()) {
+				boundResources.add(c.getId());
+			}
+		}
+		MyEntry<Integer,ArrayList<Integer>> result = new MyEntry<Integer,ArrayList<Integer>>(discreteRuntime,boundResources);
+		return result;
+	}
+
+	public int getLantency() {
+		// get the max end time in the timeInfoActors to determine the latency
+		int latency = Integer.MIN_VALUE;
+		if (timeInfoActors == null || timeInfoActors.size() == 0)
+			return -1;  // the schedule has not been calculated
+		for(Map.Entry<Integer, TimeSlot> t : timeInfoActors.entrySet())
+			latency = latency <= t.getValue().getEndTime() ? t.getValue().getEndTime() : latency; 
+		return latency;
+	}
+	  
+	public UtilizationTable getScheduler() {
+		return U;
+	}
   }
