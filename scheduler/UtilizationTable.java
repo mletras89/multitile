@@ -8,6 +8,10 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import multitile.application.Actor;
+import multitile.architecture.Architecture;
+import multitile.architecture.Crossbar;
+import multitile.architecture.NoC;
+import multitile.architecture.Processor;
 
 public class UtilizationTable {
 	
@@ -20,7 +24,7 @@ public class UtilizationTable {
 		private int iteration;
 		
 		public TimeSlot(int actorId, int startTime, int endTime) {
-			assert endTime > startTime : "This should not happen";
+			assert endTime >= startTime : "This should not happen";
 			this.actorId = actorId;
 			this.endTime = endTime;
 			this.startTime = startTime;
@@ -150,6 +154,28 @@ public class UtilizationTable {
 	    myWriter.close();
 	}
 	
+	public void saveKernelWithCommunications(String path, Map<Integer, Actor> actors, Architecture architecture) throws IOException{
+		try{
+			File memUtilStatics = new File(path+"/heuristicSchedule-RepetitionKernel-with-Communications.csv");
+			if (memUtilStatics.createNewFile()) {
+				System.out.println("File created: " + memUtilStatics.getName());
+			} else {
+				System.out.println("File already exists.");
+			}
+		}
+		catch (IOException e) {
+			System.out.println("An error occurred.");
+			e.printStackTrace();
+		}
+	
+		FileWriter myWriter = new FileWriter(path+"/heuristicSchedule-RepetitionKernel-with-Communications.csv"); 
+		myWriter.write("Job\tStart\tFinish\tResource\n");
+		saveScheduleKernelWithCommunicationsStats(myWriter, actors, architecture);
+	
+	    myWriter.close();
+	}
+	
+	
 	public void saveScheduleKernelStats(FileWriter myWriter, Map<Integer, Actor> actors, ArrayList<String> coreTypes) throws IOException{
 		for(Map.Entry<Integer,Map<Integer,LinkedList<TimeSlot>>>  e : utilizationTab.entrySet()) {
 			//System.out.println("Core Type "+e.getKey());
@@ -164,18 +190,46 @@ public class UtilizationTable {
 		}
 	}
 	
+	public void saveScheduleKernelWithCommunicationsStats(FileWriter myWriter, Map<Integer, Actor> actors, Architecture architecture) throws IOException{
+		for(Map.Entry<Integer,Map<Integer,LinkedList<TimeSlot>>>  e : utilizationTab.entrySet()) {
+			//System.out.println("Core Type "+e.getKey());
+			// e.getKey() resource id
+			String resourceName = "null";
+			Map<Integer,LinkedList<TimeSlot>> util = e.getValue();
+			Processor p = architecture.isProcessor(e.getKey());
+			Crossbar  c = architecture.isCrossbar(e.getKey());
+			NoC		noc = architecture.isNoC(e.getKey()); 
+			if (p!=null) {
+				resourceName = p.getName();
+			}
+			if(c!=null) {
+				resourceName = c.getName();
+			}
+			if(noc != null) {
+				resourceName = noc.getName();
+			}
+			
+			for(Map.Entry<Integer,LinkedList<TimeSlot>> u : util.entrySet()) {
+				LinkedList<TimeSlot> slots = u.getValue();
+				for(TimeSlot ts : slots) {
+					myWriter.write(actors.get(ts.getActorId()).getName()+"\t"+ts.getStartTime()+"\t"+ts.getEndTime()+"\t"+resourceName+"\n");
+				}
+			}			
+			
+		}
+	}
+	
+	
+	
 	public boolean insertIntervalUtilizationTable(int actorId, int coreType, int startTime, int endTime, int length) {
-		
 		if (length>P)
 			return false;
-		
 		// normalize startTime and endTIme
 		startTime = startTime % P;
 		endTime = endTime % P;
 		
 		if (endTime == 0)
 			endTime = P;
-		
 		//System.out.println("TRYING AT "+startTime+" to "+endTime);
 		
 		if(endTime > startTime) {
@@ -185,8 +239,6 @@ public class UtilizationTable {
 				insertInCoreType(coreType,ts);
 				return true;
 			}
-				
-			
 		}else {
 			// create two intervals and try to insert them
 			TimeSlot ts1 = new TimeSlot(actorId,startTime,P);
@@ -202,7 +254,40 @@ public class UtilizationTable {
 		}
 		return false;
 	}
-	
+
+	public boolean insertIntervalUtilizationTable(int actorId, ArrayList<Integer> boundResources, int startTime, int endTime, int length	) {
+		if (length>P)
+			return false;
+		// normalize startTime and endTIme
+		startTime = startTime % P;
+		endTime = endTime % P;
+		
+		if (endTime == 0)
+			endTime = P;
+		//System.out.println("TRYING AT "+startTime+" to "+endTime);
+		
+		if(endTime > startTime) {
+			// try to insert a single interval
+			TimeSlot ts = new TimeSlot(actorId,startTime,endTime);
+			if (canInsertInBoundResources(boundResources,ts)) {
+				boolean state = insertInBoundResources(boundResources,ts);
+				assert state : "this must not happen";
+				return true;
+			}
+		}else {
+			// create two intervals and try to insert them
+			TimeSlot ts1 = new TimeSlot(actorId,startTime,P);
+			TimeSlot ts2 = new TimeSlot(actorId,0, endTime);
+			ts1.split = true;
+			ts2.split = true;
+			if (canInsertInBoundResources(boundResources,ts1) && canInsertInBoundResources(boundResources,ts2)) {
+				boolean state = insertInBoundResources(boundResources, ts1, ts2);
+				assert state : "this must not happen";
+				return true;
+			}
+		}
+		return false;
+	}
 
 
 	boolean canInsertInCoreType(int coreType, TimeSlot t) {
@@ -213,6 +298,68 @@ public class UtilizationTable {
 				return true;
 		}
 		
+		return false;
+	}
+	
+	boolean canInsertInBoundResources(ArrayList<Integer> boundResources, TimeSlot t) {
+		// this only works if all the resources in the architecture are treated as unique
+		ArrayList<Boolean> status = new ArrayList<>();
+		for(int resourceType : boundResources) {
+			int nResources = countCoresPerType.get(resourceType);
+			for(int i=0; i< nResources; i++) {
+				if(canInsertInCore(resourceType,i,t))
+					status.add(true);
+				else
+					status.add(false);
+			}
+		}
+		for(Boolean s: status)
+			if (!s) return false;
+		return  true;
+	}
+	
+	public boolean insertInBoundResources(ArrayList<Integer> boundResources, TimeSlot t) {
+		// this only works if all the resources in the architecture are treated as unique
+		ArrayList<Boolean> status = new ArrayList<Boolean>();
+		for(int resourceType : boundResources) {
+			int nResources = countCoresPerType.get(resourceType);
+			for(int i=0; i< nResources; i++) {
+				if(canInsertInCore(resourceType,i,t)) {
+					LinkedList<TimeSlot> timeSlots = utilizationTab.get(resourceType).get(i);
+					timeSlots.add(t);
+					sortIntervals(timeSlots);
+					utilizationTab.get(resourceType).put(i, timeSlots);
+					status.add(true);
+					break;
+				}
+			}
+		}
+		System.out.println("Bound resources "+boundResources);
+		System.out.println("status "+status);
+		if (boundResources.size() == status.size())
+			return true;
+		return false;
+	}
+	
+	public boolean insertInBoundResources(ArrayList<Integer> boundResources, TimeSlot t1, TimeSlot t2) {
+		// this only works if all the resources in the architecture are treated as unique
+		ArrayList<Boolean> status = new ArrayList<Boolean>();
+		for(int resourceType : boundResources) {
+			int nResources = countCoresPerType.get(resourceType);
+			for(int i=0; i< nResources; i++) {
+				if(canInsertInCore(resourceType,i,t1) && canInsertInCore(resourceType,i,t2)) {
+					LinkedList<TimeSlot> timeSlots = utilizationTab.get(resourceType).get(i);
+					timeSlots.add(t1);
+					timeSlots.add(t2);
+					sortIntervals(timeSlots);
+					utilizationTab.get(resourceType).put(i, timeSlots);
+					status.add(true);
+					break;
+				}
+			}	
+		}
+		if (boundResources.size() == status.size())
+			return true;
 		return false;
 	}
 	
@@ -240,7 +387,6 @@ public class UtilizationTable {
 		}
 		return false;
 	}
-	
 	
 	boolean canInsertInCore(int coreType, int core,TimeSlot t) {
 		LinkedList<TimeSlot> timeSlots = utilizationTab.get(coreType).get(core);
