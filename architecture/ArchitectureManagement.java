@@ -54,9 +54,9 @@ public class ArchitectureManagement{
   static{
     processorIdCounter = 0;
     memoryIdCounter = 0;
-    crossbarIdCounter = 0;
+    crossbarIdCounter = -100;
     tileIdCounter = 0;
-    nocIdCounter = 0;
+    nocIdCounter = -200;
   }
 
   public static Architecture cloneArchitecture(Architecture arch) {
@@ -127,9 +127,9 @@ public class ArchitectureManagement{
   public static void resetCounters(){
     processorIdCounter = 0;
     memoryIdCounter = 0;
-    crossbarIdCounter = 0;
+    crossbarIdCounter = -100;
     tileIdCounter = 0;
-    nocIdCounter = 0;
+    nocIdCounter = -200;
   }
 
   public static int getTileId(){
