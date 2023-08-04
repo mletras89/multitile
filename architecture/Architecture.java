@@ -379,5 +379,31 @@ public class Architecture{
 	  return null;
   }
   
+  public Processor isProcessor(int resourceId) {
+	  Processor processor = null;
+	  for(Map.Entry<Integer,Tile>  t : tiles.entrySet()) {
+		  for(Map.Entry<Integer, Processor> p : t.getValue().getProcessors().entrySet()) {
+			  if (p.getKey() == resourceId)
+				  return p.getValue();
+		  }
+	  }
+	  return processor;
+  }
+  
+  public Crossbar isCrossbar(int resourceId) {
+	  Crossbar crossbar = null;
+	  for(Map.Entry<Integer,Tile>  t : tiles.entrySet()) {
+		  if(t.getValue().getCrossbar().getId() == resourceId)
+			  return t.getValue().getCrossbar();		  
+	  }
+	  return crossbar;
+  }
+  
+  public NoC isNoC(int resourceId) {
+	  NoC noc = null;
+	  if (this.noc.getId() == resourceId)
+		  return this.noc;
+	  return noc;
+  }
   
 }
