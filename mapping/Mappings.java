@@ -103,8 +103,8 @@ public class Mappings{
 		  HashMap<String,Integer> typeRuntime = new HashMap<>();
 		  HashMap<Integer,Mapping<Processor>> mappingsToProcessor = e.getValue();
 		  for(Map.Entry<Integer, Mapping<Processor>> m : mappingsToProcessor.entrySet()) {
-			  double d = (double)m.getValue().getProperties().get("discrete-runtime");
-			  typeRuntime.put(m.getValue().getTarget().getProcesorType(), (int)(d));
+			  int d = (int)m.getValue().getProperties().get("discrete-runtime");
+			  typeRuntime.put(m.getValue().getTarget().getProcesorType(), d);
 		  }
 		  discreteRuntime.put(e.getKey(), typeRuntime);
 	  }
