@@ -185,7 +185,7 @@ public class HeuristicModuloSchedulerWithCommunications extends BaseScheduler im
 	  
 	  applicationWithMessages.setActors(actors);
 	  applicationWithMessages.setFifos(fifos);
-	  
+	  applicationWithMessages.setFifosToActors();
   }
 
   public Application getApplicationWithMessages() {
@@ -198,13 +198,14 @@ public class HeuristicModuloSchedulerWithCommunications extends BaseScheduler im
 	
   }
   
-  public void tryToSchedule(Bindings bindings, Mappings mappings) {
+  public void tryToSchedule(Bindings bindings) {
 	  // calculate the MII
 	  calculateMII(bindings);
+	  
 	  // set the initial P as MII
 	  this.P = this.MII;
 	  
-	  while(!calculateStartTimes(mappings)) {
+	  while(!calculateStartTimes(bindings)) {
 		  // we increase the period
 		  this.P++;
 	  }
@@ -221,9 +222,8 @@ public class HeuristicModuloSchedulerWithCommunications extends BaseScheduler im
   }
   
   // method to initialize the initial startTimes, endTimes and lengthTimes
-  public boolean calculateStartTimes(Mappings mappings) {
-	  HashMap<Integer,HashMap<String,Integer>> runtimePerType 	=  mappings.getDiscreteRuntimeFromType();
-	  timeInfoActors											= new HashMap<>();
+  public boolean calculateStartTimes(Bindings bindings) {
+	  timeInfoActors = new HashMap<>();
 
 	  HashMap<Integer,Integer> startTime = new HashMap<>();
 	  List<Integer> V = new ArrayList<>();
@@ -238,6 +238,13 @@ public class HeuristicModuloSchedulerWithCommunications extends BaseScheduler im
 	  //             In this implementation, U(i, j) denote the usage of the i-th tile class in control step j
 	  //             i and j are stored in a list which serves as key in a map
 	  // key core type - step
+	  
+	  // key is the core type
+	  HashMap<Integer,Integer> countResourcessPerType = new HashMap<>(); // here all the resources are treated as different types, so I use the id of the resources as Key
+	  /*for() {
+		  
+	  }*/
+	  
 	  U = new UtilizationTable(countCoresPerType,P);
 	  // compute PCOUNT and SUCC
 	  // PCOUNT: is the number of immediate predecessors of v not yet scheduled  
@@ -258,7 +265,8 @@ public class HeuristicModuloSchedulerWithCommunications extends BaseScheduler im
 			  int v = V.get(k);
 			  int vIndex = actorIdToIndex.get(v);
 			  int coreTypeBinding = actorToCoreTypeMapping.get(vIndex);
-			  int discreteRuntime =  runtimePerType.get(v).get(coreTypes.get(coreTypeBinding));
+			  int discreteRuntime =  100;
+			  //int discreteRuntime =  runtimePerType.get(v).get(coreTypes.get(coreTypeBinding));
 			  
 			  /* Check whether data dependences are satisfied */
 			  if (PCOUNT.get(v) == 0) {
