@@ -57,8 +57,8 @@ public class Actor{
   public static enum ACTOR_TYPE {
       ACTOR,
       MULTICAST,
-      WRITE_ACTION,
-      READ_ACTION
+      WRITE_COMMUNICATION_TASK,
+      READ_COMMUNICATION_TASK
     }
     
   public Actor(
