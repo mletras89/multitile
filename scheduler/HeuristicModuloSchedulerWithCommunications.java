@@ -423,7 +423,6 @@ public class HeuristicModuloSchedulerWithCommunications extends BaseScheduler im
 				  }
 				  if(comm.getUsedLocalMemory() !=null) {
 					  int memoryId = comm.getUsedLocalMemory().getId();
-					  int val = usageLocalMemory.get(memoryId);
 					  usageLocalMemory.put(memoryId, 0); // it is 0 because is communication over the scratchpad memory
 				  }
 			  }
