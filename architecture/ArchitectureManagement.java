@@ -53,7 +53,7 @@ public class ArchitectureManagement{
 
   static{
     processorIdCounter = 0;
-    memoryIdCounter = 0;
+    memoryIdCounter = -700;
     crossbarIdCounter = -100;
     tileIdCounter = 0;
     nocIdCounter = -200;
@@ -126,7 +126,7 @@ public class ArchitectureManagement{
 
   public static void resetCounters(){
     processorIdCounter = 0;
-    memoryIdCounter = 0;
+    memoryIdCounter = -700;
     crossbarIdCounter = -100;
     tileIdCounter = 0;
     nocIdCounter = -200;
