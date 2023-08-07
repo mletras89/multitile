@@ -42,6 +42,7 @@ import java.util.Queue;
 
 import multitile.Transfer;
 import multitile.architecture.Crossbar;
+import multitile.architecture.LocalMemory;
 import multitile.architecture.NoC;
 import multitile.scheduler.PassTransferOverArchitecture;
 
@@ -57,7 +58,7 @@ public class CommunicationTask extends Actor{
 	
 	private ArrayList<Crossbar> usedCrossbar;
 	private NoC usedNoC = null;
-	
+	private LocalMemory usedLocalMemory = null;
 	public CommunicationTask(
              String name,
              int priority,
@@ -70,6 +71,10 @@ public class CommunicationTask extends Actor{
 	public CommunicationTask(Actor another){
 		 super(another);
   
+	}
+	
+	public LocalMemory getUsedLocalMemory() {
+		return this.usedLocalMemory;
 	}
 	
 	public NoC getUsedNoc() { return this.usedNoC;};
@@ -90,6 +95,8 @@ public class CommunicationTask extends Actor{
 				usedCrossbar.add(p.getCrossbar());
 			if (p.getNoC() != null)
 				usedNoC = p.getNoC();
+			if (p.getLocalMemory() != null)
+				usedLocalMemory = p.getLocalMemory();
 		}
 		
 		ArrayList<Double> transferTimes = new ArrayList<>();
