@@ -44,6 +44,7 @@ import multitile.architecture.Processor;
 import multitile.architecture.Tile;
 import multitile.architecture.Architecture;
 import multitile.architecture.ArchitectureManagement;
+import multitile.architecture.LocalMemory;
 import multitile.architecture.Memory;
 import multitile.architecture.TileLocalMemory;
 import multitile.mapping.Binding;
@@ -128,6 +129,7 @@ public class BaseScheduler{
 
       Processor destination   = bindings.getActorProcessorBindings().get(transfer.getActor().getId()).getTarget();
       Tile destinationTile    = bindings.getActorTileBindings().get(transfer.getActor().getId()).getTarget();
+      
       switch(source.getType()){
         case GLOBAL_MEM:
           // this is the easiest case, the sequence es GlobalMemory -> NoC -> Tile local crossbar -> processor
@@ -172,6 +174,11 @@ public class BaseScheduler{
             dstDrossbarOverNoC.setNoC(architecture.getNoC());
             sequence.add(srcCrossbarOverNoC);
             sequence.add(dstDrossbarOverNoC);
+          }else {
+        	  // the memory is the scratchpad memory
+        	  LocalMemory local = (LocalMemory)source;
+        	  PassTransferOverArchitecture sp = new PassTransferOverArchitecture(localMemOwner,local);
+        	  sequence.add(sp);
           }
         break;
       } 
@@ -227,7 +234,12 @@ public class BaseScheduler{
             dstDrossbarOverNoC.setNoC(architecture.getNoC());
             sequence.add(srcCrossbarOverNoC);
             sequence.add(dstDrossbarOverNoC);   
-          } 
+          }else {
+        	// the memory is the scratchpad memory
+        	LocalMemory local = (LocalMemory)destination;
+        	PassTransferOverArchitecture sp = new PassTransferOverArchitecture(localMemOwner,local);
+        	sequence.add(sp);
+          }
         break;
       }
     }
