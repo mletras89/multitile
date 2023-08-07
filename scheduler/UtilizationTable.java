@@ -22,6 +22,7 @@ public class UtilizationTable {
 		private int length;
 		private boolean split = false;
 		private int iteration;
+		private int resourceId;
 		
 		public TimeSlot(int actorId, int startTime, int endTime) {
 			assert endTime >= startTime : "This should not happen";
@@ -30,7 +31,25 @@ public class UtilizationTable {
 			this.startTime = startTime;
 			this.length = endTime - startTime;
 		}
+		
+		public TimeSlot(TimeSlot other) {
+			this.actorId = other.getActorId();
+			this.startTime = other.getStartTime();
+			this.endTime	= other.endTime;
+			this.length = other.getLength();
+			this.split = other.isSplit();
+			this.iteration = other.getIteration();
+			this.resourceId = other.getResourceId();
+		}
 
+		public int getResourceId() {
+			return this.resourceId;
+		}
+		
+		public void setResourceId(int resourceId) {
+			this.resourceId = resourceId;
+		}
+		
 		public int getStartTime() {
 			return startTime;
 		}
@@ -122,9 +141,7 @@ public class UtilizationTable {
 				for(TimeSlot ts : slots) {
 					System.out.println("\t\tActor "+actors.get(ts.getActorId()).getName()+" starts "+ts.getStartTime()+" ends "+ts.getEndTime()+" lenght "+ts.getLength());
 				}
-				
 			}
-			
 		}
 	}
 	
@@ -184,7 +201,11 @@ public class UtilizationTable {
 				LinkedList<TimeSlot> slots = u.getValue();
 				//System.out.println("\tCore # "+u.getKey()+" : ");
 				for(TimeSlot ts : slots) {
-					myWriter.write(actors.get(ts.getActorId()).getName()+"\t"+ts.getStartTime()+"\t"+ts.getEndTime()+"\t"+coreTypes.get(e.getKey())+","+u.getKey()+"\n");
+					if (ts.getStartTime() == ts.getEndTime()) {
+						myWriter.write(actors.get(ts.getActorId()).getName()+"\t"+0+"\t"+ts.getEndTime()+"\t"+coreTypes.get(e.getKey())+","+u.getKey()+"\n");
+						myWriter.write(actors.get(ts.getActorId()).getName()+"\t"+ts.getStartTime()+"\t"+this.P+"\t"+coreTypes.get(e.getKey())+","+u.getKey()+"\n");
+					}else
+						myWriter.write(actors.get(ts.getActorId()).getName()+"\t"+ts.getStartTime()+"\t"+ts.getEndTime()+"\t"+coreTypes.get(e.getKey())+","+u.getKey()+"\n");
 				}
 			}
 		}
@@ -194,7 +215,7 @@ public class UtilizationTable {
 		for(Map.Entry<Integer,Map<Integer,LinkedList<TimeSlot>>>  e : utilizationTab.entrySet()) {
 			//System.out.println("Core Type "+e.getKey());
 			// e.getKey() resource id
-			String resourceName = "null";
+			String resourceName = "SP";
 			Map<Integer,LinkedList<TimeSlot>> util = e.getValue();
 			Processor p = architecture.isProcessor(e.getKey());
 			Crossbar  c = architecture.isCrossbar(e.getKey());
@@ -212,14 +233,16 @@ public class UtilizationTable {
 			for(Map.Entry<Integer,LinkedList<TimeSlot>> u : util.entrySet()) {
 				LinkedList<TimeSlot> slots = u.getValue();
 				for(TimeSlot ts : slots) {
-					myWriter.write(actors.get(ts.getActorId()).getName()+"\t"+ts.getStartTime()+"\t"+ts.getEndTime()+"\t"+resourceName+"\n");
+					if (ts.getStartTime() == ts.getEndTime()  && (resourceName.compareTo("SP") != 0) ) {
+						myWriter.write(actors.get(ts.getActorId()).getName()+"\t"+0+"\t"+ts.getEndTime()+"\t"+resourceName+"\n");
+						myWriter.write(actors.get(ts.getActorId()).getName()+"\t"+ts.getStartTime()+"\t"+this.P+"\t"+resourceName+"\n");
+					}else
+						myWriter.write(actors.get(ts.getActorId()).getName()+"\t"+ts.getStartTime()+"\t"+ts.getEndTime()+"\t"+resourceName+"\n");
 				}
 			}			
 			
 		}
 	}
-	
-	
 	
 	public boolean insertIntervalUtilizationTable(int actorId, int coreType, int startTime, int endTime, int length) {
 		if (length>P)
@@ -232,11 +255,12 @@ public class UtilizationTable {
 			endTime = P;
 		//System.out.println("TRYING AT "+startTime+" to "+endTime);
 		
-		if(endTime > startTime) {
+		if(endTime >= startTime) {
 			// try to insert a single interval
 			TimeSlot ts = new TimeSlot(actorId,startTime,endTime);
 			if (canInsertInCoreType(coreType,ts)) {
-				insertInCoreType(coreType,ts);
+				boolean status = insertInCoreType(coreType,ts);
+				assert status : "this must not happen";
 				return true;
 			}
 		}else {
@@ -245,10 +269,9 @@ public class UtilizationTable {
 			TimeSlot ts2 = new TimeSlot(actorId,0, endTime);
 			ts1.split = true;
 			ts2.split = true;
-			if (canInsertInCoreType(coreType,ts1) && canInsertInCoreType(coreType,ts2)) {
-				insertInCoreType(coreType, ts1, ts2);
-				//insertInCoreType(coreType,ts1);
-				//insertInCoreType(coreType,ts2);
+			if (canInsertInCoreType(coreType,ts1,ts2)) {
+				boolean status = insertInCoreType(coreType, ts1, ts2);
+				assert status : "this must not happen";
 				return true;
 			}
 		}
@@ -266,7 +289,7 @@ public class UtilizationTable {
 			endTime = P;
 		//System.out.println("TRYING AT "+startTime+" to "+endTime);
 		
-		if(endTime > startTime) {
+		if(endTime >= startTime) {
 			// try to insert a single interval
 			TimeSlot ts = new TimeSlot(actorId,startTime,endTime);
 			if (canInsertInBoundResources(boundResources,ts)) {
@@ -301,6 +324,18 @@ public class UtilizationTable {
 		return false;
 	}
 	
+	boolean canInsertInCoreType(int coreType, TimeSlot t1, TimeSlot t2) {
+		int nCores = countCoresPerType.get(coreType);
+		
+		for(int i=0; i< nCores; i++) {
+			if(canInsertInCore(coreType,i,t1) && canInsertInCore(coreType,i,t2))
+				return true;
+		}
+		
+		return false;
+	}
+	
+	
 	boolean canInsertInBoundResources(ArrayList<Integer> boundResources, TimeSlot t) {
 		// this only works if all the resources in the architecture are treated as unique
 		ArrayList<Boolean> status = new ArrayList<>();
@@ -326,7 +361,9 @@ public class UtilizationTable {
 			for(int i=0; i< nResources; i++) {
 				if(canInsertInCore(resourceType,i,t)) {
 					LinkedList<TimeSlot> timeSlots = utilizationTab.get(resourceType).get(i);
-					timeSlots.add(t);
+					TimeSlot clone = new TimeSlot(t);
+					clone.setResourceId(resourceType);
+					timeSlots.add(clone);
 					sortIntervals(timeSlots);
 					utilizationTab.get(resourceType).put(i, timeSlots);
 					status.add(true);
@@ -349,8 +386,12 @@ public class UtilizationTable {
 			for(int i=0; i< nResources; i++) {
 				if(canInsertInCore(resourceType,i,t1) && canInsertInCore(resourceType,i,t2)) {
 					LinkedList<TimeSlot> timeSlots = utilizationTab.get(resourceType).get(i);
-					timeSlots.add(t1);
-					timeSlots.add(t2);
+					TimeSlot clone1 = new TimeSlot(t1);
+					TimeSlot clone2 = new TimeSlot(t2);
+					clone1.setResourceId(resourceType);
+					clone2.setResourceId(resourceType);
+					timeSlots.add(clone1);
+					timeSlots.add(clone2);
 					sortIntervals(timeSlots);
 					utilizationTab.get(resourceType).put(i, timeSlots);
 					status.add(true);
@@ -360,15 +401,6 @@ public class UtilizationTable {
 		}
 		if (boundResources.size() == status.size())
 			return true;
-		return false;
-	}
-	
-	boolean canInsertInCoreType(int coreType, TimeSlot t1, TimeSlot t2) {
-		int nCores = countCoresPerType.get(coreType);
-		for(int i=0; i< nCores; i++) {
-			if(canInsertInCore(coreType,i,t1) && canInsertInCore(coreType,i,t2))
-				return true;
-		}
 		return false;
 	}
 	
