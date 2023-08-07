@@ -44,9 +44,7 @@ import java.util.*;
 
 import multitile.architecture.Processor;
 import multitile.architecture.Memory;
-import multitile.architecture.NoC;
 import multitile.architecture.Tile;
-import multitile.mapping.Binding;
 import multitile.mapping.Bindings;
 import net.sf.opendse.model.Task;
 import multitile.Transfer;
