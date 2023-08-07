@@ -37,7 +37,9 @@
 package multitile.scheduler;
 
 import multitile.architecture.Crossbar;
+import multitile.architecture.LocalMemory;
 import multitile.architecture.NoC;
+import multitile.architecture.Processor;
 
 public class PassTransferOverArchitecture {
 
@@ -45,9 +47,14 @@ public class PassTransferOverArchitecture {
   private NoC noc=null;
   private PASS_TYPE type;
 
+  // information of the scratchpad memory
+  private Processor processor;
+  private LocalMemory memory;
+  
   public static enum PASS_TYPE {
     CROSSBAR,
-    NOC
+    NOC,
+    SCRATCHPAD
   }
 
   public PassTransferOverArchitecture(Crossbar crossbar){
@@ -60,6 +67,20 @@ public class PassTransferOverArchitecture {
     this.type = PASS_TYPE.NOC;
   }
 
+  public PassTransferOverArchitecture(Processor processor, LocalMemory memory) {
+	  this.processor = processor;
+	  this.memory	= memory;
+	  this.type		= PASS_TYPE.SCRATCHPAD;
+  }
+  
+  public LocalMemory getLocalMemory() {
+	  return this.memory;
+  }
+  
+  public Processor getProcessor() {
+	  return this.processor;
+  }
+  
   public Crossbar getCrossbar(){
     return this.crossbar;
   }
