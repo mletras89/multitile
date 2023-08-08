@@ -254,6 +254,10 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 	    myWriter.close();
 	}
 	
+	public Queue<TimeSlot> getSchedulePipelinedActions(){
+		return this.schedulePipelinedActions;
+	}
+	
 	public void savePipelinedScheduleStats(FileWriter myWriter) throws IOException{
 		for(TimeSlot  t : schedulePipelinedActions) {
 			//System.out.println("Core Type "+e.getKey());
