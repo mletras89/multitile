@@ -71,14 +71,12 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 	// the key is the core, crossbar or noc id
 	private Queue<TimeSlot> schedulePipelinedActions;
 	private int startKernel;
-	private Bindings bindings;
 	
-	public SimulateModuloScheduler(Architecture architecture, Application application,HeuristicModuloSchedulerWithCommunications heuristic, Bindings bindings){
+	public SimulateModuloScheduler(Architecture architecture, Application application,HeuristicModuloSchedulerWithCommunications heuristic){
 		super();
 		this.setApplication(application);
 		this.setArchitecture(architecture);
 		this.heuristic = heuristic;
-		this.bindings = bindings;
 	}
 
 	@Override
@@ -92,6 +90,16 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 		}*/
 	}	
 
+	public int getMakeSpan() {
+		ArrayList<Integer> endTimes = new ArrayList<>();
+		for(TimeSlot t : schedulePipelinedActions) {
+			endTimes.add(t.getEndTime());
+		}
+		if (endTimes.size() == 0)
+			return 0;
+		return Collections.max(endTimes);
+	}
+	
 	public HeuristicModuloSchedulerWithCommunications getHeuristic() {
 		return heuristic;
 	}
