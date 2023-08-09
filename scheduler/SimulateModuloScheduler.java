@@ -92,6 +92,10 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 		}*/
 	}	
 
+	public HeuristicModuloSchedulerWithCommunications getHeuristic() {
+		return heuristic;
+	}
+	
 	public void createScheduleForAnalysis() {
 		int latency = heuristic.getLantency();
 		assert latency != -1 : "First calculate the schedule";
@@ -214,11 +218,12 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 			for(Map.Entry<Integer, TimeSlot> t : timeInfoActors.entrySet()) {
 				//if(t.getValue().getLength() >0) {
 					int actorId		= t.getValue().getActorId();
-					TimeSlot nTs = new TimeSlot(actorId, t.getValue().getStartTime() + heuristic.getPeriod()*i,t.getValue().getEndTime() + heuristic.getPeriod()*i);
-					nTs.setIteration(i);
-					ArrayList<Integer> tmp = actorToResourceId.get(actorId);
+					//TimeSlot nTs = new TimeSlot(actorId, t.getValue().getStartTime() + heuristic.getPeriod()*i,t.getValue().getEndTime() + heuristic.getPeriod()*i);
+					//nTs.setIteration(i);
+					Set<Integer> tmp = new HashSet<>(actorToResourceId.get(actorId));
 					for(int resource : tmp) {
-						TimeSlot clone = new TimeSlot(nTs);
+						TimeSlot clone =  new TimeSlot(actorId, t.getValue().getStartTime() + heuristic.getPeriod()*i,t.getValue().getEndTime() + heuristic.getPeriod()*i); //  new TimeSlot(t.getValue());
+						clone.setIteration(i);
 						clone.setResourceId(resource);
 						schedulePipelinedActions.add(clone);
 					}
