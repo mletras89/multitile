@@ -425,6 +425,21 @@ public class HeuristicModuloSchedulerWithCommunications extends BaseScheduler im
 					  int memoryId = comm.getUsedLocalMemory().getId();
 					  usageLocalMemory.put(memoryId, 0); // it is 0 because is communication over the scratchpad memory
 				  }
+				  // need this to track the usage of the communications in the cores
+				  Actor actorInCommunication;
+				  if (actor.getValue().getType() == ACTOR_TYPE.READ_COMMUNICATION_TASK) 
+					  actorInCommunication = application.getActor( comm.getFifo().getDestination().getName() );
+				  else
+					  actorInCommunication = application.getActor( comm.getFifo().getSource().getName() );
+				  
+				  Processor p = bindings.getActorProcessorBindings().get(actorInCommunication.getId()).getTarget();
+				  int coreTypeIx = coreTypes.indexOf(p.getProcesorType());
+				  MyEntry<Integer,Integer> key = new MyEntry<Integer,Integer>(coreTypeIx, p.getId());
+				  int val = usageCores.get(key);
+				  int discreteRuntime = comm.getDiscretizedRuntime();
+				  maxExTime = (discreteRuntime > maxExTime) ? discreteRuntime : maxExTime;
+				  usageCores.put(key, val + discreteRuntime);
+				  
 			  }
 		  } 
 		  // System.out.println("USAGE: "+usage);
@@ -475,6 +490,18 @@ public class HeuristicModuloSchedulerWithCommunications extends BaseScheduler im
 			  if(comm.getUsedLocalMemory() != null) {
 				  boundResources.add(comm.getUsedLocalMemory().getId());
 			  }
+			  // including in the bound resources list, the core triggering the read of the write
+			  Actor operator = null;
+			  if (actor.getType() == ACTOR_TYPE.READ_COMMUNICATION_TASK) 
+				  operator = application.getActors().get( comm.getFifo().getDestination().getId() ) ;
+			  else
+				  operator = application.getActors().get( comm.getFifo().getSource().getId() ) ;
+			  
+			  assert operator != null;
+			  int coreId = bindings.getActorProcessorBindings().get(operator.getId()).getTarget().getId();
+			  boundResources.add(coreId);
+			  
+			  
 		  }
 		  MyEntry<Integer,ArrayList<Integer>> result = new MyEntry<Integer,ArrayList<Integer>>(discreteRuntime,boundResources);
 		  return result;
