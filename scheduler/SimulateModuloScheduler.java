@@ -246,7 +246,7 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 		schedulePipelinedActions = new LinkedList<TimeSlot>(q);
 	}	
 		
-	public void savePipelinedSchedule(String path, String fileName) throws IOException{
+	public void savePipelinedSchedule(String path, String fileName, double scaleFactor) throws IOException{
 		try{
 			File memUtilStatics = new File(path+"/"+fileName+".csv");
 			if (memUtilStatics.createNewFile()) {
@@ -262,7 +262,7 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 	
 		FileWriter myWriter = new FileWriter(path+"/"+fileName+".csv"); 
 		myWriter.write("Job\tStart\tFinish\tResource\n");
-		savePipelinedScheduleStats(myWriter);
+		savePipelinedScheduleStats(myWriter,scaleFactor);
 	
 	    myWriter.close();
 	}
@@ -271,7 +271,7 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 		return this.schedulePipelinedActions;
 	}
 	
-	public void savePipelinedScheduleStats(FileWriter myWriter) throws IOException{
+	public void savePipelinedScheduleStats(FileWriter myWriter, double scaleFactor) throws IOException{
 		for(TimeSlot  t : schedulePipelinedActions) {
 			//System.out.println("Core Type "+e.getKey());
 			// e.getKey() resource id
@@ -289,7 +289,7 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 				resourceName = noc.getName();
 			}
 			Actor actor = heuristic.getApplicationWithMessages().getActors().get(t.getActorId());
-			myWriter.write(actor.getName()+"\t"+t.getStartTime()+"\t"+t.getEndTime()+"\t"+resourceName+"\n");
+			myWriter.write(actor.getName()+"\t"+t.getStartTime()*scaleFactor+"\t"+t.getEndTime()*scaleFactor+"\t"+resourceName+"\n");
 		}
 	}
 	
