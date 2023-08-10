@@ -41,6 +41,28 @@ public class UtilizationTable {
 			this.iteration = other.getIteration();
 			this.resourceId = other.getResourceId();
 		}
+		
+		@Override
+		public boolean equals(Object obj) {
+			if(obj == null)
+				return false;
+		
+			if(obj.getClass() != this.getClass())
+				return false;
+			
+			final TimeSlot other = (TimeSlot)obj;
+			
+			if (this.actorId != other.getActorId())
+				return false;
+			
+			if (this.startTime != other.getStartTime())
+				return false;
+			
+			if(this.endTime != other.getEndTime())
+				return false;
+				
+			return true;
+		}
 
 		public int getResourceId() {
 			return this.resourceId;
@@ -150,7 +172,7 @@ public class UtilizationTable {
 		return this.utilizationTab;
 	}
 
-	public void saveKernel(String path, Map<Integer, Actor> actors, ArrayList<String> coreTypes) throws IOException{
+	public void saveKernel(String path, Map<Integer, Actor> actors, ArrayList<String> coreTypes, double scaleFactor) throws IOException{
 		try{
 			File memUtilStatics = new File(path+"/heuristicSchedule-RepetitionKernel.csv");
 			if (memUtilStatics.createNewFile()) {
@@ -166,12 +188,12 @@ public class UtilizationTable {
 	
 		FileWriter myWriter = new FileWriter(path+"/heuristicSchedule-RepetitionKernel.csv"); 
 		myWriter.write("Job\tStart\tFinish\tResource\n");
-		saveScheduleKernelStats(myWriter, actors, coreTypes);
+		saveScheduleKernelStats(myWriter, actors, coreTypes,scaleFactor);
 	
 	    myWriter.close();
 	}
 	
-	public void saveKernelWithCommunications(String path, Map<Integer, Actor> actors, Architecture architecture) throws IOException{
+	public void saveKernelWithCommunications(String path, Map<Integer, Actor> actors, Architecture architecture, double scaleFactor) throws IOException{
 		try{
 			File memUtilStatics = new File(path+"/heuristicSchedule-RepetitionKernel-with-Communications.csv");
 			if (memUtilStatics.createNewFile()) {
@@ -187,13 +209,13 @@ public class UtilizationTable {
 	
 		FileWriter myWriter = new FileWriter(path+"/heuristicSchedule-RepetitionKernel-with-Communications.csv"); 
 		myWriter.write("Job\tStart\tFinish\tResource\n");
-		saveScheduleKernelWithCommunicationsStats(myWriter, actors, architecture);
+		saveScheduleKernelWithCommunicationsStats(myWriter, actors, architecture, scaleFactor);
 	
 	    myWriter.close();
 	}
 	
 	
-	public void saveScheduleKernelStats(FileWriter myWriter, Map<Integer, Actor> actors, ArrayList<String> coreTypes) throws IOException{
+	public void saveScheduleKernelStats(FileWriter myWriter, Map<Integer, Actor> actors, ArrayList<String> coreTypes, double scaleFactor) throws IOException{
 		for(Map.Entry<Integer,Map<Integer,LinkedList<TimeSlot>>>  e : utilizationTab.entrySet()) {
 			//System.out.println("Core Type "+e.getKey());
 			Map<Integer,LinkedList<TimeSlot>> util = e.getValue();
@@ -202,16 +224,16 @@ public class UtilizationTable {
 				//System.out.println("\tCore # "+u.getKey()+" : ");
 				for(TimeSlot ts : slots) {
 					if (ts.getStartTime() == ts.getEndTime()) {
-						myWriter.write(actors.get(ts.getActorId()).getName()+"\t"+0+"\t"+ts.getEndTime()+"\t"+coreTypes.get(e.getKey())+","+u.getKey()+"\n");
-						myWriter.write(actors.get(ts.getActorId()).getName()+"\t"+ts.getStartTime()+"\t"+this.P+"\t"+coreTypes.get(e.getKey())+","+u.getKey()+"\n");
+						myWriter.write(actors.get(ts.getActorId()).getName()+"\t"+0+"\t"+ts.getEndTime()*scaleFactor+"\t"+coreTypes.get(e.getKey())+","+u.getKey()+"\n");
+						myWriter.write(actors.get(ts.getActorId()).getName()+"\t"+ts.getStartTime()*scaleFactor+"\t"+this.P*scaleFactor+"\t"+coreTypes.get(e.getKey())+","+u.getKey()+"\n");
 					}else
-						myWriter.write(actors.get(ts.getActorId()).getName()+"\t"+ts.getStartTime()+"\t"+ts.getEndTime()+"\t"+coreTypes.get(e.getKey())+","+u.getKey()+"\n");
+						myWriter.write(actors.get(ts.getActorId()).getName()+"\t"+ts.getStartTime()*scaleFactor+"\t"+ts.getEndTime()*scaleFactor+"\t"+coreTypes.get(e.getKey())+","+u.getKey()+"\n");
 				}
 			}
 		}
 	}
 	
-	public void saveScheduleKernelWithCommunicationsStats(FileWriter myWriter, Map<Integer, Actor> actors, Architecture architecture) throws IOException{
+	public void saveScheduleKernelWithCommunicationsStats(FileWriter myWriter, Map<Integer, Actor> actors, Architecture architecture, double scaleFactor) throws IOException{
 		for(Map.Entry<Integer,Map<Integer,LinkedList<TimeSlot>>>  e : utilizationTab.entrySet()) {
 			//System.out.println("Core Type "+e.getKey());
 			// e.getKey() resource id
@@ -234,10 +256,10 @@ public class UtilizationTable {
 				LinkedList<TimeSlot> slots = u.getValue();
 				for(TimeSlot ts : slots) {
 					if (ts.getStartTime() == ts.getEndTime()  && (resourceName.compareTo("SP") != 0) ) {
-						myWriter.write(actors.get(ts.getActorId()).getName()+"\t"+0+"\t"+ts.getEndTime()+"\t"+resourceName+"\n");
-						myWriter.write(actors.get(ts.getActorId()).getName()+"\t"+ts.getStartTime()+"\t"+this.P+"\t"+resourceName+"\n");
+						myWriter.write(actors.get(ts.getActorId()).getName()+"\t"+0+"\t"+ts.getEndTime()*scaleFactor+"\t"+resourceName+"\n");
+						myWriter.write(actors.get(ts.getActorId()).getName()+"\t"+ts.getStartTime()*scaleFactor+"\t"+this.P*scaleFactor+"\t"+resourceName+"\n");
 					}else
-						myWriter.write(actors.get(ts.getActorId()).getName()+"\t"+ts.getStartTime()+"\t"+ts.getEndTime()+"\t"+resourceName+"\n");
+						myWriter.write(actors.get(ts.getActorId()).getName()+"\t"+ts.getStartTime()*scaleFactor+"\t"+ts.getEndTime()*scaleFactor+"\t"+resourceName+"\n");
 				}
 			}			
 			
