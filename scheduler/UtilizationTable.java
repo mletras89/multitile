@@ -277,7 +277,7 @@ public class UtilizationTable {
 			endTime = P;
 		//System.out.println("TRYING AT "+startTime+" to "+endTime);
 		
-		if(endTime >= startTime) {
+		if(endTime > startTime || length==0) {
 			// try to insert a single interval
 			TimeSlot ts = new TimeSlot(actorId,startTime,endTime);
 			if (canInsertInCoreType(coreType,ts)) {
@@ -311,7 +311,7 @@ public class UtilizationTable {
 			endTime = P;
 		//System.out.println("TRYING AT "+startTime+" to "+endTime);
 		
-		if(endTime >= startTime) {
+		if(endTime > startTime || length==0) {
 			// try to insert a single interval
 			TimeSlot ts = new TimeSlot(actorId,startTime,endTime);
 			if (canInsertInBoundResources(boundResources,ts)) {
@@ -447,9 +447,23 @@ public class UtilizationTable {
 		sortIntervals(timeSlots);
 		
 		int nIntervals = timeSlots.size();
-		
 		if (nIntervals == 0 && t.getLength() <= this.P)
 			return true;
+		
+		if(!(t.startTime>=0 && t.endTime <=this.P))
+			return false;
+		
+		for(TimeSlot ts : timeSlots) {
+			if (ts.intersection(t) != 0)
+				return false;
+			if (ts.getLength() == 0 && ts.getStartTime()>= t.getStartTime() && ts.getEndTime() <= t.getEndTime())
+				return false;
+			if (t.getLength() == 0 && t.getStartTime()>= ts.getStartTime() && t.getEndTime() <= ts.getEndTime())
+				return false;
+		}
+		
+		return true;
+		/*
 		// check if it is at the beginning
 		if (timeSlots.get(0).getStartTime() >= t.getEndTime() && timeSlots.get(0).getStartTime() > 0 )
 			return true;
@@ -464,7 +478,7 @@ public class UtilizationTable {
 		if (timeSlots.get(nIntervals-1).getEndTime() <= t.getStartTime() && t.getEndTime() <= P)
 			return true;
 		
-		return false;
+		return false;*/
 	}
 	
 	public boolean insertInCoreType(int coreType, TimeSlot t) {
