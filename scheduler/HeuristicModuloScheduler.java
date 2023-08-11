@@ -69,6 +69,8 @@ public class HeuristicModuloScheduler extends BaseScheduler implements Schedule{
   private HashMap<Integer,Integer> actorIdToIndex;
   private UtilizationTable U;
   
+  private Stack<Integer> topologicalOrder;
+  
   public HeuristicModuloScheduler(Architecture architecture, Application application, ArrayList<Integer> actorToCoreTypeMapping,Set<String> coreTypes,HashMap<Integer,Integer> actorIdToIndex){
 	  super();
 	  //this.resourceOcupation = new HashMap<>();
@@ -147,6 +149,7 @@ public class HeuristicModuloScheduler extends BaseScheduler implements Schedule{
 	  System.out.println("ACTUAL LATENCY "+this.getLantency());
 	  //U.printUtilizationTable(application.getActors(), coreTypes);
 	  //printTimeInfoActors();
+	  //this.printTopologicalOrder();
   }
   
   public void printTimeInfoActors() {
@@ -160,6 +163,8 @@ public class HeuristicModuloScheduler extends BaseScheduler implements Schedule{
 	  HashMap<Integer,HashMap<String,Integer>> runtimePerType 	=  mappings.getDiscreteRuntimeFromType();
 	  timeInfoActors											= new HashMap<>();
 
+	  topologicalOrder = new Stack<Integer>();
+	  
 	  HashMap<Integer,Integer> startTime = new HashMap<>();
 	  List<Integer> V = new ArrayList<>();
 	  for(Map.Entry<Integer,Actor> v : application.getActors().entrySet()){
@@ -216,7 +221,7 @@ public class HeuristicModuloScheduler extends BaseScheduler implements Schedule{
 				  
 				  //U.printUtilizationTable(application.getActors(), coreTypes);
 				  timeInfoActors.put(v, new TimeSlot(v, startTime.get(v),startTime.get(v) + discreteRuntime ));
-				  
+				  topologicalOrder.push(v);
 				  for (int w : SUCC.get(v)) {
 					  PCOUNT.put(w, PCOUNT.get(w) -1 );
 					  //int maxVal = startTime.get(w) > (startTime.get(v)+ discreteRuntime) % this.P   ? startTime.get(w) : (startTime.get(v)+discreteRuntime) % this.P;
@@ -236,9 +241,21 @@ public class HeuristicModuloScheduler extends BaseScheduler implements Schedule{
 	  for(Map.Entry<Integer, Integer> s : startTime.entrySet()) {
 		  endTime.put(s.getKey(), ( s.getValue() + lengthTime.get(s.getKey())) % P );
 	  }*/
+	  
+	  // assing the topological order
+	  this.assingTopoligalOrder();
+	  
 	  return true;
 	 
   }
+
+  public void assingTopoligalOrder() {
+	  int counter = 0;
+	  for(int v:topologicalOrder) {
+		  application.getActors().get(v).setPriority(counter++);
+	  }
+  }
+  
 
 
   @Override
