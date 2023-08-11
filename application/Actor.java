@@ -43,7 +43,7 @@ import multitile.Action;
 public class Actor{
   private int id;
   private String name;
-  private int priority;    
+  private int priority=-1;    
   
   private int inputs;
   private int outputs;
@@ -74,6 +74,7 @@ public class Actor{
     this.setType(ACTOR_TYPE.ACTOR);
     this.inputFifos  = new Vector<Fifo>();   
     this.outputFifos = new Vector<Fifo>();    
+    
   }
   
   public Actor(Actor another){
@@ -85,6 +86,7 @@ public class Actor{
     this.setType(another.getType());
     this.inputFifos  = new Vector<Fifo>();   
     this.outputFifos = new Vector<Fifo>();
+    this.priority = another.getPriority();
   }
     
   public Actor(String name){
@@ -209,7 +211,7 @@ public class Actor{
   }
   
   public int getPriority() {
-    return priority;
+    return this.priority;
   }
   
   public void setPriority(int priority) {
