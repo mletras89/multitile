@@ -519,6 +519,32 @@ public class Application{
 	    	}
 	    	return actor;
 	    }
+	    
+	    public void printTopologicalOrder() {
+	  	  ArrayList<Actor> actors = new ArrayList<>(this.actors.values());
+	  	  actors.sort((o1,o2) ->  o1.getPriority() - o2.getPriority());
+	  	  
+	  	  for(Actor actor : actors) {
+	  		  System.out.println("Actor "+actor.getName()+" order "+actor.getPriority());
+	  	  }
+	    }
+	    
+	    public int getMaxActorPriority() {
+	    	ArrayList<Actor> actors = new ArrayList<>(this.actors.values());
+		  	actors.sort((o1,o2) ->  o1.getPriority() - o2.getPriority());
+	    	return actors.get(actors.size()-1).getPriority();
+	    }
+	    
+	    public ArrayList<Integer> getActorsWihtPriority(int priority){
+	    	ArrayList<Integer> result = new ArrayList<>();
+	    	
+	    	for(Map.Entry<Integer, Actor> a : actors.entrySet()) {
+	    		if (a.getValue().getPriority() == priority)
+	    			result.add(a.getKey());
+	    	}
+	    	return result;
+	    }
+	    
 }
 
 
