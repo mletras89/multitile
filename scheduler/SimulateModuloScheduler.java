@@ -104,39 +104,44 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 		return heuristic;
 	}
 	
-	public void createScheduleForAnalysis() {
+	public void createScheduleForAnalysis(double scaleFactor) {
 		int latency = heuristic.getLantency();
 		assert latency != -1 : "First calculate the schedule";
 		this.startKernel = ((int)Math.ceil((double)latency/(double)heuristic.getPeriod()))*heuristic.getPeriod();
 		int nIterations = (startKernel / heuristic.getPeriod()) + 4;
+		
 		createPipelinedScheduler(nIterations);
 		// once I have the schedule, I have to calculate the FIFO capacities
 		// key: is the FIFO id
 		// value: 
 		//		key : time
 		//		value : number tokens
-		HashMap<Integer, TreeMap<Integer,Integer> > mapTokensCounting = new HashMap<>();
+		HashMap<Integer, TreeMap<Double,Integer> > mapTokensCounting = new HashMap<>();
 		for(Map.Entry<Integer, Fifo> f: application.getFifos().entrySet()) {
-			TreeMap<Integer,Integer> tokensCounting = new TreeMap<>();
-			tokensCounting.put(0, f.getValue().getInitialTokens());
+			TreeMap<Double,Integer> tokensCounting = new TreeMap<>();
+			tokensCounting.put(0.0, f.getValue().getInitialTokens());
 			mapTokensCounting.put(f.getKey(), tokensCounting);
 		}
-		
+		int count = 0;
+		ArrayList<TimeSlot> l = new ArrayList<>();
 		for(TimeSlot t :  schedulePipelinedActions) {
 			Actor actor = heuristic.getApplicationWithMessages().getActors().get(t.getActorId());
-			if(actor.getType() == ACTOR_TYPE.READ_COMMUNICATION_TASK || actor.getType() == ACTOR_TYPE.WRITE_COMMUNICATION_TASK) {
+			Processor p = architecture.isProcessor(t.getResourceId());
+			if((actor.getType() == ACTOR_TYPE.READ_COMMUNICATION_TASK || actor.getType() == ACTOR_TYPE.WRITE_COMMUNICATION_TASK) && p == null && !l.contains(t)) {
 				CommunicationTask communication = (CommunicationTask)(actor);
 				Fifo fifo = communication.getFifo();
+				//System.err.println("fifo:"+fifo.getName()+"CONS: "+fifo.getProdRate()+" PRD:"+fifo.getConsRate());
 				int nTokens = 0;
-				if (communication.getType() == ACTOR_TYPE.WRITE_COMMUNICATION_TASK) nTokens += fifo.getConsRate();
-				if (communication.getType() == ACTOR_TYPE.READ_COMMUNICATION_TASK) nTokens -= fifo.getProdRate();
-				insertCommunicationsInSchedule(mapTokensCounting, fifo, nTokens, t.getEndTime());
+				if (actor.getType() == ACTOR_TYPE.WRITE_COMMUNICATION_TASK) nTokens += fifo.getConsRate();
+				if (actor.getType() == ACTOR_TYPE.READ_COMMUNICATION_TASK) nTokens -= fifo.getProdRate();
+				insertCommunicationsInSchedule(mapTokensCounting, fifo, nTokens, t.getEndTime()*scaleFactor);
+				l.add(t);
 			}
 		}
-		//printCommunicationsInSchedule(mapTokensCounting);
+		printCommunicationsInSchedule(mapTokensCounting);
 		// then set the FIFO capacities
-		for(Map.Entry<Integer, TreeMap<Integer,Integer>> m : mapTokensCounting.entrySet()) {
-			TreeMap<Integer,Integer> tokensCounting = m.getValue();
+		for(Map.Entry<Integer, TreeMap<Double,Integer>> m : mapTokensCounting.entrySet()) {
+			TreeMap<Double,Integer> tokensCounting = m.getValue();
 			int fifoCapacity = Collections.max(tokensCounting.values());
 			assert fifoCapacity >= 0 : "Capacity must not be negative";
 			
@@ -149,36 +154,38 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 		}
 	}
 	
-	public void printCommunicationsInSchedule(HashMap<Integer, TreeMap<Integer,Integer> > mapTokensCounting) {
-		for(Map.Entry<Integer, TreeMap<Integer,Integer>> m : mapTokensCounting.entrySet()) {
+
+	
+	public void printCommunicationsInSchedule(HashMap<Integer, TreeMap<Double,Integer> > mapTokensCounting) {
+		for(Map.Entry<Integer, TreeMap<Double,Integer>> m : mapTokensCounting.entrySet()) {
 			System.err.println("FIFO "+application.getFifos().get(m.getKey()).getName());
-			TreeMap<Integer,Integer> tokensCounting = m.getValue();
-			for(Map.Entry<Integer, Integer> t: tokensCounting.entrySet()) {
+			TreeMap<Double,Integer> tokensCounting = m.getValue();
+			for(Map.Entry<Double, Integer> t: tokensCounting.entrySet()) {
 				System.err.println("\tTime "+t.getKey()+" count: "+t.getValue());
 			}
 		}
 	}
 	
-	public void insertCommunicationsInSchedule(HashMap<Integer, TreeMap<Integer,Integer> > mapTokensCounting, Fifo fifo, int tokens, int time) {
+	public void insertCommunicationsInSchedule(HashMap<Integer, TreeMap<Double,Integer> > mapTokensCounting, Fifo fifo, int tokens, double time) {
 		// tokens might be positive or negative
 		// in case of positive, tokens have been produced
 		// in case of negative, tokens must be consumed
 		//HashMap<Integer, TreeMap<Integer,Integer> > result = mapTokensCounting;
-		TreeMap<Integer,Integer> tokensCounting = mapTokensCounting.get(fifo.getId());
+		TreeMap<Double,Integer> tokensCounting = mapTokensCounting.get(fifo.getId());
 		if(tokensCounting.isEmpty()) {
 			tokensCounting.put(time, tokens);
 		}else {
 			if(!tokensCounting.containsKey(time)) {
-				ArrayList<Integer> smallIndices = new ArrayList<>();
-				for(Map.Entry<Integer, Integer> t : tokensCounting.entrySet()) {
+				ArrayList<Double> smallIndices = new ArrayList<>();
+				for(Map.Entry<Double, Integer> t : tokensCounting.entrySet()) {
 					if (t.getKey() < time)
 						smallIndices.add(t.getKey());
 				}
-				int max = Collections.max(smallIndices);
+				double max = Collections.max(smallIndices);
 				int count = tokensCounting.get(max);
 				tokensCounting.put(time, count);
 			}
-			for(Map.Entry<Integer, Integer> t : tokensCounting.entrySet()) {
+			for(Map.Entry<Double, Integer> t : tokensCounting.entrySet()) {
 				if(t.getKey() >= time) {
 					int currentTokens = tokensCounting.get(t.getKey());
 					tokensCounting.put(t.getKey(), currentTokens + tokens );
