@@ -117,6 +117,7 @@ public class HeuristicModuloSchedulerWithCommunications extends BaseScheduler im
 			  int nOutputs = a.getValue().getOutputs();
 			  actor.setInputs(nInputs);
 			  actor.setOutputs(nOutputs);
+			  actor.setPriority( a.getValue().getPriority()  );
 			  actors.put(actor.getId(), actor);
 			  mapActors.put(a.getValue().getName(), actor.getId() );
 		  }
@@ -134,6 +135,7 @@ public class HeuristicModuloSchedulerWithCommunications extends BaseScheduler im
 			  actorW.setUsedInterconnects(writeInterconnects);
 			  actorW.setTransfer(writeTransfer);
 			  actorW.setRuntimeFromInterconnects(this.scaleFactor);
+			  actorW.setPriority( application.getActors().get(f.getValue().getSource().getId()).getPriority());
 			  actors.put(actorW.getId(), actorW);
 			  mapActors.put(actorW.getName(), actorW.getId());
 			  mapWriteTasks.put(f.getKey(), actorW);
@@ -148,6 +150,7 @@ public class HeuristicModuloSchedulerWithCommunications extends BaseScheduler im
 			  actorR.setUsedInterconnects(readInterconnects);
 			  actorR.setTransfer(readTransfer);
 			  actorR.setRuntimeFromInterconnects(this.scaleFactor);
+			  actorR.setPriority( application.getActors().get(f.getValue().getDestination().getId()).getPriority());
 			  actors.put(actorR.getId(), actorR);
 			  mapActors.put(actorR.getName(), actorR.getId());
 			  mapReadTasks.put(f.getKey(), actorR);
@@ -213,6 +216,9 @@ public class HeuristicModuloSchedulerWithCommunications extends BaseScheduler im
 	
 		  HashMap<Integer,Integer> startTime = new HashMap<>();
 		  List<Integer> V = new ArrayList<>();
+		  
+		  
+		  
 		  for(Map.Entry<Integer,Actor> v : applicationWithMessages.getActors().entrySet()){
 			  V.add(v.getKey());
 			  startTime.put(v.getKey(), 0);
