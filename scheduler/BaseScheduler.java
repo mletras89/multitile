@@ -254,7 +254,8 @@ public class BaseScheduler{
 		  setBoundMemories.add(m.getValue().getTarget());
 	  }
 	  boolean success = false;
-          boolean everRemap = false;
+      boolean everRemap = false;
+          
 	  while(!success) {
 		  boolean doRemap = false;
 		  for(Memory mem : setBoundMemories) {
@@ -272,7 +273,7 @@ public class BaseScheduler{
 						  Memory reMappingMemory = ArchitectureManagement.getMemoryToBeRelocated(fifo,architecture,bindings);
 			              ApplicationManagement.remapFifo(fifo, reMappingMemory,bindings);
 						  doRemap=true;
-                                                  everRemap= true;
+                          everRemap= true;
 						  //break;
 					  }
 				  }
@@ -284,8 +285,12 @@ public class BaseScheduler{
 		  if(!doRemap)
 			  success = true;
 	  }
-          return everRemap;
+	  
+      return everRemap;
 	}
+  
+  
+  
   
   public double getOverallDelay() {
 	  double delay = Double.MIN_VALUE;
