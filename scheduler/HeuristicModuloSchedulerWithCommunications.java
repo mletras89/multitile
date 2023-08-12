@@ -217,11 +217,11 @@ public class HeuristicModuloSchedulerWithCommunications extends BaseScheduler im
 		  HashMap<Integer,Integer> startTime = new HashMap<>();
 		  List<Integer> V = new ArrayList<>();
 		  
-		  
-		  
-		  for(Map.Entry<Integer,Actor> v : applicationWithMessages.getActors().entrySet()){
-			  V.add(v.getKey());
-			  startTime.put(v.getKey(), 0);
+		  ArrayList<Actor> actorsToOrder = new ArrayList<>(applicationWithMessages.getActors().values());
+		  actorsToOrder.sort((o1,o2) ->  o1.getPriority() - o2.getPriority());
+		  for(Actor v : actorsToOrder){
+			  V.add(v.getId());
+			  startTime.put(v.getId(), 0);
 		  }
 		  
 		  // [Modulo schedule the loop]
@@ -311,6 +311,7 @@ public class HeuristicModuloSchedulerWithCommunications extends BaseScheduler im
 					  }
 					  
 					  removeV.add(v);
+					  break;
 				  }
 			  }
 			  V.removeAll(removeV);
