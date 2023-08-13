@@ -250,14 +250,21 @@ public class BaseScheduler{
   public boolean checkAndReMapMemories(Bindings bindings) {
 	  Map<Integer, Binding<Memory>>  memBindings = bindings.getFifoMemoryBindings();
 	  Set<Memory> setBoundMemories = new HashSet<Memory>(); // set of the ids of the bound memories
-	  for(Map.Entry<Integer, Binding<Memory>> m : memBindings.entrySet() ) {
-		  setBoundMemories.add(m.getValue().getTarget());
-	  }
+	  
+	  
+
+	  
 	  boolean success = false;
       boolean everRemap = false;
-          
+      
+      
+      
 	  while(!success) {
 		  boolean doRemap = false;
+		  setBoundMemories.clear();
+		  for(Map.Entry<Integer, Binding<Memory>> m : memBindings.entrySet() ) {
+			  setBoundMemories.add(m.getValue().getTarget());
+		  }
 		  for(Memory mem : setBoundMemories) {
 			  double capacityMem = mem.getCapacity();
 			  double currentFix = 0.0;
@@ -271,10 +278,11 @@ public class BaseScheduler{
 					  }else {
 						  // ignore the binding and do the remap if a fifo does not fit 
 						  Memory reMappingMemory = ArchitectureManagement.getMemoryToBeRelocated(fifo,architecture,bindings);
+						  System.out.println("remappiug memory "+reMappingMemory.getName());
 			              ApplicationManagement.remapFifo(fifo, reMappingMemory,bindings);
 						  doRemap=true;
                           everRemap= true;
-						  //break;
+						  break;
 					  }
 				  }
 			  }
