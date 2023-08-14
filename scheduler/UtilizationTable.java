@@ -393,8 +393,8 @@ public class UtilizationTable {
 				}
 			}
 		}
-		System.out.println("Bound resources "+boundResources);
-		System.out.println("status "+status);
+		//System.out.println("Bound resources "+boundResources);
+		//System.out.println("status "+status);
 		if (boundResources.size() == status.size())
 			return true;
 		return false;
