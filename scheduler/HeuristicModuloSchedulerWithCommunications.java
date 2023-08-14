@@ -139,37 +139,76 @@ public class HeuristicModuloSchedulerWithCommunications extends BaseScheduler im
 			  actors.put(actorW.getId(), actorW);
 			  mapActors.put(actorW.getName(), actorW.getId());
 			  mapWriteTasks.put(f.getKey(), actorW);
-			  // create read communication task
-			  Transfer readTransfer = new Transfer(f.getValue().getDestination(),f.getValue());
-			  readTransfer.setType(TRANSFER_TYPE.READ);
-			  Queue<PassTransferOverArchitecture> readInterconnects = this.calculatePathOfTransfer(readTransfer, bindings);
-			  CommunicationTask actorR = new CommunicationTask("readTask::"+fifoName);
-			  actorR.setType(ACTOR_TYPE.READ_COMMUNICATION_TASK);
-			  actorR.setInputs(1);
-			  actorR.setFifo(f.getValue());
-			  actorR.setUsedInterconnects(readInterconnects);
-			  actorR.setTransfer(readTransfer);
-			  actorR.setRuntimeFromInterconnects(this.scaleFactor);
-			  actorR.setPriority( application.getActors().get(f.getValue().getDestination().getId()).getPriority());
-			  actors.put(actorR.getId(), actorR);
-			  mapActors.put(actorR.getName(), actorR.getId());
-			  mapReadTasks.put(f.getKey(), actorR);
-			  // create the FIFO connecting the communication tasks
-			  Fifo fifo = new Fifo( actorW.getName()+"->"+actorR.getName(),  0,   1, 1, 1 , 1 , actorW , actorR ,FIFO_MAPPING_TYPE.SOURCE);
-			  fifos.put(fifo.getId(), fifo);
-			  
+			  // create read communication task, check the case of the MRB
 			  // copy the Fifos
 			  int actorSrcId = mapActors.get( f.getValue().getSource().getName());
 			  Actor actorSrc = actors.get(actorSrcId);
-			  int actorDstId = mapActors.get(f.getValue().getDestination().getName());
-			  Actor actorDst = actors.get(actorDstId);
-			  
-			  //Fifo fifo = new Fifo( t.getId(),  initialTokens,   tokenCapacity, tokenSize, consRate , prodRate , actorSrc , actorDst ,FIFO_MAPPING_TYPE.SOURCE);
+			//Fifo fifo = new Fifo( t.getId(),  initialTokens,   tokenCapacity, tokenSize, consRate , prodRate , actorSrc , actorDst ,FIFO_MAPPING_TYPE.SOURCE);
 			  Fifo fifoInputWrite = new Fifo("fifo::"+actorW.getName(), f.getValue().getInitialTokens(), f.getValue().get_capacity(), f.getValue().getTokenSize(), 1, 1, actorSrc, actorW, FIFO_MAPPING_TYPE.SOURCE);
-			  Fifo fifoInputRead  = new Fifo("fifo::"+actorR.getName(), 0, f.getValue().get_capacity(), f.getValue().getTokenSize(), 1, 1, actorR, actorDst, FIFO_MAPPING_TYPE.SOURCE);
-			  
 			  fifos.put(fifoInputWrite.getId(), fifoInputWrite);
-			  fifos.put(fifoInputRead.getId(), fifoInputRead);
+			  if (!f.getValue().isCompositeChannel()) {
+				  Transfer readTransfer = new Transfer(f.getValue().getDestination(),f.getValue());
+				  readTransfer.setType(TRANSFER_TYPE.READ);
+				  Queue<PassTransferOverArchitecture> readInterconnects = this.calculatePathOfTransfer(readTransfer, bindings);
+				  CommunicationTask actorR = new CommunicationTask("readTask::"+fifoName);
+				  actorR.setType(ACTOR_TYPE.READ_COMMUNICATION_TASK);
+				  actorR.setInputs(1);
+				  actorR.setFifo(f.getValue());
+				  actorR.setUsedInterconnects(readInterconnects);
+				  actorR.setTransfer(readTransfer);
+				  actorR.setRuntimeFromInterconnects(this.scaleFactor);
+				  actorR.setPriority( application.getActors().get(f.getValue().getDestination().getId()).getPriority());
+				  actors.put(actorR.getId(), actorR);
+				  mapActors.put(actorR.getName(), actorR.getId());
+				  mapReadTasks.put(f.getKey(), actorR);
+				  // create the FIFO connecting the communication tasks
+				  Fifo fifo = new Fifo( actorW.getName()+"->"+actorR.getName(),  0,   1, 1, 1 , 1 , actorW , actorR ,FIFO_MAPPING_TYPE.SOURCE);
+				  fifos.put(fifo.getId(), fifo);
+				  
+
+				  int actorDstId = mapActors.get(f.getValue().getDestination().getName());
+				  Actor actorDst = actors.get(actorDstId);
+				  
+				  
+				  Fifo fifoInputRead  = new Fifo("fifo::"+actorR.getName(), 0, f.getValue().get_capacity(), f.getValue().getTokenSize(), 1, 1, actorR, actorDst, FIFO_MAPPING_TYPE.SOURCE);
+				  
+				  
+				  fifos.put(fifoInputRead.getId(), fifoInputRead);
+				  
+			  }
+			  else {
+				  CompositeFifo mrb = (CompositeFifo)f.getValue();
+				  int counter = 0;
+				  for(Map.Entry<Integer, Fifo> fs : mrb.getReaders().entrySet()) {
+					  
+					  Transfer readTransfer = new Transfer(fs.getValue().getDestination(),f.getValue());
+					  readTransfer.setType(TRANSFER_TYPE.READ);
+					  Queue<PassTransferOverArchitecture> readInterconnects = this.calculatePathOfTransfer(readTransfer, bindings);
+					  CommunicationTask actorR = new CommunicationTask("readTask::"+fifoName+"::"+counter++);
+					  actorR.setType(ACTOR_TYPE.READ_COMMUNICATION_TASK);
+					  actorR.setInputs(1);
+					  actorR.setFifo(f.getValue());
+					  actorR.setUsedInterconnects(readInterconnects);
+					  actorR.setTransfer(readTransfer);
+					  actorR.setRuntimeFromInterconnects(this.scaleFactor);
+					  actorR.setPriority( application.getActors().get(fs.getValue().getDestination().getId()).getPriority());
+					  actors.put(actorR.getId(), actorR);
+					  mapActors.put(actorR.getName(), actorR.getId());
+					  mapReadTasks.put(f.getKey(), actorR);
+					  
+					  // create the FIFO connecting the communication tasks
+					  Fifo fifo = new Fifo( actorW.getName()+"->"+actorR.getName(),  0,   1, 1, 1 , 1 , actorW , actorR ,FIFO_MAPPING_TYPE.SOURCE);
+					  fifos.put(fifo.getId(), fifo);
+					  
+					  int actorDstId = mapActors.get(fs.getValue().getDestination().getName());
+					  Actor actorDst = actors.get(actorDstId);
+					  
+					  Fifo fifoInputRead  = new Fifo("fifo::"+actorR.getName(), 0, f.getValue().get_capacity(), f.getValue().getTokenSize(), 1, 1, actorR, actorDst, FIFO_MAPPING_TYPE.SOURCE);
+					  fifos.put(fifoInputRead.getId(), fifoInputRead);
+					  
+				  }
+			  }
+			  
 		  }
 		  
 		  applicationWithMessages.setActors(actors);
@@ -198,10 +237,10 @@ public class HeuristicModuloSchedulerWithCommunications extends BaseScheduler im
 			  // we increase the period
 			  this.P++;
 		  }
-		  System.out.println("HEURISTIC WITH COMMS:: ACTUAL PERIOD "+P);
-		  System.out.println("HEURISTIC WITH COMMS:: ACTUAL LATENCY "+this.getLantency());
-		  U.printUtilizationTable(applicationWithMessages.getActors(), coreTypes);
-		  printTimeInfoActors();
+		  //System.out.println("HEURISTIC WITH COMMS:: ACTUAL PERIOD "+P);
+		  //System.out.println("HEURISTIC WITH COMMS:: ACTUAL LATENCY "+this.getLantency());
+		  //U.printUtilizationTable(applicationWithMessages.getActors(), coreTypes);
+		  //printTimeInfoActors();
 	  }
 	  
 	  public void printTimeInfoActors() {
@@ -238,12 +277,12 @@ public class HeuristicModuloSchedulerWithCommunications extends BaseScheduler im
 			  Actor origActor = application.getActor(actor.getName());
 			  if (actor.getType() == ACTOR_TYPE.ACTOR || actor.getType() == ACTOR_TYPE.MULTICAST) {
 				  // mapped to core
-				  System.out.println("actor "+actor.getName());
+				  //System.out.println("actor "+actor.getName());
 				  int coreId = bindings.getActorProcessorBindings().get(origActor.getId()).getTarget().getId();
 				  countResourcesPerType.put(coreId, 1);
 			  }
 			  if (actor.getType() == ACTOR_TYPE.READ_COMMUNICATION_TASK || actor.getType() == ACTOR_TYPE.WRITE_COMMUNICATION_TASK) {
-				  System.out.println("actor comm "+actor.getName());
+				  //System.out.println("actor comm "+actor.getName());
 				  // cast to communication task
 				  CommunicationTask comm = (CommunicationTask)actor;
 				  // mapped to interconnect
@@ -283,7 +322,7 @@ public class HeuristicModuloSchedulerWithCommunications extends BaseScheduler im
 				  int discreteRuntime = infoBoundResources.getKey();
 				  /* Check whether data dependences are satisfied */
 				  if (PCOUNT.get(v) == 0) {
-					  System.out.println("scheduling "+applicationWithMessages.getActors().get(v).getName()+" runtime "+discreteRuntime);
+					  //System.out.println("scheduling "+applicationWithMessages.getActors().get(v).getName()+" runtime "+discreteRuntime);
 						/* Check that no more than num(r(v)) operations are scheduled on the
 	           			resources corresponding to *R(r(v)) at the same time modulo MII */
 					  int start = startTime.get(v);
@@ -467,7 +506,7 @@ public class HeuristicModuloSchedulerWithCommunications extends BaseScheduler im
 		  }
 		  this.MII = Collections.max(tmpL);
 		  maxExTime = (this.MII > maxExTime) ? this.MII : maxExTime;
-		  System.out.println("Heuristic with Communications MII "+MII);
+		  //System.out.println("Heuristic with Communications MII "+MII);
 	  }
 
 	
