@@ -138,7 +138,7 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 				l.add(t);
 			}
 		}
-		printCommunicationsInSchedule(mapTokensCounting);
+		//printCommunicationsInSchedule(mapTokensCounting);
 		// then set the FIFO capacities
 		for(Map.Entry<Integer, TreeMap<Double,Integer>> m : mapTokensCounting.entrySet()) {
 			TreeMap<Double,Integer> tokensCounting = m.getValue();
@@ -226,7 +226,7 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 				}
 			}
 		}
-		System.out.println("ACTORTORESOURCEID "+actorToResourceId);
+		//System.out.println("ACTORTORESOURCEID "+actorToResourceId);
 		schedulePipelinedActions = new LinkedList<>();
 		// filling the scheduler
 		for(int i = 0; i < nIterations; i++) {
