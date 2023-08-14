@@ -73,8 +73,6 @@ public class HeuristicModuloScheduler extends BaseScheduler implements Schedule{
   
   public HeuristicModuloScheduler(Architecture architecture, Application application, ArrayList<Integer> actorToCoreTypeMapping,Set<String> coreTypes,HashMap<Integer,Integer> actorIdToIndex){
 	  super();
-	  //this.resourceOcupation = new HashMap<>();
-	  //this.indexCoreTypes =indexCoreTypes;
 	  countCoresPerType = new HashMap<>();
 	  this.actorToCoreTypeMapping = actorToCoreTypeMapping;
 	  this.setApplication(application);
@@ -92,7 +90,7 @@ public class HeuristicModuloScheduler extends BaseScheduler implements Schedule{
 			  }
 		  }
 	  }
-	  System.out.println("countCoresPerType "+countCoresPerType);
+	  //System.out.println("countCoresPerType "+countCoresPerType);
 	  this.actorIdToIndex = new HashMap<Integer,Integer>(actorIdToIndex);
 
   }
@@ -145,8 +143,8 @@ public class HeuristicModuloScheduler extends BaseScheduler implements Schedule{
 		  // we increase the period
 		  this.P++;
 	  }
-	  System.out.println("ACTUAL PERIOD "+P);
-	  System.out.println("ACTUAL LATENCY "+this.getLantency());
+	  //System.out.println("ACTUAL PERIOD "+P);
+	  //System.out.println("ACTUAL LATENCY "+this.getLantency());
 	  //U.printUtilizationTable(application.getActors(), coreTypes);
 	  //printTimeInfoActors();
 	  //this.printTopologicalOrder();
@@ -343,7 +341,7 @@ public class HeuristicModuloScheduler extends BaseScheduler implements Schedule{
 		  }
 		  this.MII = Collections.max(tmpL);
 		  maxExTime = (this.MII > maxExTime) ? this.MII : maxExTime;
-		  System.out.println("MII "+MII);
+		  //System.out.println("MII "+MII);
 	}
 
 	public UtilizationTable getScheduler() {

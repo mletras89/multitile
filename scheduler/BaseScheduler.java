@@ -278,7 +278,7 @@ public class BaseScheduler{
 					  }else {
 						  // ignore the binding and do the remap if a fifo does not fit 
 						  Memory reMappingMemory = ArchitectureManagement.getMemoryToBeRelocated(fifo,architecture,bindings);
-						  System.out.println("remappiug memory "+reMappingMemory.getName());
+						  //System.out.println("remappiug memory "+reMappingMemory.getName());
 			              ApplicationManagement.remapFifo(fifo, reMappingMemory,bindings);
 						  doRemap=true;
                           everRemap= true;
