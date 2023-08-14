@@ -52,8 +52,6 @@ public class CommunicationTask extends Actor{
 	private int discretizedRuntime;
 	private double runtime;
 	private Transfer transfer = null;
-	
-	
 	private Queue<PassTransferOverArchitecture> usedInterconnects;
 	
 	private ArrayList<Crossbar> usedCrossbar;
@@ -157,4 +155,8 @@ public class CommunicationTask extends Actor{
 		this.transfer = transfer;
 	}
 	
+	public Transfer getTransfer() {
+		return this.transfer;
+	}
+
 }
