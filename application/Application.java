@@ -498,7 +498,15 @@ public class Application{
 					myWriter.write(actorNames.get(a.getKey())+" [label=\""+a.getValue().getName()+"\" style=filled fillcolor=\""+color+"\" shape="+shape+"];\n");
 		    	}
 				for(Map.Entry<Integer, Fifo> f : fifos.entrySet()) {
-					myWriter.write(actorNames.get(f.getValue().getSource().getId())+" -> "+actorNames.get(f.getValue().getDestination().getId())+"\n");
+					if (f.getValue().isCompositeChannel()) {
+						CompositeFifo mrb = (CompositeFifo)f.getValue();
+						
+						for(Map.Entry<Integer,Fifo> ff : mrb.getReaders().entrySet()) {
+							myWriter.write(actorNames.get(f.getValue().getSource().getId())+" -> "+actorNames.get(ff.getValue().getDestination().getId())+"\n");
+						}
+					}
+					else
+						myWriter.write(actorNames.get(f.getValue().getSource().getId())+" -> "+actorNames.get(f.getValue().getDestination().getId())+"\n");
 				}
 				
 				myWriter.write("}");
