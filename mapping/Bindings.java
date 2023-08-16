@@ -82,7 +82,7 @@ public class Bindings{
 		  }
 		  System.out.println("fifoMemoryBindings...");
 		  for(Map.Entry<Integer, Binding<Memory>> e :  fifoMemoryBindings.entrySet()) {
-			  System.out.println("Binding of "+application.getFifos().get(e.getKey()).getName()+" to memory "+e.getValue().getTarget().getName() );
+			  System.out.println("Binding of "+application.getFifos().get(e.getKey()).getName()+" to memory "+e.getValue().getTarget().getName() +" capacity "+e.getValue().getTarget().getCapacity() );
 		  }
 	  }
 }
