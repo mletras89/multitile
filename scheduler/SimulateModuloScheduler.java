@@ -122,7 +122,6 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 			tokensCounting.put(0.0, f.getValue().getInitialTokens());
 			mapTokensCounting.put(f.getKey(), tokensCounting);
 		}
-		int count = 0;
 		ArrayList<TimeSlot> l = new ArrayList<>();
 		for(TimeSlot t :  schedulePipelinedActions) {
 			Actor actor = heuristic.getApplicationWithMessages().getActors().get(t.getActorId());
