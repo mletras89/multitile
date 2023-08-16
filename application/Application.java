@@ -367,7 +367,7 @@ public class Application{
 		      fifo.set_capacity(capacityWriter+capacityReader);
 		    }
 
-		    CompositeFifo compositeFifo = new CompositeFifo("compositeFifo_"+index,writer.get_tokens(),capacityWriter+capacityReader,writer.getTokenSize(),writer.getConsRate(),writer.getProdRate(),writer.getSource(),readerFifos,multicastActor);
+		    CompositeFifo compositeFifo = new CompositeFifo("compositeFifo_"+index,writer.get_tokens(),capacityWriter+capacityReader,writer.getTokenSize(),writer.getConsRate(),writer.getProdRate(),writer.getSource(),readerFifos,multicastActor,writer);
 		    compositeFifo.setMappingType( writer.getMappingType() );
 		    return compositeFifo;
 	  }

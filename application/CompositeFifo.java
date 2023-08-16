@@ -52,12 +52,18 @@ public class CompositeFifo extends Fifo {
   private List<Actor> destinations;
   private Actor multicastActor;
   //private int readsMRB;
+  private Fifo writer;
   
-  public CompositeFifo(String name, int tokens, int capacity, int tokenSize,int consRate, int prodRate, Actor src, List<Fifo> destinationFifos,Actor multicastActor){
+  public Fifo getWriter() {
+	return writer;
+}
+
+public CompositeFifo(String name, int tokens, int capacity, int tokenSize,int consRate, int prodRate, Actor src, List<Fifo> destinationFifos,Actor multicastActor, Fifo writer){
     super(name,tokens,capacity,tokenSize,consRate,prodRate);
     this.setSource(src);
     this.setDestinations(destinationFifos);
     this.setMulticastActor(multicastActor);
+    this.writer = writer;
     //readsMRB = 0;
   }
 

@@ -49,6 +49,7 @@ import multitile.scheduler.PassTransferOverArchitecture;
 public class CommunicationTask extends Actor{
 
 	private Fifo fifo;
+	private Fifo fifoFromMRB;
 	private int discretizedRuntime;
 	private double runtime;
 	private Transfer transfer = null;
@@ -57,6 +58,9 @@ public class CommunicationTask extends Actor{
 	private ArrayList<Crossbar> usedCrossbar;
 	private NoC usedNoC = null;
 	private LocalMemory usedLocalMemory = null;
+	
+	
+	
 	public CommunicationTask(
              String name,
              int priority,
@@ -157,6 +161,14 @@ public class CommunicationTask extends Actor{
 	
 	public Transfer getTransfer() {
 		return this.transfer;
+	}
+
+	public Fifo getFifoFromMRB() {
+		return fifoFromMRB;
+	}
+
+	public void setFifoFromMRB(Fifo _fifoFromMRB) {
+		fifoFromMRB = _fifoFromMRB;
 	}
 
 }

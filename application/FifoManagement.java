@@ -86,7 +86,7 @@ public class FifoManagement{
       fifo.set_capacity(capacityWriter+capacityReader);
     }
 
-    CompositeFifo compositeFifo = new CompositeFifo("compositeFifo_"+getCompositeCounter(),writer.get_tokens(),capacityWriter+capacityReader,writer.getTokenSize(),writer.getConsRate(),writer.getProdRate(),writer.getSource(),readerFifos,multicastActor);
+    CompositeFifo compositeFifo = new CompositeFifo("compositeFifo_"+getCompositeCounter(),writer.get_tokens(),capacityWriter+capacityReader,writer.getTokenSize(),writer.getConsRate(),writer.getProdRate(),writer.getSource(),readerFifos,multicastActor,writer);
     // 	when doing the composite channel, we take the mapping of the writer
     // assigning the new mapping to the new compositefifo
     Memory memoryBinding =  bindings.getFifoMemoryBindings().get(writer.getId()).getTarget();
@@ -111,7 +111,7 @@ public class FifoManagement{
 	      fifo.set_capacity(capacityWriter+capacityReader);
 	    }
 
-	    CompositeFifo compositeFifo = new CompositeFifo("compositeFifo_"+index,writer.get_tokens(),capacityWriter+capacityReader,writer.getTokenSize(),writer.getConsRate(),writer.getProdRate(),writer.getSource(),readerFifos,multicastActor);
+	    CompositeFifo compositeFifo = new CompositeFifo("compositeFifo_"+index,writer.get_tokens(),capacityWriter+capacityReader,writer.getTokenSize(),writer.getConsRate(),writer.getProdRate(),writer.getSource(),readerFifos,multicastActor,writer);
 	    // when doing the composite channel, we take the mapping of the writer
 	    // assigning the new mapping to the new compositefifo
 	    Memory memoryBinding =  bindings.getFifoMemoryBindings().get(writer.getId()).getTarget();
@@ -137,7 +137,7 @@ public class FifoManagement{
 	      fifo.set_capacity(capacityWriter+capacityReader);
 	    }
 
-	    CompositeFifo compositeFifo = new CompositeFifo("compositeFifo_"+index,writer.get_tokens(),capacityWriter+capacityReader,writer.getTokenSize(),writer.getConsRate(),writer.getProdRate(),writer.getSource(),readerFifos,multicastActor);
+	    CompositeFifo compositeFifo = new CompositeFifo("compositeFifo_"+index,writer.get_tokens(),capacityWriter+capacityReader,writer.getTokenSize(),writer.getConsRate(),writer.getProdRate(),writer.getSource(),readerFifos,multicastActor,writer);
 	    compositeFifo.setMappingType( writer.getMappingType() );
 	    return compositeFifo;
   }
