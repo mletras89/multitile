@@ -246,57 +246,70 @@ public class BaseScheduler{
     return sequence;
   }
   
-  // check if the memory bounds are safe, if not do the re-mapping until the solution is feasible
-  public boolean checkAndReMapMemories(Bindings bindings) {
+  public ArrayList<Fifo> checkMemorySize(Bindings bindings) {
+	  ArrayList<Fifo> fifosToReMap = new ArrayList<>();
+	  
 	  Map<Integer, Binding<Memory>>  memBindings = bindings.getFifoMemoryBindings();
 	  Set<Memory> setBoundMemories = new HashSet<Memory>(); // set of the ids of the bound memories
 	  
-	  
-
-	  
-	  boolean success = false;
-      boolean everRemap = false;
-      
-      
-      
-	  while(!success) {
-		  boolean doRemap = false;
-		  setBoundMemories.clear();
-		  for(Map.Entry<Integer, Binding<Memory>> m : memBindings.entrySet() ) {
-			  setBoundMemories.add(m.getValue().getTarget());
-		  }
-		  for(Memory mem : setBoundMemories) {
-			  double capacityMem = mem.getCapacity();
-			  double currentFix = 0.0;
-			  for(Map.Entry<Integer, Binding<Memory>> m : memBindings.entrySet() ) { 
-				  if (mem.getId() == m.getValue().getTarget().getId()) {
-					  // check if I can write
-					  Fifo fifo = application.getFifos().get( m.getKey() );
-					  int bytesFifo = fifo.get_capacity() * fifo.getTokenSize();
-					  if(currentFix + bytesFifo <= capacityMem ) {
-						  currentFix += bytesFifo;
-					  }else {
-						  // ignore the binding and do the remap if a fifo does not fit 
-						  Memory reMappingMemory = ArchitectureManagement.getMemoryToBeRelocated(fifo,architecture,bindings);
-						  //System.out.println("remappiug memory "+reMappingMemory.getName());
-			              ApplicationManagement.remapFifo(fifo, reMappingMemory,bindings);
-						  doRemap=true;
-                          everRemap= true;
-						  break;
-					  }
-				  }
-			  }
-			  if (doRemap) 
-				  break;
-		  }
-		  
-		  if(!doRemap)
-			  success = true;
+	  for(Map.Entry<Integer, Binding<Memory>> m : memBindings.entrySet() ) {
+		  setBoundMemories.add(m.getValue().getTarget());
 	  }
 	  
-      return everRemap;
+	  for(Memory mem : setBoundMemories) {
+		  double capacityMem = mem.getCapacity();
+		  double currentStored = 0.0;
+		  for(Map.Entry<Integer, Binding<Memory>> m : memBindings.entrySet() ) { 
+			  if (m.getValue().getTarget().getId() == mem.getId()) {
+				  Fifo fifo = application.getFifos().get( m.getKey() );
+				  int bytesFifo = fifo.get_capacity() * fifo.getTokenSize();
+				  if(currentStored + bytesFifo <= capacityMem ) {
+					  currentStored += bytesFifo;
+				  }else {
+					  fifosToReMap.add(fifo);
+				  }
+			  }
+			  
+			  
+		  }
+	  }
+	  return fifosToReMap;
+  }
+  
+  
+  // check if the memory bounds are safe, if not do the re-mapping until the solution is feasible
+  public boolean checkAndReMapMemories(Bindings bindings) {
+	  ArrayList<Fifo> fifosToReMap = checkMemorySize(bindings);
+	  //System.out.println("fifosToReMap"+fifosToReMap);
+	  //System.exit(1);
+	  if (fifosToReMap.size() == 0)
+		  return false;
+	  for(Fifo f : fifosToReMap) {
+		// ignore the binding and do the remap if a fifo does not fit 
+		  Memory reMappingMemory = this.getMemoryToBeRelocated(application.getFifos().get(f.getId()),bindings);
+		  //System.out.println("remapping memory "+reMappingMemory.getName());
+		  bindings.getFifoMemoryBindings().put(f.getId(), new Binding<Memory>(reMappingMemory));
+          //ApplicationManagement.remapFifo(application.getFifos().get(f.getId()), reMappingMemory,bindings);
+	  }
+	  return true;
 	}
   
+  
+  public Memory getMemoryToBeRelocated(Fifo fifo,Bindings bindings){
+	    Memory mappedMemory = bindings.getFifoMemoryBindings().get(fifo.getId()).getTarget();
+	    //System.out.println("Mapped Memory "+mappedMemory.getName());
+	    Memory newMapping;
+	    switch(mappedMemory.getType()){
+	      case LOCAL_MEM:
+	    	  Tile mappedTile = this.architecture.getTiles().get(mappedMemory.getEmbeddedToProcessor().getOwnerTile().getId());
+	    	  newMapping = this.architecture.getTiles().get(mappedTile.getId()).getTileLocalMemory();
+	        break;
+	      default:
+	        newMapping = this.architecture.getGlobalMemory();
+	        break;
+	    }
+	    return newMapping;
+  }
   
   
   
