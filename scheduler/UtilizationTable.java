@@ -497,7 +497,7 @@ public class UtilizationTable {
 		return false;
 	}
 	
-	public static void sortIntervals(LinkedList<TimeSlot> timeSlots) {
+	public void sortIntervals(LinkedList<TimeSlot> timeSlots) {
 		timeSlots.sort((o1,o2) 
 				-> o1.getStartTime() - o2.getStartTime());
 	}
