@@ -268,13 +268,13 @@ public class Architecture{
 		  System.out.println("Tile: "+t.getValue().getName());
 	      for(HashMap.Entry<Integer,Processor> p : t.getValue().getProcessors().entrySet()){
 	        System.out.println("\tProcessor "+p.getValue().getName()+" type "+p.getValue().getProcesorType()+" core id "+p.getKey());
-	        System.out.println("\t\tLocal memory "+p.getValue().getLocalMemory().getName()+" capacity "+p.getValue().getLocalMemory().getCapacity());
+	        System.out.println("\t\tLocal memory "+p.getValue().getLocalMemory().getName()+" capacity "+p.getValue().getLocalMemory().getCapacity()+" type "+p.getValue().getLocalMemory().getType());
 	      }
-	      System.out.println("\tTile Local memory: "+t.getValue().getTileLocalMemory().getName()+" capacity "+t.getValue().getTileLocalMemory().getCapacity());
+	      System.out.println("\tTile Local memory: "+t.getValue().getTileLocalMemory().getName()+" capacity "+t.getValue().getTileLocalMemory().getCapacity()+" type "+t.getValue().getTileLocalMemory().getType());
 	      System.out.println("\tCrossbar: "+t.getValue().getCrossbar().getName()+" bW "+t.getValue().getCrossbar().getBandwidth()+" channels "+t.getValue().getCrossbar().getNumberofParallelChannels()+ " bw per channel "+t.getValue().getCrossbar().getBandwithPerChannel());
 	  }
 	  System.out.println("NoC: "+this.getNoC().getName()+" bW "+this.getNoC().getBandwidth()+" channels "+this.getNoC().getNumberOfParallelChannels()+ " bw per channel "+this.getNoC().getBandwithPerChannel());
-	  System.out.println("Global Memory: "+this.getGlobalMemory().getName()+" capacity "+this.getGlobalMemory().getCapacity());
+	  System.out.println("Global Memory: "+this.getGlobalMemory().getName()+" capacity "+this.getGlobalMemory().getCapacity()+" type "+this.globalMemory.getType());
   }
   
 
