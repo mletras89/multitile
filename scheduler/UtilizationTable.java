@@ -4,9 +4,13 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Queue;
+
 import multitile.application.Actor;
 import multitile.architecture.Architecture;
 import multitile.architecture.Crossbar;
@@ -300,12 +304,18 @@ public class UtilizationTable {
 		return false;
 	}
 
+	
+	
+	
+	
 	public boolean insertIntervalUtilizationTable(int actorId, ArrayList<Integer> boundResources, int startTime, int endTime, int length	) {
 		if (length>P)
 			return false;
 		// normalize startTime and endTIme
 		startTime = startTime % P;
 		endTime = endTime % P;
+		
+		// check if there is free space
 		
 		if (endTime == 0)
 			endTime = P;
@@ -442,6 +452,72 @@ public class UtilizationTable {
 		return false;
 	}
 	
+	
+	public Queue<Integer> getCandidateStartsInBoundResources(ArrayList<Integer> boundResources, int start, int length) {
+		Queue<Integer> candidateStartsInBoundResources = new LinkedList<>();
+		
+		ArrayList<Integer> overAllCandidateStartTimes = new ArrayList<>();
+		
+		// this only works if all the resources in the architecture are treated as unique, as the case of the heuristic with communications
+		for(int resourceType : boundResources) {
+			int nResources = countCoresPerType.get(resourceType);
+			for(int i=0; i< nResources; i++) 
+				overAllCandidateStartTimes.addAll( getCandidateStartsInCore(resourceType, i , start, length));
+		}
+		// filtering repeated
+		overAllCandidateStartTimes = new ArrayList<Integer>(new HashSet<Integer>(overAllCandidateStartTimes));
+		// sorting 
+		Collections.sort(overAllCandidateStartTimes);
+		// sort with respect of startTime
+		for(int val : overAllCandidateStartTimes) {
+			if (val >= start)
+				candidateStartsInBoundResources.add(val);
+		}
+		for(int val : overAllCandidateStartTimes) {
+			if (val < start)
+				candidateStartsInBoundResources.add(val);
+		}
+		return candidateStartsInBoundResources;
+	}
+	
+	ArrayList<Integer> getCandidateStartsInCore(int  coreType, int core, int start, int length){
+		ArrayList<Integer> candidateStarts = new ArrayList<>();
+		LinkedList<TimeSlot> timeSlots = utilizationTab.get(coreType).get(core);
+		
+		int nTimeSlots = timeSlots.size();
+		
+		if (nTimeSlots == 0) {
+			candidateStarts.add(start);
+			return candidateStarts;
+		}
+		
+		for(int i = 0; i<nTimeSlots-1;i++) {
+			if( timeSlots.get(i+1).getStartTime() - timeSlots.get(i).getEndTime() >= length  ) {
+				candidateStarts.add(timeSlots.get(i).getEndTime());
+			}
+		}
+		// case when the borders are connected
+		if(timeSlots.get(nTimeSlots-1).getEndTime() < this.P  && timeSlots.get(0).getStartTime()>0 ) {
+			int sizeBorderSpace = (P - timeSlots.get(nTimeSlots-1).getEndTime()) + timeSlots.get(0).getStartTime();
+			if(sizeBorderSpace >= length) 
+				candidateStarts.add(timeSlots.get(nTimeSlots-1).getEndTime());
+			
+		}
+		// check individual borders
+		if(timeSlots.get(nTimeSlots-1).getEndTime() < this.P) {
+			if((P - timeSlots.get(nTimeSlots-1).getEndTime() ) >= length) 
+				candidateStarts.add(timeSlots.get(nTimeSlots-1).getEndTime());
+		}
+		if(timeSlots.get(0).getStartTime()>0 ) {
+			if(timeSlots.get(0).getStartTime() >= length)
+				candidateStarts.add(timeSlots.get(0).getStartTime());
+		}
+			
+		return candidateStarts;
+		
+	}
+	
+
 	boolean canInsertInCore(int coreType, int core,TimeSlot t) {
 		LinkedList<TimeSlot> timeSlots = utilizationTab.get(coreType).get(core);
 		sortIntervals(timeSlots);
@@ -456,10 +532,13 @@ public class UtilizationTable {
 		for(TimeSlot ts : timeSlots) {
 			if (ts.intersection(t) != 0)
 				return false;
-			if (ts.getLength() == 0 && ts.getStartTime()>= t.getStartTime() && ts.getEndTime() <= t.getEndTime())
+			
+			if (t.getLength() == 0 && t.getStartTime()> ts.getStartTime() && t.getEndTime() < ts.getEndTime())
 				return false;
-			if (t.getLength() == 0 && t.getStartTime()>= ts.getStartTime() && t.getEndTime() <= ts.getEndTime())
+			
+			if (ts.getLength() == 0 && ts.getStartTime()> t.getStartTime() && ts.getEndTime() < t.getEndTime())
 				return false;
+			
 		}
 		
 		return true;
