@@ -343,12 +343,35 @@ public class HeuristicModuloSchedulerWithCommunications extends BaseScheduler im
 				  int discreteRuntime = infoBoundResources.getKey();
 				  /* Check whether data dependences are satisfied */
 				  if (PCOUNT.get(v) == 0) {
-					  //System.out.println("scheduling "+applicationWithMessages.getActors().get(v).getName()+" runtime "+discreteRuntime);
+					  //System.out.println("scheduling "+applicationWithMessages.getActors().get(v).getName()+" runtime "+discreteRuntime+" bound Resources "+boundResources);
 						/* Check that no more than num(r(v)) operations are scheduled on the
 	           			resources corresponding to *R(r(v)) at the same time modulo MII */
 					  int start = startTime.get(v);
 					  //int upperBound = (Math.floorDiv(start,this.P) + 1) * P; 
 					  int upperBound = start % this.P;
+					  
+					  //Queue<Integer> getCandidateStartsInBoundResources(ArrayList<Integer> boundResources, int start, int length)
+					  
+					  
+					  /*
+					  if(!U.insertIntervalUtilizationTable(v, boundResources, startTime.get(v), startTime.get(v)+discreteRuntime ,discreteRuntime)) {
+						  // It was not possible to insert in the suggested start time, then I have to get the candidate start times
+						  Queue<Integer> candidateStartTimes = U.getCandidateStartsInBoundResources(boundResources, startTime.get(v), discreteRuntime);
+						  //System.out.println("start time "+startTime.get(v)+" candidateStartTimes "+candidateStartTimes);
+						  boolean state = false;
+						  for(int q : candidateStartTimes) {
+							  state = U.insertIntervalUtilizationTable(v, boundResources, q, q+discreteRuntime, discreteRuntime);
+							  if (state) {
+								  if (q>=startTime.get(v))
+									  startTime.put(v, q);
+								  else
+									  startTime.put(v, this.P + q);
+								  break;
+							  }
+						  }
+						  if (state == false)
+							  return false;
+					  }*/
 					  
 					  //System.out.println("actor "+application.getActors().get(v).getName()+ " lenght "+discreteRuntime);
 					  while(!U.insertIntervalUtilizationTable(v, boundResources, startTime.get(v), startTime.get(v)+discreteRuntime ,discreteRuntime)) {
