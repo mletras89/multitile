@@ -47,4 +47,9 @@ public class MyEntry<K, V> implements Map.Entry<K, V> {
         return key.hashCode() ^ value.hashCode();
     }
 
+    @Override
+    public String toString() {
+    	return "(key: "+this.getKey()+", value: "+this.getValue()+")"; 
+    }
+    
 }
