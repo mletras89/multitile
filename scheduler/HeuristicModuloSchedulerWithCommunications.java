@@ -42,6 +42,7 @@
 package multitile.scheduler;
 
 import multitile.architecture.Processor;
+import multitile.architecture.Tile;
 import multitile.mapping.Bindings;
 import multitile.scheduler.UtilizationTable.TimeSlot;
 import multitile.architecture.Architecture;
@@ -63,7 +64,7 @@ public class HeuristicModuloSchedulerWithCommunications extends BaseScheduler im
   private int MII;
   private int P;
   // key is the core type
-  //private HashMap<Integer,Integer> countCoresPerType;
+  private HashMap<Integer,Integer> countCoresPerType;
   private ArrayList<String> coreTypes;
   private UtilizationTable U;
   private double scaleFactor;
@@ -73,11 +74,11 @@ public class HeuristicModuloSchedulerWithCommunications extends BaseScheduler im
 		  super();
 		  //this.resourceOcupation = new HashMap<>();
 		  //this.indexCoreTypes =indexCoreTypes;
-		  //countCoresPerType = new HashMap<>();
+		  this.countCoresPerType = new HashMap<>();
 		  this.setApplication(application);
 		  this.setArchitecture(architecture);
 		  this.coreTypes = new ArrayList<>(coreTypes);
-/*	    
+	    
 		  for(Map.Entry<Integer, Tile>  t : architecture.getTiles().entrySet()) {
 			  for(Map.Entry<Integer, Processor> p : t.getValue().getProcessors().entrySet()) {
 				  String coreType = p.getValue().getProcesorType();
@@ -89,7 +90,7 @@ public class HeuristicModuloSchedulerWithCommunications extends BaseScheduler im
 				  }
 			  }
 		  }
-		  System.out.println("countCoresPerType "+countCoresPerType);*/
+		  /*System.out.println("countCoresPerType "+countCoresPerType);*/
 		  this.scaleFactor = scaleFactor;
 	  }
   
@@ -246,10 +247,10 @@ public class HeuristicModuloSchedulerWithCommunications extends BaseScheduler im
 		
 	  }
 	  
-	  public void tryToSchedule(Bindings bindings) {
+	  public void tryToSchedule(Bindings bindings,String foldername) {
 		  // calculate the MII
 		  calculateMII(bindings);
-		  
+		  //calculateMIISecond(bindings);
 		  // set the initial P as MII
 		  this.P = this.MII;
 		  //System.out.println("MII "+this.P);
@@ -257,11 +258,15 @@ public class HeuristicModuloSchedulerWithCommunications extends BaseScheduler im
 			  // we increase the period
 			  this.P++;
 			  //System.out.println("\tCYCLED HERE P ="+this.getPeriod());
+			  //if (foldername.contains("dse_00231"))
+				//  System.exit(1);
 		  }
 		  //System.out.println("HEURISTIC WITH COMMS:: ACTUAL PERIOD "+P);
 		  //System.out.println("HEURISTIC WITH COMMS:: ACTUAL LATENCY "+this.getLantency());
 		  //U.printUtilizationTable(applicationWithMessages.getActors(), coreTypes);
 		  //printTimeInfoActors();
+		  //System.out.println("DONE "+this.P);
+		  
 	  }
 	  
 	  public void printTimeInfoActors() {
@@ -334,6 +339,7 @@ public class HeuristicModuloSchedulerWithCommunications extends BaseScheduler im
 			  SUCC.put(actor.getKey(), getSUCC(actor.getValue()));
 		  }
 		  
+		  
 		  while(!V.isEmpty()) {
 			  List<Integer> removeV = new ArrayList<>();
 			  for (int k = 0 ; k < V.size();k++) {
@@ -343,36 +349,38 @@ public class HeuristicModuloSchedulerWithCommunications extends BaseScheduler im
 				  int discreteRuntime = infoBoundResources.getKey();
 				  /* Check whether data dependences are satisfied */
 				  if (PCOUNT.get(v) == 0) {
-					  //System.out.println("scheduling "+applicationWithMessages.getActors().get(v).getName()+" runtime "+discreteRuntime+" bound Resources "+boundResources);
+					  //System.out.println("\nscheduling "+applicationWithMessages.getActors().get(v).getName()+" runtime "+discreteRuntime+" bound Resources "+boundResources+" want starts "+startTime.get(v));
 						/* Check that no more than num(r(v)) operations are scheduled on the
 	           			resources corresponding to *R(r(v)) at the same time modulo MII */
 					  int start = startTime.get(v);
 					  //int upperBound = (Math.floorDiv(start,this.P) + 1) * P; 
-					  int upperBound = start % this.P;
-					  
-					  //Queue<Integer> getCandidateStartsInBoundResources(ArrayList<Integer> boundResources, int start, int length)
-					  
-					  
-					  /*
+					  /**
+					   *FASTER IMPLEMENTATION UNDER EVALUATION
+					   */
 					  if(!U.insertIntervalUtilizationTable(v, boundResources, startTime.get(v), startTime.get(v)+discreteRuntime ,discreteRuntime)) {
 						  // It was not possible to insert in the suggested start time, then I have to get the candidate start times
-						  Queue<Integer> candidateStartTimes = U.getCandidateStartsInBoundResources(boundResources, startTime.get(v), discreteRuntime);
-						  //System.out.println("start time "+startTime.get(v)+" candidateStartTimes "+candidateStartTimes);
+						  /**Only evaluatates at the point in time where there is enough space in the bound resources**/
+						  Queue<MyEntry<Integer,Integer>> candidateStartTimes = U.getCandidateStartsInBoundResources(boundResources, startTime.get(v), discreteRuntime);
 						  boolean state = false;
-						  for(int q : candidateStartTimes) {
-							  state = U.insertIntervalUtilizationTable(v, boundResources, q, q+discreteRuntime, discreteRuntime);
-							  if (state) {
-								  if (q>=startTime.get(v))
-									  startTime.put(v, q);
-								  else
-									  startTime.put(v, this.P + q);
+						  for(MyEntry<Integer,Integer> q : candidateStartTimes) {
+							  state = U.insertIntervalUtilizationTable(v, boundResources, q.getKey(), q.getKey()+discreteRuntime ,discreteRuntime) ;
+							  if(state){
+								  //System.out.println("q.getKey() "+q.getKey() +" start "+start);
+								  if (q.getKey()>= start) 
+									  startTime.put(v, q.getKey());
+							      else {
+							    	  startTime.put(v, start + (P  - (start % P) )  + q.getKey()  );
+							       }
+								  //System.out.println("new start "+startTime.get(v));
 								  break;
 							  }
 						  }
-						  if (state == false)
+						  if (!state)
 							  return false;
-					  }*/
+					  }	  
 					  
+					  /** THIS CODE BELOGN TO A BACKUP WORKING IMP MORE TIME DEMANDING
+					   * int upperBound = start % this.P;
 					  //System.out.println("actor "+application.getActors().get(v).getName()+ " lenght "+discreteRuntime);
 					  while(!U.insertIntervalUtilizationTable(v, boundResources, startTime.get(v), startTime.get(v)+discreteRuntime ,discreteRuntime)) {
 						  //System.out.println("Trying to insert"+application.getActors().get(v).getName()+" at "+startTime.get(v)+" to "+((startTime.get(v) + discreteRuntime) % this.P ));
@@ -382,13 +390,15 @@ public class HeuristicModuloSchedulerWithCommunications extends BaseScheduler im
 							  return false;
 							  //System.exit(1);  // here I have to increase the MII
 						  }  
-					  }
-					  
+					  }*/
+					  //System.out.println("SCHEDULED "+applicationWithMessages.getActors().get(v).getName()+" runtime "+discreteRuntime+" bound Resources "+boundResources+" starts "+startTime.get(v));
 					  //U.printUtilizationTable(applicationWithMessages.getActors(), coreTypes);
 					  timeInfoActors.put(v, new TimeSlot(v, startTime.get(v),startTime.get(v) + discreteRuntime ));
 					  
 					  for (int w : SUCC.get(v)) {
 						  PCOUNT.put(w, PCOUNT.get(w) -1 );
+						  //if (startTime.get(w) <= (startTime.get(v)+ discreteRuntime))
+						  //    startTime.put(w,startTime.get(v)+ discreteRuntime);
 						  int maxVal = startTime.get(w) > (startTime.get(v)+ discreteRuntime)  ? startTime.get(w) : (startTime.get(v)+discreteRuntime);
 						  startTime.put(w,maxVal);
 					  }
@@ -418,6 +428,7 @@ public class HeuristicModuloSchedulerWithCommunications extends BaseScheduler im
 	  //  the set is composed of the ids
 	  private Set<Integer> getSUCC(Actor v) {
 		  Set<Integer> SUCC = new HashSet<Integer>();
+		  
 		  for(Fifo fifo: v.getOutputFifos()) {
 			  //System.out.println("Fifo "+fifo.getName()+" is composite "+fifo.isCompositeChannel());
 			  if(fifo.isCompositeChannel()) {
@@ -552,8 +563,122 @@ public class HeuristicModuloSchedulerWithCommunications extends BaseScheduler im
 		  maxExTime = (this.MII > maxExTime) ? this.MII : maxExTime;
 		  //System.out.println("Heuristic with Communications MII "+MII);
 	  }
-
-	
+/**
+ * 	I need to determine an accurate lower bound, this might be a hint of a possible solution
+ *  A better lower bound is required e.g., in multicamera application to accelerate the search 
+ * 
+	  private void calculateMIISecond(Bindings bindings) {
+		  // key: core type
+		  // Value: count
+		  HashMap<Integer,Integer> usageCores = new HashMap<>();
+			  
+		  // key: is the noc id
+		  // value: is the count
+		  HashMap<Integer,Integer> usageNoC 	 = new HashMap<>();
+		  // key: is the crossover id
+		  // value: is the count
+		  HashMap<Integer,Integer> usageCrossbar = new HashMap<>();
+		  // key: is the local memory id
+		  // value: is the count
+		  HashMap<Integer,Integer> usageLocalMemory = new HashMap<>();
+		  // initialize
+		  for(Map.Entry<Integer, Actor > actor : applicationWithMessages.getActors().entrySet()) {
+			  Actor origActor = application.getActor(actor.getValue().getName());
+			  //System.out.println("actor "+actor.getValue().getName()+" id "+actor.getKey());
+			  if(actor.getValue().getType() == ACTOR_TYPE.ACTOR || actor.getValue().getType() == ACTOR_TYPE.MULTICAST) {
+				  Processor p = bindings.getActorProcessorBindings().get(origActor.getId()).getTarget();
+				  int coreTypeIx = coreTypes.indexOf(p.getProcesorType());
+				  usageCores.put(coreTypeIx, 0);
+			  }
+			  if(actor.getValue().getType() == ACTOR_TYPE.READ_COMMUNICATION_TASK || actor.getValue().getType() == ACTOR_TYPE.WRITE_COMMUNICATION_TASK) {
+				  // first init the crossbar
+				  CommunicationTask comm = (CommunicationTask)(actor.getValue());
+				  for(Crossbar c : comm.getUsedCrossbars()) {
+					  usageCrossbar.put(c.getId(), 0);
+				  }
+				  // init the noc
+				  if (comm.getUsedNoc() != null) {
+					  usageNoC.put(comm.getUsedNoc().getId(), 0);
+				  }
+				  if(comm.getUsedLocalMemory() != null) {
+					  usageLocalMemory.put(comm.getUsedLocalMemory().getId(), 0);
+				  }
+			  }
+		  }
+		  // 1 [Compute resource usage]
+		  // Examine the loop body to determine the usage, usage(i), of each resource class R(i) by the loop body
+		  // <K,V> here the key is the id of the tile and the value is the usage of cpus in the tile
+		  // update the usage
+		  int maxExTime = 0;
+		  for(Map.Entry<Integer, Actor > actor : applicationWithMessages.getActors().entrySet()) {
+			  Actor origActor = application.getActor(actor.getValue().getName());
+			  if(actor.getValue().getType() == ACTOR_TYPE.ACTOR || actor.getValue().getType() == ACTOR_TYPE.MULTICAST) {
+				  Processor p = bindings.getActorProcessorBindings().get(origActor.getId()).getTarget();
+				  int coreTypeIx = coreTypes.indexOf(p.getProcesorType());
+				  int val = usageCores.get(coreTypeIx);
+				  int discreteRuntime = (int)bindings.getActorProcessorBindings().get(origActor.getId()).getProperties().get("discrete-runtime");
+				  maxExTime = (discreteRuntime > maxExTime) ? discreteRuntime : maxExTime;
+				  usageCores.put(coreTypeIx, val+discreteRuntime);
+			  }
+			  if(actor.getValue().getType() == ACTOR_TYPE.READ_COMMUNICATION_TASK || actor.getValue().getType() == ACTOR_TYPE.WRITE_COMMUNICATION_TASK) {
+				  // first init the crossbar
+				  CommunicationTask comm = (CommunicationTask)(actor.getValue());
+				  for(Crossbar c : comm.getUsedCrossbars()) {
+					  int crossbarId = c.getId();
+					  int val = usageCrossbar.get(crossbarId);
+					  int discreteRuntime = comm.getDiscretizedRuntime();
+					  maxExTime = (discreteRuntime > maxExTime) ? discreteRuntime : maxExTime;
+					  usageCrossbar.put(crossbarId, val+discreteRuntime);
+				  }
+				  // init the noc
+				  if (comm.getUsedNoc() != null) {
+					  int nocId = comm.getUsedNoc().getId();
+					  int val = usageNoC.get(nocId);
+					  int discreteRuntime = comm.getDiscretizedRuntime();
+					  maxExTime = (discreteRuntime > maxExTime) ? discreteRuntime : maxExTime;
+					  usageNoC.put(nocId, val+discreteRuntime);
+				  }
+				  if(comm.getUsedLocalMemory() !=null) {
+					  int memoryId = comm.getUsedLocalMemory().getId();
+					  usageLocalMemory.put(memoryId, 0); // it is 0 because is communication over the scratchpad memory
+				  }
+				  // need this to track the usage of the communications in the cores
+				  Actor actorInCommunication;
+				  if (actor.getValue().getType() == ACTOR_TYPE.READ_COMMUNICATION_TASK) 
+					  actorInCommunication = application.getActor( comm.getFifo().getDestination().getName() );
+				  else
+					  actorInCommunication = application.getActor( comm.getFifo().getSource().getName() );
+				  
+				  Processor p = bindings.getActorProcessorBindings().get(actorInCommunication.getId()).getTarget();
+				  int coreTypeIx = coreTypes.indexOf(p.getProcesorType());
+				  int val = usageCores.get(coreTypeIx);
+				  int discreteRuntime = comm.getDiscretizedRuntime();
+				  maxExTime = (discreteRuntime > maxExTime) ? discreteRuntime : maxExTime;
+				  usageCores.put(coreTypeIx, val + discreteRuntime);
+				  
+			  }
+		  } 
+		  // System.out.println("USAGE: "+usage);
+		  // 	3 [Compute the lower bound of minimum initiation interval]
+		  // 		a) [Compute the resource-constrained initiation interval]
+		  List<Integer> tmpL = new ArrayList<>();
+		  for(HashMap.Entry<Integer,Integer> u :usageCores.entrySet()){
+			  tmpL.add((int)Math.ceil( (double) u.getValue() / (double)countCoresPerType.get(u.getKey())) );
+		  }
+		  for(HashMap.Entry<Integer,Integer> c : usageCrossbar.entrySet()) {
+			  tmpL.add(c.getValue());
+		  }
+		  for(HashMap.Entry<Integer,Integer> n : usageNoC.entrySet()) {
+			  tmpL.add(n.getValue());
+		  }
+		  for(HashMap.Entry<Integer,Integer> m : usageLocalMemory.entrySet()) {
+			  tmpL.add(m.getValue());
+		  }
+		  //this.MII = Collections.max(tmpL);
+		  maxExTime = (this.MII > maxExTime) ? this.MII : maxExTime;
+		  System.out.println("MII second "+MII);
+	  } */
+	  
 	  public MyEntry<Integer,ArrayList<Integer>> getBoundResources(Bindings bindings, int actorId) {
 		  Actor actor = applicationWithMessages.getActors().get(actorId);
 		  ArrayList<Integer> boundResources = new ArrayList<>();
@@ -618,5 +743,7 @@ public class HeuristicModuloSchedulerWithCommunications extends BaseScheduler im
 	  public int getPeriod() {
 		  return this.P;
 	  }
-	  
+	  public int getMII() {
+		  return this.MII;
+	  }
 	}
