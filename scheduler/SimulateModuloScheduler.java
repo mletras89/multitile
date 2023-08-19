@@ -53,6 +53,7 @@ import multitile.application.Actor;
 import multitile.application.Actor.ACTOR_TYPE;
 import multitile.application.Application;
 import multitile.application.CommunicationTask;
+import multitile.application.CompositeFifo;
 import multitile.application.Fifo;
 import java.io.File;
 import java.io.FileWriter;
@@ -105,6 +106,7 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 	}
 	
 	public void createScheduleForAnalysis(double scaleFactor) {
+		// this only works for hSDFG
 		int latency = heuristic.getLantency();
 		assert latency != -1 : "First calculate the schedule";
 		this.startKernel = ((int)Math.ceil((double)latency/(double)heuristic.getPeriod()))*heuristic.getPeriod();
@@ -117,34 +119,54 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 		//		key : time
 		//		value : number tokens
 		HashMap<Integer, TreeMap<Double,Integer> > mapTokensCounting = new HashMap<>();
+		
+		// count of reads of a MRB
+		// key: is the MRB FIFO
+		// value: number of reads
+		HashMap<Integer,Integer> readsMRB = new HashMap<>();
+		
+		
 		for(Map.Entry<Integer, Fifo> f: application.getFifos().entrySet()) {
 			TreeMap<Double,Integer> tokensCounting = new TreeMap<>();
 			tokensCounting.put(0.0, f.getValue().getInitialTokens());
 			mapTokensCounting.put(f.getKey(), tokensCounting);
+			if (f.getValue().isCompositeChannel())
+				readsMRB.put(f.getKey(), 0);
 		}
 		ArrayList<TimeSlot> l = new ArrayList<>();
 		for(TimeSlot t :  schedulePipelinedActions) {
 			Actor actor = heuristic.getApplicationWithMessages().getActors().get(t.getActorId());
 			Processor p = architecture.isProcessor(t.getResourceId());
 			if((actor.getType() == ACTOR_TYPE.READ_COMMUNICATION_TASK || actor.getType() == ACTOR_TYPE.WRITE_COMMUNICATION_TASK) && p == null && !l.contains(t)) {
+				//System.err.println("\nCOMM TASK "+actor.getName()+" at "+t);
 				CommunicationTask communication = (CommunicationTask)(actor);
 				Fifo fifo = communication.getFifo();
 				//System.err.println("fifo:"+fifo.getName()+"CONS: "+fifo.getProdRate()+" PRD:"+fifo.getConsRate());
 				int nTokens = 0;
-				if (actor.getType() == ACTOR_TYPE.WRITE_COMMUNICATION_TASK) nTokens += fifo.getConsRate();
-				if (actor.getType() == ACTOR_TYPE.READ_COMMUNICATION_TASK) nTokens -= fifo.getProdRate();
-				insertCommunicationsInSchedule(mapTokensCounting, fifo, nTokens, t.getEndTime()*scaleFactor);
+				double insertTime = t.getEndTime()*scaleFactor;
+				if (actor.getType() == ACTOR_TYPE.WRITE_COMMUNICATION_TASK) 
+					nTokens += fifo.getConsRate();
+				if (actor.getType() == ACTOR_TYPE.READ_COMMUNICATION_TASK) {
+					nTokens -= fifo.getProdRate();
+					if(t.getLength() == 0)
+						insertTime += 0000000000000000000000001;  // this trick to track the reads from local memories
+					if(fifo.isCompositeChannel())
+						readsMRB.put(fifo.getId(), readsMRB.get(fifo.getId())+1);
+				}
+				insertCommunicationsInSchedule(mapTokensCounting, fifo, nTokens, insertTime, readsMRB);
 				l.add(t);
 			}
 		}
 		//printCommunicationsInSchedule(mapTokensCounting);
 		// then set the FIFO capacities
 		for(Map.Entry<Integer, TreeMap<Double,Integer>> m : mapTokensCounting.entrySet()) {
+			Fifo fifo = application.getFifos().get(m.getKey());
 			TreeMap<Double,Integer> tokensCounting = m.getValue();
 			int fifoCapacity = Collections.max(tokensCounting.values());
-			assert fifoCapacity >= 0 : "Capacity must not be negative";
+			assert fifoCapacity > 0 : "Capacity must not be negative or zero, Capacity="+fifoCapacity+" fifo: "+fifo.getName();
 			
-			Fifo fifo = application.getFifos().get(m.getKey());
+			int fifoMinVal = Collections.min(tokensCounting.values());
+			assert fifoMinVal >=0: "Minimum number of stored tokens must be bigger than 0 fifo: "+fifo.getName();
 			
 			if (fifoCapacity == 0)
 				fifoCapacity = (fifo.getConsRate() >= fifo.getProdRate()) ? fifo.getConsRate() : fifo.getProdRate();
@@ -165,7 +187,7 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 		}
 	}
 	
-	public void insertCommunicationsInSchedule(HashMap<Integer, TreeMap<Double,Integer> > mapTokensCounting, Fifo fifo, int tokens, double time) {
+	public void insertCommunicationsInSchedule(HashMap<Integer, TreeMap<Double,Integer> > mapTokensCounting, Fifo fifo, int tokens, double time, HashMap<Integer,Integer> readsMRB) {
 		// tokens might be positive or negative
 		// in case of positive, tokens have been produced
 		// in case of negative, tokens must be consumed
@@ -186,8 +208,15 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 			}
 			for(Map.Entry<Double, Integer> t : tokensCounting.entrySet()) {
 				if(t.getKey() >= time) {
+					int nTokens = tokens;
 					int currentTokens = tokensCounting.get(t.getKey());
-					tokensCounting.put(t.getKey(), currentTokens + tokens );
+					if (tokens < 0 && fifo.isCompositeChannel()) { // it is a read
+						CompositeFifo mrb = (CompositeFifo) fifo;
+						int nReaders = mrb.getReaders().size();
+						if (readsMRB.get(mrb.getId()) % nReaders != 0)
+							nTokens = 0;			
+					}
+					tokensCounting.put(t.getKey(), currentTokens + nTokens );
 				}
 			}
 		}
@@ -199,6 +228,7 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 	// the bindings must be given
 	public void createPipelinedScheduler(int nIterations) {
 		HashMap<Integer,TimeSlot> timeInfoActors = heuristic.getTimeInfoActors();
+		//heuristic.printTimeInfoActors();
 		assert timeInfoActors != null: "First generate the timeInfoActors";
 		assert timeInfoActors.size() != 0 : "First generate the timeInfoActors";
 		
@@ -248,7 +278,13 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 		
 		// order queue
 		ArrayList<TimeSlot> q = new ArrayList<TimeSlot>(schedulePipelinedActions);
-		q.sort((o1,o2) -> o1.getStartTime() - o2.getStartTime());
+		q.sort((o1,o2) -> {
+			int result = o1.getStartTime() - o2.getStartTime();
+			if (result == 0) result = o1.getLength() - o2.getLength();
+					return result;
+			});
+		
+		
 		schedulePipelinedActions = new LinkedList<TimeSlot>(q);
 	}	
 		
@@ -295,7 +331,8 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 				resourceName = noc.getName();
 			}
 			Actor actor = heuristic.getApplicationWithMessages().getActors().get(t.getActorId());
-			myWriter.write(actor.getName()+"\t"+t.getStartTime()*scaleFactor+"\t"+t.getEndTime()*scaleFactor+"\t"+resourceName+"\n");
+			if ((resourceName.compareTo("SP") != 0) )
+				myWriter.write(actor.getName()+"\t"+t.getStartTime()*scaleFactor+"\t"+t.getEndTime()*scaleFactor+"\t"+resourceName+"\n");
 		}
 	}
 	
