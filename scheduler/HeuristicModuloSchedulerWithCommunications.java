@@ -256,7 +256,7 @@ public class HeuristicModuloSchedulerWithCommunications extends BaseScheduler im
 		  //System.out.println("MII "+this.P);
 		  
 		  /**
-		   * Instead of increasin one by one, we perform
+		   * Instead of increasing one by one, we perform
 		   * a binary search to do less evaluations to find P
 		   * */ 
 		  
