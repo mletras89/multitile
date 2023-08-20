@@ -254,19 +254,53 @@ public class HeuristicModuloSchedulerWithCommunications extends BaseScheduler im
 		  // set the initial P as MII
 		  this.P = this.MII;
 		  //System.out.println("MII "+this.P);
-		  while(!calculateStartTimes(bindings)) {
+		  
+		  /**
+		   * Instead of increasin one by one, we perform
+		   * a binary search to do less evaluations to find P
+		   * */ 
+		  
+		  int _lowerBound = this.MII;
+		  int _upperBound = _lowerBound + this.MII;
+		  if(!calculateStartTimes(bindings)) {
+			  while(true) {
+				  boolean state  = false;
+				  int lowerBound = _lowerBound;
+				  int upperBound = _upperBound;
+				  
+				  while(true) {
+					  
+					  
+					  this.P = lowerBound + (upperBound-lowerBound)/2;
+					  state = calculateStartTimes(bindings);
+					  
+					  //System.out.println("P "+this.P+" lower "+lowerBound+" upper "+upperBound+" state "+state);
+					  if (lowerBound == upperBound)
+						  break;
+					  
+					  if (state) {
+						  upperBound = this.P;
+					  }
+					  else {
+						  lowerBound = this.P+1;
+					  }
+				  }
+			  
+				  if (state) 
+					  break;
+				  _lowerBound = _upperBound;
+				  _upperBound += this.MII;
+			  }
+		  }
+		  /*while(!calculateStartTimes(bindings)) {
 			  // we increase the period
 			  this.P++;
-			  //System.out.println("\tCYCLED HERE P ="+this.getPeriod());
-			  //if (foldername.contains("dse_00231"))
-				//  System.exit(1);
-		  }
+		  }*/
 		  //System.out.println("HEURISTIC WITH COMMS:: ACTUAL PERIOD "+P);
 		  //System.out.println("HEURISTIC WITH COMMS:: ACTUAL LATENCY "+this.getLantency());
 		  //U.printUtilizationTable(applicationWithMessages.getActors(), coreTypes);
 		  //printTimeInfoActors();
 		  //System.out.println("DONE "+this.P);
-		  
 	  }
 	  
 	  public void printTimeInfoActors() {
@@ -325,7 +359,7 @@ public class HeuristicModuloSchedulerWithCommunications extends BaseScheduler im
 			  }
 		  }
 		  
-		  U = new UtilizationTable(countResourcesPerType,P);
+		  U = new UtilizationTable(countResourcesPerType,this.P);
 		  // compute PCOUNT and SUCC
 		  // PCOUNT: is the number of immediate predecessors of v not yet scheduled  
 		  // SUCC: is the set of all immediate successors of v
@@ -369,7 +403,7 @@ public class HeuristicModuloSchedulerWithCommunications extends BaseScheduler im
 								  if (q.getKey()>= start) 
 									  startTime.put(v, q.getKey());
 							      else {
-							    	  startTime.put(v, start + (P  - (start % P) )  + q.getKey()  );
+							    	  startTime.put(v, start + (this.P  - (start % this.P) )  + q.getKey()  );
 							       }
 								  //System.out.println("new start "+startTime.get(v));
 								  break;
