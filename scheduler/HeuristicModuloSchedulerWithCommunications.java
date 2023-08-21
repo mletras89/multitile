@@ -273,8 +273,6 @@ public class HeuristicModuloSchedulerWithCommunications extends BaseScheduler im
 					  continue;
 				  }
 				  while(true) {
-					  
-					  
 					  this.P = lowerBound + (upperBound-lowerBound)/2;
 					  state = calculateStartTimes(bindings);
 					  
