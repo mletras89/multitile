@@ -254,20 +254,24 @@ public class HeuristicModuloSchedulerWithCommunications extends BaseScheduler im
 		  // set the initial P as MII
 		  this.P = this.MII;
 		  //System.out.println("MII "+this.P);
-		  
 		  /**
 		   * Instead of increasing one by one, we perform
 		   * a binary search to do less evaluations to find P
 		   * */ 
-		  
 		  int _lowerBound = this.MII;
-		  int _upperBound = _lowerBound + this.MII;
+		  int _upperBound = _lowerBound + 30;  //+ this.MII;
 		  if(!calculateStartTimes(bindings)) {
 			  while(true) {
 				  boolean state  = false;
 				  int lowerBound = _lowerBound;
 				  int upperBound = _upperBound;
 				  
+				  this.P = upperBound;
+				  if(!calculateStartTimes(bindings)) {
+					  _lowerBound = _upperBound;
+					  _upperBound += 30;//this.MII;
+					  continue;
+				  }
 				  while(true) {
 					  
 					  
@@ -289,7 +293,7 @@ public class HeuristicModuloSchedulerWithCommunications extends BaseScheduler im
 				  if (state) 
 					  break;
 				  _lowerBound = _upperBound;
-				  _upperBound += this.MII;
+				  _upperBound += 30;//this.MII;
 			  }
 		  }
 		  /*while(!calculateStartTimes(bindings)) {
