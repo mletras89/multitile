@@ -138,11 +138,52 @@ public class HeuristicModuloScheduler extends BaseScheduler implements Schedule{
 	  calculateMII(mappings);
 	  // set the initial P as MII
 	  this.P = this.MII;
+	  /**
+	   * Instead of increasing one by one, we perform
+	   * a binary search to do less evaluations to find P
+	   * */ 
+	  int _lowerBound = this.MII;
+	  int _upperBound = _lowerBound + 30;  //+ this.MII;
+	  if(!calculateStartTimes(mappings)) {
+		  while(true) {
+			  boolean state  = false;
+			  int lowerBound = _lowerBound;
+			  int upperBound = _upperBound;
+			  
+			  this.P = upperBound;
+			  if(!calculateStartTimes(mappings)) {
+				  _lowerBound = _upperBound;
+				  _upperBound += 30;//this.MII;
+				  continue;
+			  }
+			  while(true) {
+				  this.P = lowerBound + (upperBound-lowerBound)/2;
+				  state = calculateStartTimes(mappings);
+				  
+				  //System.out.println("P "+this.P+" lower "+lowerBound+" upper "+upperBound+" state "+state);
+				  if (lowerBound == upperBound)
+					  break;
+				  
+				  if (state) {
+					  upperBound = this.P;
+				  }
+				  else {
+					  lowerBound = this.P+1;
+				  }
+			  }
+		  
+			  if (state) 
+				  break;
+			  _lowerBound = _upperBound;
+			  _upperBound += 30;//this.MII;
+		  }
+	  }
 	  
+	  /*
 	  while(!calculateStartTimes(mappings)) {
 		  // we increase the period
 		  this.P++;
-	  }
+	  }*/
 	  //System.out.println("ACTUAL PERIOD "+P);
 	  //System.out.println("ACTUAL LATENCY "+this.getLantency());
 	  //U.printUtilizationTable(application.getActors(), coreTypes);
