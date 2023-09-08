@@ -259,7 +259,7 @@ public class HeuristicModuloSchedulerWithCommunications extends BaseScheduler im
 		   * a binary search to do less evaluations to find P
 		   * */ 
 		  int _lowerBound = this.MII;
-		  int _upperBound = _lowerBound + 30;  //+ this.MII;
+		  int _upperBound = _lowerBound + this.MII;
 		  if(!calculateStartTimes(bindings)) {
 			  while(true) {
 				  boolean state  = false;
@@ -269,7 +269,7 @@ public class HeuristicModuloSchedulerWithCommunications extends BaseScheduler im
 				  this.P = upperBound;
 				  if(!calculateStartTimes(bindings)) {
 					  _lowerBound = _upperBound;
-					  _upperBound += 30;//this.MII;
+					  _upperBound += this.MII;
 					  continue;
 				  }
 				  while(true) {
@@ -291,7 +291,7 @@ public class HeuristicModuloSchedulerWithCommunications extends BaseScheduler im
 				  if (state) 
 					  break;
 				  _lowerBound = _upperBound;
-				  _upperBound += 30;//this.MII;
+				  _upperBound += this.MII;
 			  }
 		  }
 		  /*while(!calculateStartTimes(bindings)) {
