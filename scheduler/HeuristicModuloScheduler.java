@@ -143,7 +143,7 @@ public class HeuristicModuloScheduler extends BaseScheduler implements Schedule{
 	   * a binary search to do less evaluations to find P
 	   * */ 
 	  int _lowerBound = this.MII;
-	  int _upperBound = _lowerBound + 30;  //+ this.MII;
+	  int _upperBound = _lowerBound + this.MII;  //+ this.MII;
 	  if(!calculateStartTimes(mappings)) {
 		  while(true) {
 			  boolean state  = false;
@@ -153,14 +153,14 @@ public class HeuristicModuloScheduler extends BaseScheduler implements Schedule{
 			  this.P = upperBound;
 			  if(!calculateStartTimes(mappings)) {
 				  _lowerBound = _upperBound;
-				  _upperBound += 30;//this.MII;
+				  _upperBound += this.MII;
 				  continue;
 			  }
 			  while(true) {
 				  this.P = lowerBound + (upperBound-lowerBound)/2;
 				  state = calculateStartTimes(mappings);
 				  
-				  //System.out.println("P "+this.P+" lower "+lowerBound+" upper "+upperBound+" state "+state);
+				  //<System.out.println("P "+this.P+" lower "+lowerBound+" upper "+upperBound+" state "+state);
 				  if (lowerBound == upperBound)
 					  break;
 				  
@@ -175,7 +175,7 @@ public class HeuristicModuloScheduler extends BaseScheduler implements Schedule{
 			  if (state) 
 				  break;
 			  _lowerBound = _upperBound;
-			  _upperBound += 30;//this.MII;
+			  _upperBound += this.MII;
 		  }
 	  }
 	  
