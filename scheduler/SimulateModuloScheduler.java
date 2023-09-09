@@ -62,7 +62,8 @@ import java.util.*;
 
 public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 	
-	private HeuristicModuloSchedulerWithCommunications heuristic;
+	//private HeuristicModuloSchedulerWithCommunications heuristic;
+	private HeuristicModuloSchedulerConstrained heuristic;
 	// key: core type
 	// value:
 	//		Key: processor index
@@ -73,7 +74,8 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 	private Queue<TimeSlot> schedulePipelinedActions;
 	private int startKernel;
 	
-	public SimulateModuloScheduler(Architecture architecture, Application application,HeuristicModuloSchedulerWithCommunications heuristic){
+	//public SimulateModuloScheduler(Architecture architecture, Application application,HeuristicModuloSchedulerWithCommunications heuristic){
+	public SimulateModuloScheduler(Architecture architecture, Application application,HeuristicModuloSchedulerConstrained heuristic){
 		super();
 		this.setApplication(application);
 		this.setArchitecture(architecture);
@@ -101,7 +103,8 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 		return Collections.max(endTimes);
 	}
 	
-	public HeuristicModuloSchedulerWithCommunications getHeuristic() {
+	//public HeuristicModuloSchedulerWithCommunications getHeuristic() {
+	public HeuristicModuloSchedulerConstrained getHeuristic() {
 		return heuristic;
 	}
 	
@@ -124,12 +127,13 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 		// key: is the MRB FIFO
 		// value: number of reads
 		HashMap<Integer,Integer> readsMRB = new HashMap<>();
-		
+		HashMap<Integer,Integer> capacityFifo = new HashMap<>();
 		
 		for(Map.Entry<Integer, Fifo> f: application.getFifos().entrySet()) {
 			TreeMap<Double,Integer> tokensCounting = new TreeMap<>();
 			tokensCounting.put(0.0, f.getValue().getInitialTokens());
 			mapTokensCounting.put(f.getKey(), tokensCounting);
+			capacityFifo.put(f.getKey(), 1);
 			if (f.getValue().isCompositeChannel())
 				readsMRB.put(f.getKey(), 0);
 		}
@@ -152,17 +156,24 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 						insertTime += 0000000000000000000000001;  // this trick to track the reads from local memories
 					if(fifo.isCompositeChannel())
 						readsMRB.put(fifo.getId(), readsMRB.get(fifo.getId())+1);
+					// before read I have to adjust the capacities of those fifos connected at the output of the actor reading this fifo
+					checkAndIncreseTargetFifos(fifo, capacityFifo, mapTokensCounting, insertTime);
 				}
 				insertCommunicationsInSchedule(mapTokensCounting, fifo, nTokens, insertTime, readsMRB);
 				l.add(t);
+				//update the capacity
+				TreeMap<Double,Integer> tokensCounting = mapTokensCounting.get(fifo.getId());
+				int fifoCapacity = Collections.max(tokensCounting.values());
+				if (capacityFifo.get(fifo.getId()) < fifoCapacity)
+					capacityFifo.put(fifo.getId(), fifoCapacity);
 			}
 		}
 		//printCommunicationsInSchedule(mapTokensCounting);
 		// then set the FIFO capacities
-		for(Map.Entry<Integer, TreeMap<Double,Integer>> m : mapTokensCounting.entrySet()) {
-			Fifo fifo = application.getFifos().get(m.getKey());
-			TreeMap<Double,Integer> tokensCounting = m.getValue();
-			int fifoCapacity = Collections.max(tokensCounting.values());
+		for(Map.Entry<Integer, Integer> f: capacityFifo.entrySet()) {
+			Fifo fifo = application.getFifos().get(f.getKey());
+			TreeMap<Double,Integer> tokensCounting = mapTokensCounting.get(fifo.getId());
+			int fifoCapacity = f.getValue();
 			assert fifoCapacity > 0 : "Capacity must not be negative or zero, Capacity="+fifoCapacity+" fifo: "+fifo.getName();
 			
 			int fifoMinVal = Collections.min(tokensCounting.values());
@@ -171,7 +182,7 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 			if (fifoCapacity == 0)
 				fifoCapacity = (fifo.getConsRate() >= fifo.getProdRate()) ? fifo.getConsRate() : fifo.getProdRate();
 				
-			application.getFifos().get(m.getKey()).set_capacity(fifoCapacity);
+			application.getFifos().get(f.getKey()).set_capacity(fifoCapacity+10);
 		}
 	}
 	
@@ -186,6 +197,33 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 			}
 		}
 	}
+	
+	public void checkAndIncreseTargetFifos(Fifo fifo, HashMap<Integer,Integer> capacityFifo,HashMap<Integer, TreeMap<Double,Integer> > mapTokensCounting, double time){
+		Actor destination = fifo.getDestination();
+		for(Fifo f : destination.getOutputFifos()) {
+			int prod = f.getProdRate();
+			int storedTokens = checkCurrentStoredTokens(mapTokensCounting, f, time);
+			if (capacityFifo.get(f.getId()) <  storedTokens + prod)
+				capacityFifo.put(f.getId() ,  storedTokens + prod);
+		}
+	}
+	
+	public int checkCurrentStoredTokens(HashMap<Integer, TreeMap<Double,Integer> > mapTokensCounting, Fifo fifo, double time) {
+		// tokens might be positive or negative
+		// in case of positive, tokens have been produced
+		// in case of negative, tokens must be consumed
+		//HashMap<Integer, TreeMap<Integer,Integer> > result = mapTokensCounting;
+		TreeMap<Double,Integer> tokensCounting = mapTokensCounting.get(fifo.getId());
+		
+		int count =0 ;
+		for(Map.Entry<Double, Integer> t : tokensCounting.entrySet()) {
+			if( t.getKey() <= time )
+				count = t.getValue();
+		}
+
+		return count;
+	}
+	
 	
 	public void insertCommunicationsInSchedule(HashMap<Integer, TreeMap<Double,Integer> > mapTokensCounting, Fifo fifo, int tokens, double time, HashMap<Integer,Integer> readsMRB) {
 		// tokens might be positive or negative
