@@ -345,41 +345,82 @@ public class HeuristicModuloSchedulerConstrained extends BaseScheduler implement
 			  List<Integer> removeV = new ArrayList<>();
 			  for (int k = 0 ; k < V.size();k++) {
 				  int v = V.get(k);
-				  MyEntry<Integer,ArrayList<Integer>> infoBoundResources = this.getBoundResources(bindings, v);
-				  ArrayList<Integer> boundResources = infoBoundResources.getValue();
-				  int discreteRuntime = infoBoundResources.getKey();
+				  
 				  /* Check whether data dependences are satisfied */
 				  if (PCOUNT.get(v) == 0) {
-					  //System.out.println("\nscheduling "+applicationWithMessages.getActors().get(v).getName()+" runtime "+discreteRuntime+" bound Resources "+boundResources+" want starts "+startTime.get(v));
-						/* Check that no more than num(r(v)) operations are scheduled on the
-	           			resources corresponding to *R(r(v)) at the same time modulo MII */
-					  int start = startTime.get(v);
-					  //int upperBound = (Math.floorDiv(start,this.P) + 1) * P; 
-					  /**
-					   *FASTER IMPLEMENTATION UNDER EVALUATION
-					   */
-					  if(!U.insertIntervalUtilizationTable(v, boundResources, startTime.get(v), startTime.get(v)+discreteRuntime ,discreteRuntime)) {
-						  // It was not possible to insert in the suggested start time, then I have to get the candidate start times
-						  /**Only evaluatates at the point in time where there is enough space in the bound resources**/
-						  Queue<MyEntry<Integer,Integer>> candidateStartTimes = U.getCandidateStartsInBoundResources(boundResources, startTime.get(v), discreteRuntime);
-						  boolean state = false;
-						  for(MyEntry<Integer,Integer> q : candidateStartTimes) {
-							  state = U.insertIntervalUtilizationTable(v, boundResources, q.getKey(), q.getKey()+discreteRuntime ,discreteRuntime) ;
-							  if(state){
-								  //System.out.println("q.getKey() "+q.getKey() +" start "+start);
-								  if (q.getKey()>= start) 
-									  startTime.put(v, q.getKey());
-							      else {
-							    	  startTime.put(v, start + (this.P  - (start % this.P) )  + q.getKey()  );
-							       }
-								  //System.out.println("new start "+startTime.get(v));
-								  break;
-							  }
-						  }
-						  if (!state)
-							  return false;
-					  }	  
+					  HashMap<CommunicationTask,Integer> startTimes = new HashMap<>();
+					  MyEntry<Integer,ArrayList<Integer>> infoBoundResources = this.getBoundResources(bindings, v);
+					  ArrayList<Integer> boundResources = infoBoundResources.getValue();
+					  int discreteRuntime = infoBoundResources.getKey();
 					  
+					  int wholeExecTime = discreteRuntime;
+					  for(CommunicationTask  c: actorReads.get(v)) {
+						  MyEntry<Integer,ArrayList<Integer>> infoBoundResourcesCTask = this.getBoundResources(bindings, c.getId());
+						  wholeExecTime += infoBoundResourcesCTask.getKey();
+					  }
+					  for(CommunicationTask  c: actorWrites.get(v)) {
+						  MyEntry<Integer,ArrayList<Integer>> infoBoundResourcesCTask = this.getBoundResources(bindings, c.getId());
+						  wholeExecTime += infoBoundResourcesCTask.getKey();
+					  }
+					  int start = startTime.get(v);
+					  
+					  // get the candidate start times in the bound core
+					  MyEntry<Integer,Integer> asapStartTime = new MyEntry<Integer,Integer>(start,wholeExecTime); 
+					  Queue<MyEntry<Integer,Integer>> candidateStartTimes = U.getCandidateStartsInBoundResources(boundResources, startTime.get(v),wholeExecTime);
+					  Queue<MyEntry<Integer,Integer>> setCandidateStartTimes = new LinkedList<>();
+					  setCandidateStartTimes.add(asapStartTime);
+					  setCandidateStartTimes.addAll(candidateStartTimes);
+					  boolean state = false;
+					  // first check if I can use the suggested start time
+					  for(MyEntry<Integer,Integer> q : candidateStartTimes) {
+						  if(U.canInsertIntervalUtilizationTable(v, boundResources, q.getKey(), q.getKey()+wholeExecTime ,wholeExecTime)) {
+							  // propose a start time for each communication task 
+							  startTimes = new HashMap<>();
+							  // first set the reads
+							  int taskStart = q.getKey();
+							  for(CommunicationTask c : actorReads.get(v)) {
+								  startTimes.put(c, taskStart);
+								  taskStart += c.getDiscretizedRuntime();
+							  }
+							  taskStart += discreteRuntime;
+							  for(CommunicationTask c : actorReads.get(v)) {
+								  startTimes.put(c, taskStart);
+								  taskStart += c.getDiscretizedRuntime();
+							  }
+							  ArrayList<Boolean> canSchedule = new ArrayList<>();
+							  for(Map.Entry<CommunicationTask, Integer> sp : startTimes.entrySet()) {
+								  CommunicationTask c = sp.getKey();
+								  MyEntry<Integer,ArrayList<Integer>> infoBoundResourcesCTask = this.getBoundResources(bindings, c.getId());
+								  if(U.canInsertIntervalUtilizationTable(c.getId(), infoBoundResourcesCTask.getValue(), sp.getValue(), sp.getValue() +  c.getDiscretizedRuntime(), c.getDiscretizedRuntime()))
+									  canSchedule.add(true);
+								  else
+									  break;
+							  }
+							  if (canSchedule.size() != startTimes.size())
+								  continue;
+							  canSchedule = new ArrayList<Boolean>( new HashSet<Boolean>(canSchedule));
+							  if (canSchedule.size() == 1) {
+								  if (canSchedule.get(0) == false)  // paranoia checks
+									  continue;}
+							  else
+								  continue; // paranoia checks
+							  // then I can schedule all the tasks
+							  // schedule the core
+							  boolean successSchedule = U.insertIntervalUtilizationTable(v, boundResources, q.getKey(), q.getKey()+wholeExecTime , wholeExecTime);
+							  assert successSchedule : "This must not happen";
+							  for(Map.Entry<CommunicationTask, Integer> sp : startTimes.entrySet()) {
+								  CommunicationTask c = sp.getKey();
+								  MyEntry<Integer,ArrayList<Integer>> infoBoundResourcesCTask = this.getBoundResources(bindings, c.getId());
+								  successSchedule = U.insertIntervalUtilizationTable(c.getId(), infoBoundResourcesCTask.getValue(), sp.getValue(), sp.getValue() + c.getDiscretizedRuntime() , c.getDiscretizedRuntime());
+								  assert successSchedule : "This must not happen";
+							  }
+							  state = true;
+							  break;  // succes in scheduling all the tasks
+						  }
+					  }
+					  if(!state)
+						  return false;
+
 					  /** THIS CODE BELOGN TO A BACKUP WORKING IMP MORE TIME DEMANDING
 					   * int upperBound = start % this.P;
 					  //System.out.println("actor "+application.getActors().get(v).getName()+ " lenght "+discreteRuntime);
@@ -392,15 +433,18 @@ public class HeuristicModuloSchedulerConstrained extends BaseScheduler implement
 							  //System.exit(1);  // here I have to increase the MII
 						  }  
 					  }*/
-					  //System.out.println("SCHEDULED "+applicationWithMessages.getActors().get(v).getName()+" runtime "+discreteRuntime+" bound Resources "+boundResources+" starts "+startTime.get(v));
-					  //U.printUtilizationTable(applicationWithMessages.getActors(), coreTypes);
-					  timeInfoActors.put(v, new TimeSlot(v, startTime.get(v),startTime.get(v) + discreteRuntime ));
-					  
+					  // update info for actor
+					  timeInfoActors.put(v, new TimeSlot(v, startTime.get(v),startTime.get(v) + wholeExecTime ));
+					  // update info for communication tasks
+					  for(Map.Entry<CommunicationTask, Integer> sp : startTimes.entrySet()) {
+						  CommunicationTask c = sp.getKey();
+						  timeInfoActors.put(c.getId(), new TimeSlot(c.getId(), sp.getValue(), sp.getValue() + c.getDiscretizedRuntime()));
+					  }
 					  for (int w : SUCC.get(v)) {
 						  PCOUNT.put(w, PCOUNT.get(w) -1 );
 						  //if (startTime.get(w) <= (startTime.get(v)+ discreteRuntime))
 						  //    startTime.put(w,startTime.get(v)+ discreteRuntime);
-						  int maxVal = startTime.get(w) > (startTime.get(v)+ discreteRuntime)  ? startTime.get(w) : (startTime.get(v)+discreteRuntime);
+						  int maxVal = startTime.get(w) > (startTime.get(v)+ wholeExecTime)  ? startTime.get(w) : (startTime.get(v)+wholeExecTime);
 						  startTime.put(w,maxVal);
 					  }
 					  
