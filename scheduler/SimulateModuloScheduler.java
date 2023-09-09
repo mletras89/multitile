@@ -139,18 +139,20 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 		}
 		ArrayList<TimeSlot> l = new ArrayList<>();
 		for(TimeSlot t :  schedulePipelinedActions) {
-			Actor actor = heuristic.getApplicationWithMessages().getActors().get(t.getActorId());
 			Processor p = architecture.isProcessor(t.getResourceId());
-			if((actor.getType() == ACTOR_TYPE.READ_COMMUNICATION_TASK || actor.getType() == ACTOR_TYPE.WRITE_COMMUNICATION_TASK) && p == null && !l.contains(t)) {
-				//System.err.println("\nCOMM TASK "+actor.getName()+" at "+t);
-				CommunicationTask communication = (CommunicationTask)(actor);
+			if(heuristic.getSetCommunicationTasks().containsKey(t.getActorId()) && p == null && !l.contains(t) ) {
+				CommunicationTask communication = null;
+				if (heuristic.getSetCommunicationTasks().containsKey(t.getActorId()) )
+					communication = heuristic.getSetCommunicationTasks().get(t.getActorId());
+				assert communication != null : "This should never happen";
+				
 				Fifo fifo = communication.getFifo();
 				//System.err.println("fifo:"+fifo.getName()+"CONS: "+fifo.getProdRate()+" PRD:"+fifo.getConsRate());
 				int nTokens = 0;
 				double insertTime = t.getEndTime()*scaleFactor;
-				if (actor.getType() == ACTOR_TYPE.WRITE_COMMUNICATION_TASK) 
+				if (communication.getType() == ACTOR_TYPE.WRITE_COMMUNICATION_TASK) 
 					nTokens += fifo.getConsRate();
-				if (actor.getType() == ACTOR_TYPE.READ_COMMUNICATION_TASK) {
+				if (communication.getType() == ACTOR_TYPE.READ_COMMUNICATION_TASK) {
 					nTokens -= fifo.getProdRate();
 					if(t.getLength() == 0)
 						insertTime += 0000000000000000000000001;  // this trick to track the reads from local memories
@@ -165,7 +167,7 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 				TreeMap<Double,Integer> tokensCounting = mapTokensCounting.get(fifo.getId());
 				int fifoCapacity = Collections.max(tokensCounting.values());
 				if (capacityFifo.get(fifo.getId()) < fifoCapacity)
-					capacityFifo.put(fifo.getId(), fifoCapacity);
+					capacityFifo.put(fifo.getId(), fifoCapacity);				
 			}
 		}
 		//printCommunicationsInSchedule(mapTokensCounting);
@@ -368,7 +370,12 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 			if(noc != null) {
 				resourceName = noc.getName();
 			}
-			Actor actor = heuristic.getApplicationWithMessages().getActors().get(t.getActorId());
+			Actor actor = null;
+			if (heuristic.getApplication().getActors().containsKey(t.getActorId()))
+				actor = heuristic.getApplication().getActors().get(t.getActorId());  
+			if (heuristic.getSetCommunicationTasks().containsKey(t.getActorId()))
+				actor = heuristic.getSetCommunicationTasks().get(t.getActorId());
+			assert actor != null : "This should never happen!!!!!";
 			if ((resourceName.compareTo("SP") != 0) )
 				myWriter.write(actor.getName()+"\t"+t.getStartTime()*scaleFactor+"\t"+t.getEndTime()*scaleFactor+"\t"+resourceName+"\n");
 		}
