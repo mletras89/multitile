@@ -328,10 +328,39 @@ public class UtilizationTable {
 	}
 
 	
+	public boolean canInsertIntervalUtilizationTable(int actorId, ArrayList<Integer> boundResources, int startTime, int endTime, int length) {
+		if (length>P)
+			return false;
+		
+		// normalize startTime and endTIme
+		startTime = startTime % P;
+		endTime = endTime % P;
+		
+		if (endTime == 0)
+			endTime = P;
+		//System.out.println("TRYING AT "+startTime+" to "+endTime);
+		
+		if(endTime > startTime || length==0) {
+			// try to insert a single interval
+			TimeSlot ts = new TimeSlot(actorId,startTime,endTime);
+			if (canInsertInBoundResources(boundResources,ts)) {
+				return true;
+			}
+		}else {
+			// create two intervals and try to insert them
+			TimeSlot ts1 = new TimeSlot(actorId,startTime,P);
+			TimeSlot ts2 = new TimeSlot(actorId,0, endTime);
+			ts1.split = true;
+			ts2.split = true;
+			if (canInsertInBoundResources(boundResources,ts1) && canInsertInBoundResources(boundResources,ts2)) {
+				return true;
+			}
+		}
+		return false;
+	}
 	
 	
-	
-	public boolean insertIntervalUtilizationTable(int actorId, ArrayList<Integer> boundResources, int startTime, int endTime, int length	) {
+	public boolean insertIntervalUtilizationTable(int actorId, ArrayList<Integer> boundResources, int startTime, int endTime, int length) {
 		if (length>P)
 			return false;
 		
