@@ -242,16 +242,19 @@ private HashMap<Integer, CommunicationTask> setCommunicationTasks;
 				  int upperBound = _upperBound;
 				  
 				  this.P = upperBound;
+				  System.out.println("P "+this.P+" lower "+lowerBound+" upper "+upperBound+" state "+state);
 				  if(!calculateStartTimes(bindings)) {
 					  _lowerBound = _upperBound;
 					  _upperBound += this.MII;
+					  //System.exit(1);
 					  continue;
 				  }
+				 
 				  while(true) {
 					  this.P = lowerBound + (upperBound-lowerBound)/2;
 					  state = calculateStartTimes(bindings);
 					  
-					  //System.out.println("P "+this.P+" lower "+lowerBound+" upper "+upperBound+" state "+state);
+					  System.out.println("P "+this.P+" lower "+lowerBound+" upper "+upperBound+" state "+state);
 					  if (lowerBound == upperBound)
 						  break;
 					  
@@ -261,6 +264,7 @@ private HashMap<Integer, CommunicationTask> setCommunicationTasks;
 					  else {
 						  lowerBound = this.P+1;
 					  }
+					  
 				  }
 			  
 				  if (state) 
@@ -342,13 +346,13 @@ private HashMap<Integer, CommunicationTask> setCommunicationTasks;
 			  PCOUNT.put(actor.getKey(), getPCOUNT(actor.getValue()));
 			  SUCC.put(actor.getKey(), getSUCC(actor.getValue()));
 		  }
-		  
+		  System.out.println("Testing period "+this.P);
 		  
 		  while(!V.isEmpty()) {
 			  List<Integer> removeV = new ArrayList<>();
 			  for (int k = 0 ; k < V.size();k++) {
 				  int v = V.get(k);
-				  
+				  System.out.println("Scheduling actor "+application.getActors().get(v).getName());
 				  /* Check whether data dependences are satisfied */
 				  if (PCOUNT.get(v) == 0) {
 					  HashMap<CommunicationTask,Integer> startTimes = new HashMap<>();
@@ -360,36 +364,52 @@ private HashMap<Integer, CommunicationTask> setCommunicationTasks;
 					  for(CommunicationTask  c: actorReads.get(v)) {
 						  MyEntry<Integer,ArrayList<Integer>> infoBoundResourcesCTask = this.getBoundResources(bindings, c.getId());
 						  wholeExecTime += infoBoundResourcesCTask.getKey();
+						  //System.out.println("Read "+c.getName()+" costs "+infoBoundResourcesCTask.getKey());
 					  }
 					  for(CommunicationTask  c: actorWrites.get(v)) {
 						  MyEntry<Integer,ArrayList<Integer>> infoBoundResourcesCTask = this.getBoundResources(bindings, c.getId());
 						  wholeExecTime += infoBoundResourcesCTask.getKey();
+						  //System.out.println("Write "+c.getName()+" costs "+infoBoundResourcesCTask.getKey());
 					  }
-					  int start = startTime.get(v);
+					  System.out.println("Scheduling actor "+application.getActors().get(v).getName()+" discreteRuntime "+discreteRuntime + " wholeExecTime "+wholeExecTime);
 					  
+					  int start = startTime.get(v);
+					  //System.out.println("here1 ");
 					  // get the candidate start times in the bound core
 					  MyEntry<Integer,Integer> asapStartTime = new MyEntry<Integer,Integer>(start,wholeExecTime); 
 					  Queue<MyEntry<Integer,Integer>> candidateStartTimes = U.getCandidateStartsInBoundResources(boundResources, startTime.get(v),wholeExecTime);
 					  Queue<MyEntry<Integer,Integer>> setCandidateStartTimes = new LinkedList<>();
 					  setCandidateStartTimes.add(asapStartTime);
 					  setCandidateStartTimes.addAll(candidateStartTimes);
+					  //System.out.println("set candidate starts "+setCandidateStartTimes+" wholeExecTime"+wholeExecTime+" discreteRuntime "+discreteRuntime);
+					  
 					  boolean state = false;
+					  //System.out.println("start "+start);
+					  //int upperBound = start % this.P;
+					  //System.out.println("Upper bound "+upperBound);
+					  //System.exit(1);
 					  // first check if I can use the suggested start time
-					  for(MyEntry<Integer,Integer> q : candidateStartTimes) {
-						  if(U.canInsertIntervalUtilizationTable(v, boundResources, q.getKey(), q.getKey()+wholeExecTime ,wholeExecTime)) {
+					  //for(MyEntry<Integer,Integer> q : candidateStartTimes) {
+					  //startTime.put(v, startTime.get(v)-1);
+					  System.out.println("startTIME!!! "+startTime.get(v)+" upperBound "+(startTime.get(v)+this.P) + " startTime.get(v) % P "+startTime.get(v) % this.P+" PERIOD "+this.P );
+					  for(int startT = startTime.get(v); startT < startTime.get(v)+this.P; startT++) {
+						  if(U.canInsertIntervalUtilizationTable(v, boundResources, startT, startT+wholeExecTime ,wholeExecTime)) {
 							  // propose a start time for each communication task 
 							  startTimes = new HashMap<>();
 							  // first set the reads
-							  int taskStart = q.getKey();
+							  int taskStart = startT;
+							  int lengthReads = 0;
 							  for(CommunicationTask c : actorReads.get(v)) {
 								  startTimes.put(c, taskStart);
 								  taskStart += c.getDiscretizedRuntime();
+								  lengthReads += c.getDiscretizedRuntime();
 							  }
 							  taskStart += discreteRuntime;
-							  for(CommunicationTask c : actorReads.get(v)) {
+							  for(CommunicationTask c : actorWrites.get(v)) {
 								  startTimes.put(c, taskStart);
 								  taskStart += c.getDiscretizedRuntime();
 							  }
+							  //System.exit(1);
 							  ArrayList<Boolean> canSchedule = new ArrayList<>();
 							  for(Map.Entry<CommunicationTask, Integer> sp : startTimes.entrySet()) {
 								  CommunicationTask c = sp.getKey();
@@ -397,39 +417,52 @@ private HashMap<Integer, CommunicationTask> setCommunicationTasks;
 								  if(U.canInsertIntervalUtilizationTable(c.getId(), infoBoundResourcesCTask.getValue(), sp.getValue(), sp.getValue() +  c.getDiscretizedRuntime(), c.getDiscretizedRuntime()))
 									  canSchedule.add(true);
 								  else
-									  break;
+									  canSchedule.add(false);
 							  }
-							  if (canSchedule.size() != startTimes.size())
-								  continue;
 							  canSchedule = new ArrayList<Boolean>( new HashSet<Boolean>(canSchedule));
-							  if (canSchedule.size() == 1) {
-								  if (canSchedule.get(0) == false)  // paranoia checks
-									  continue;}
-							  else
-								  continue; // paranoia checks
+							  if (canSchedule.size() == 2) 
+								  continue;
+							  
+							  if (canSchedule.size() == 1) 
+								  if (canSchedule.get(0) == false)   
+									  continue;
 							  // then I can schedule all the tasks
 							  // schedule the core
-							  boolean successSchedule = U.insertIntervalUtilizationTable(v, boundResources, q.getKey(), q.getKey()+wholeExecTime , wholeExecTime);
+							  boolean successSchedule = U.insertIntervalUtilizationTable(v, boundResources, startT+lengthReads, startT+lengthReads+discreteRuntime , discreteRuntime);
 							  assert successSchedule : "This must not happen";
 							  for(Map.Entry<CommunicationTask, Integer> sp : startTimes.entrySet()) {
 								  CommunicationTask c = sp.getKey();
 								  MyEntry<Integer,ArrayList<Integer>> infoBoundResourcesCTask = this.getBoundResources(bindings, c.getId());
-								  successSchedule = U.insertIntervalUtilizationTable(c.getId(), infoBoundResourcesCTask.getValue(), sp.getValue(), sp.getValue() + c.getDiscretizedRuntime() , c.getDiscretizedRuntime());
+								  ArrayList<Integer> listBoundResources = infoBoundResourcesCTask.getValue();
+								  successSchedule = U.insertIntervalUtilizationTable(c.getId(),listBoundResources , sp.getValue(), sp.getValue() + c.getDiscretizedRuntime() , c.getDiscretizedRuntime());
+								  U.printUtilizationTable(application.getActors(), setCommunicationTasks, coreTypes);
+								  System.out.println("Tryng to insert "+c.getName()+"at "+sp.getValue()+" on "+listBoundResources+" length "+c.getDiscretizedRuntime());
 								  assert successSchedule : "This must not happen";
 							  }
+							  if (startT>= start) 
+								  startTime.put(v, startT);
+						      else {
+						    	  startTime.put(v, start + (this.P  - (start % this.P) )  + startT  );
+						       }
+							  //correct the start times
 							  state = true;
 							  break;  // succes in scheduling all the tasks
 						  }
 					  }
 					  if(!state)
 						  return false;
-
-					  // update info for actor
-					  timeInfoActors.put(v, new TimeSlot(v, startTime.get(v),startTime.get(v) + wholeExecTime ));
 					  // update info for communication tasks
-					  for(Map.Entry<CommunicationTask, Integer> sp : startTimes.entrySet()) {
-						  CommunicationTask c = sp.getKey();
-						  timeInfoActors.put(c.getId(), new TimeSlot(c.getId(), sp.getValue(), sp.getValue() + c.getDiscretizedRuntime()));
+					  int taskStart = startTime.get(v);
+					  for(CommunicationTask c : actorReads.get(v)) {
+						  timeInfoActors.put(c.getId(), new TimeSlot(c.getId(), taskStart, taskStart + c.getDiscretizedRuntime()));
+						  taskStart += c.getDiscretizedRuntime();
+					  }
+					  // update info for actor
+					  timeInfoActors.put(v, new TimeSlot(v, taskStart,taskStart + discreteRuntime ));
+					  taskStart += discreteRuntime;
+					  for(CommunicationTask c : actorWrites.get(v)) {
+						  timeInfoActors.put(c.getId(), new TimeSlot(c.getId(), taskStart, taskStart + c.getDiscretizedRuntime()));
+						  taskStart += c.getDiscretizedRuntime();
 					  }
 					  for (int w : SUCC.get(v)) {
 						  PCOUNT.put(w, PCOUNT.get(w) -1 );
@@ -438,7 +471,7 @@ private HashMap<Integer, CommunicationTask> setCommunicationTasks;
 						  int maxVal = startTime.get(w) > (startTime.get(v)+ wholeExecTime)  ? startTime.get(w) : (startTime.get(v)+wholeExecTime);
 						  startTime.put(w,maxVal);
 					  }
-					  
+					  System.out.println("scheduled "+application.getActors().get(v).getName());
 					  removeV.add(v);
 					  break;
 				  }
