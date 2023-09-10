@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Queue;
 
 import multitile.application.Actor;
+import multitile.application.CommunicationTask;
 import multitile.application.MyEntry;
 import multitile.architecture.Architecture;
 import multitile.architecture.Crossbar;
@@ -154,7 +155,7 @@ public class UtilizationTable {
 	
 	
 	public UtilizationTable(HashMap<Integer,Integer> countCoresPerType, int P) {
-		//System.out.println("countCoresPerType "+countCoresPerType );
+		//System.out.println("countCoresPerType "+countCsoresPerType );
 		
 		this.countCoresPerType = new HashMap<>(countCoresPerType);
 		utilizationTab = new HashMap<>();
@@ -188,7 +189,23 @@ public class UtilizationTable {
 			}
 		}
 	}
-	
+
+	public void printUtilizationTable(Map<Integer, Actor> actors,Map<Integer, CommunicationTask> setCommTasks, ArrayList<String>  coreTypes ) {
+		for(Map.Entry<Integer,Map<Integer,LinkedList<TimeSlot>>>  e : utilizationTab.entrySet()) {
+			System.out.println("Core Type "+e.getKey());
+			Map<Integer,LinkedList<TimeSlot>> util = e.getValue();
+			for(Map.Entry<Integer,LinkedList<TimeSlot>> u : util.entrySet()) {
+				LinkedList<TimeSlot> slots = u.getValue();
+				System.out.println("\tCore # "+u.getKey()+" : ");
+				for(TimeSlot ts : slots) {
+					if (actors.containsKey(ts.getActorId()))
+						System.out.println("\t\tActor "+actors.get(ts.getActorId()).getName()+" starts "+ts.getStartTime()+" ends "+ts.getEndTime()+" lenght "+ts.getLength());
+					if (setCommTasks.containsKey(ts.getActorId()))
+						System.out.println("\t\tActor "+setCommTasks.get(ts.getActorId()).getName()+" starts "+ts.getStartTime()+" ends "+ts.getEndTime()+" lenght "+ts.getLength());
+				}
+			}
+		}
+	}
 	
 	public Map<Integer,Map<Integer,LinkedList<TimeSlot>>> getUtilizationTable(){
 		return this.utilizationTab;
@@ -215,7 +232,7 @@ public class UtilizationTable {
 	    myWriter.close();
 	}
 	
-	public void saveKernelWithCommunications(String path, Map<Integer, Actor> actors, Architecture architecture, double scaleFactor) throws IOException{
+	public void saveKernelWithCommunications(String path, Map<Integer, Actor> actors, Map<Integer, CommunicationTask> setCommunicationTasks, Architecture architecture, double scaleFactor) throws IOException{
 		try{
 			File memUtilStatics = new File(path+"/heuristicSchedule-RepetitionKernel-with-Communications.csv");
 			if (memUtilStatics.createNewFile()) {
@@ -231,7 +248,7 @@ public class UtilizationTable {
 	
 		FileWriter myWriter = new FileWriter(path+"/heuristicSchedule-RepetitionKernel-with-Communications.csv"); 
 		myWriter.write("Job\tStart\tFinish\tResource\n");
-		saveScheduleKernelWithCommunicationsStats(myWriter, actors, architecture, scaleFactor);
+		saveScheduleKernelWithCommunicationsStats(myWriter, actors, setCommunicationTasks, architecture, scaleFactor);
 	
 	    myWriter.close();
 	}
@@ -255,7 +272,7 @@ public class UtilizationTable {
 		}
 	}
 	
-	public void saveScheduleKernelWithCommunicationsStats(FileWriter myWriter, Map<Integer, Actor> actors, Architecture architecture, double scaleFactor) throws IOException{
+	public void saveScheduleKernelWithCommunicationsStats(FileWriter myWriter, Map<Integer, Actor> actors, Map<Integer, CommunicationTask> setCommunicationTasks, Architecture architecture, double scaleFactor) throws IOException{
 		for(Map.Entry<Integer,Map<Integer,LinkedList<TimeSlot>>>  e : utilizationTab.entrySet()) {
 			//System.out.println("Core Type "+e.getKey());
 			// e.getKey() resource id
@@ -279,14 +296,19 @@ public class UtilizationTable {
 					if(noc != null) {
 						resourceName = noc.getName();
 					}		
+					Actor selectActor = null;
+					if(actors.containsKey(ts.getActorId()))
+						selectActor = actors.get(ts.getActorId());
+					if(setCommunicationTasks.containsKey(ts.getActorId()))
+						selectActor = setCommunicationTasks.get(ts.actorId);
 					
 					if ((resourceName.compareTo("SP") != 0) )
 						if (ts.getStartTime() == ts.getEndTime() && ts.getLength() != 0 ) {
-							myWriter.write(actors.get(ts.getActorId()).getName()+"\t"+0+"\t"+ts.getEndTime()*scaleFactor+"\t"+resourceName+"\n");
+							myWriter.write(selectActor.getName()+"\t"+0+"\t"+ts.getEndTime()*scaleFactor+"\t"+resourceName+"\n");
 							
-							myWriter.write(actors.get(ts.getActorId()).getName()+"\t"+ts.getStartTime()*scaleFactor+"\t"+this.P*scaleFactor+"\t"+resourceName+"\n");
+							myWriter.write(selectActor.getName()+"\t"+ts.getStartTime()*scaleFactor+"\t"+this.P*scaleFactor+"\t"+resourceName+"\n");
 						}else
-							myWriter.write(actors.get(ts.getActorId()).getName()+"\t"+ts.getStartTime()*scaleFactor+"\t"+ts.getEndTime()*scaleFactor+"\t"+resourceName+"\n");
+							myWriter.write(selectActor.getName()+"\t"+ts.getStartTime()*scaleFactor+"\t"+ts.getEndTime()*scaleFactor+"\t"+resourceName+"\n");
 				}
 			}			
 			
@@ -368,7 +390,7 @@ public class UtilizationTable {
 		startTime = startTime % P;
 		endTime = endTime % P;
 		
-		if (endTime == 0)
+		if (endTime == 0 && length!=0)
 			endTime = P;
 		//System.out.println("TRYING AT "+startTime+" to "+endTime);
 		
