@@ -184,7 +184,7 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 			if (fifoCapacity == 0)
 				fifoCapacity = (fifo.getConsRate() >= fifo.getProdRate()) ? fifo.getConsRate() : fifo.getProdRate();
 				
-			application.getFifos().get(f.getKey()).set_capacity(fifoCapacity+10);
+			application.getFifos().get(f.getKey()).set_capacity(fifoCapacity);
 		}
 	}
 	
