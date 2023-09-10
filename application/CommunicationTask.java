@@ -85,6 +85,10 @@ public class CommunicationTask extends Actor{
 		return this.usedCrossbar;
 	}
 	
+	@Override
+	public String toString() {
+		return this.getName();
+	}
 	public void setRuntimeFromInterconnects(double scaleFactor) {
 		// this method set the runtime and the interconnects
 		assert this.usedInterconnects != null : "Must calculate the pass beforehand...";
