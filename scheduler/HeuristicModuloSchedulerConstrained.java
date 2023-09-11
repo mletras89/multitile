@@ -134,7 +134,13 @@ private HashMap<Integer, CommunicationTask> setCommunicationTasks;
 			  Transfer writeTransfer = new Transfer(f.getValue().getSource(),f.getValue());
 			  writeTransfer.setType(TRANSFER_TYPE.WRITE);
 			  //Queue<PassTransferOverArchitecture> writeInterconnects = this.calculatePathOfTransfer(writeTransfer, bindings);
-			  CommunicationTask actorW = new CommunicationTask("writeTask::"+fifoName);
+			  CommunicationTask actorW = null;
+			  if (!f.getValue().isCompositeChannel())
+				  actorW = new CommunicationTask("writeTask::"+fifoName);
+			  else {
+				  CompositeFifo mrb = (CompositeFifo)f.getValue();
+				  actorW = new CommunicationTask(mrb.getWriter().getName());
+			  }
 			  actorW.setType(ACTOR_TYPE.WRITE_COMMUNICATION_TASK);
 			  actorW.setInputs(1);
 			  actorW.setFifo(f.getValue());
@@ -173,10 +179,10 @@ private HashMap<Integer, CommunicationTask> setCommunicationTasks;
 					  Transfer readTransfer = new Transfer(fs.getValue().getDestination(),f.getValue());
 					  readTransfer.setType(TRANSFER_TYPE.READ);
 					  //Queue<PassTransferOverArchitecture> readInterconnects = this.calculatePathOfTransfer(readTransfer, bindings);
-					  CommunicationTask actorR = new CommunicationTask("readTask::"+fifoName+"::"+counter++);
+					  CommunicationTask actorR = new CommunicationTask("readTask::"+fs.getValue().getName());   //+fifoName+"::"+counter++);
 					  actorR.setType(ACTOR_TYPE.READ_COMMUNICATION_TASK);
 					  actorR.setInputs(1);
-					  actorR.setFifo(f.getValue());
+					  actorR.setFifo(f.getValue()); //!!!
 					  //actorR.setUsedInterconnects(readInterconnects);
 					  actorR.setTransfer(readTransfer);
 					  //actorR.setRuntimeFromInterconnects(this.scaleFactor);
@@ -186,7 +192,7 @@ private HashMap<Integer, CommunicationTask> setCommunicationTasks;
 					  ArrayList<CommunicationTask> listReads = actorReads.get(fs.getValue().getDestination().getId());
 					  list.add(actorR);
 					  setCommunicationTasks.put(actorR.getId(),actorR);
-					  actorReads.put(fs.getValue().getSource().getId(), listReads);
+					  actorReads.put(fs.getValue().getDestination().getId(), listReads);
 				  }
 			  }
 			  
@@ -242,7 +248,7 @@ private HashMap<Integer, CommunicationTask> setCommunicationTasks;
 				  int upperBound = _upperBound;
 				  
 				  this.P = upperBound;
-				  System.out.println("P "+this.P+" lower "+lowerBound+" upper "+upperBound+" state "+state);
+				  //System.out.println("P "+this.P+" lower "+lowerBound+" upper "+upperBound+" state "+state);
 				  if(!calculateStartTimes(bindings)) {
 					  _lowerBound = _upperBound;
 					  _upperBound += this.MII;
@@ -254,7 +260,7 @@ private HashMap<Integer, CommunicationTask> setCommunicationTasks;
 					  this.P = lowerBound + (upperBound-lowerBound)/2;
 					  state = calculateStartTimes(bindings);
 					  
-					  System.out.println("P "+this.P+" lower "+lowerBound+" upper "+upperBound+" state "+state);
+					  //System.out.println("P "+this.P+" lower "+lowerBound+" upper "+upperBound+" state "+state);
 					  if (lowerBound == upperBound)
 						  break;
 					  
@@ -346,13 +352,13 @@ private HashMap<Integer, CommunicationTask> setCommunicationTasks;
 			  PCOUNT.put(actor.getKey(), getPCOUNT(actor.getValue()));
 			  SUCC.put(actor.getKey(), getSUCC(actor.getValue()));
 		  }
-		  System.out.println("Testing period "+this.P);
+		  //System.out.println("Testing period "+this.P);
 		  
 		  while(!V.isEmpty()) {
 			  List<Integer> removeV = new ArrayList<>();
 			  for (int k = 0 ; k < V.size();k++) {
 				  int v = V.get(k);
-				  System.out.println("Scheduling actor "+application.getActors().get(v).getName());
+				  //System.out.println("Scheduling actor "+application.getActors().get(v).getName());
 				  /* Check whether data dependences are satisfied */
 				  if (PCOUNT.get(v) == 0) {
 					  HashMap<CommunicationTask,Integer> startTimes = new HashMap<>();
@@ -371,7 +377,7 @@ private HashMap<Integer, CommunicationTask> setCommunicationTasks;
 						  wholeExecTime += infoBoundResourcesCTask.getKey();
 						  //System.out.println("Write "+c.getName()+" costs "+infoBoundResourcesCTask.getKey());
 					  }
-					  System.out.println("Scheduling actor "+application.getActors().get(v).getName()+" discreteRuntime "+discreteRuntime + " wholeExecTime "+wholeExecTime);
+					  //System.out.println("Scheduling actor "+application.getActors().get(v).getName()+" discreteRuntime "+discreteRuntime + " wholeExecTime "+wholeExecTime);
 					  
 					  int start = startTime.get(v);
 					  //System.out.println("here1 ");
@@ -391,7 +397,7 @@ private HashMap<Integer, CommunicationTask> setCommunicationTasks;
 					  // first check if I can use the suggested start time
 					  //for(MyEntry<Integer,Integer> q : candidateStartTimes) {
 					  //startTime.put(v, startTime.get(v)-1);
-					  System.out.println("startTIME!!! "+startTime.get(v)+" upperBound "+(startTime.get(v)+this.P) + " startTime.get(v) % P "+startTime.get(v) % this.P+" PERIOD "+this.P );
+					  //System.out.println("startTIME!!! "+startTime.get(v)+" upperBound "+(startTime.get(v)+this.P) + " startTime.get(v) % P "+startTime.get(v) % this.P+" PERIOD "+this.P );
 					  for(int startT = startTime.get(v); startT < startTime.get(v)+this.P; startT++) {
 						  if(U.canInsertIntervalUtilizationTable(v, boundResources, startT, startT+wholeExecTime ,wholeExecTime)) {
 							  // propose a start time for each communication task 
@@ -435,8 +441,8 @@ private HashMap<Integer, CommunicationTask> setCommunicationTasks;
 								  MyEntry<Integer,ArrayList<Integer>> infoBoundResourcesCTask = this.getBoundResources(bindings, c.getId());
 								  ArrayList<Integer> listBoundResources = infoBoundResourcesCTask.getValue();
 								  successSchedule = U.insertIntervalUtilizationTable(c.getId(),listBoundResources , sp.getValue(), sp.getValue() + c.getDiscretizedRuntime() , c.getDiscretizedRuntime());
-								  U.printUtilizationTable(application.getActors(), setCommunicationTasks, coreTypes);
-								  System.out.println("Tryng to insert "+c.getName()+"at "+sp.getValue()+" on "+listBoundResources+" length "+c.getDiscretizedRuntime());
+								  //U.printUtilizationTable(application.getActors(), setCommunicationTasks, coreTypes);
+								  //System.out.println("Tryng to insert "+c.getName()+"at "+sp.getValue()+" on "+listBoundResources+" length "+c.getDiscretizedRuntime());
 								  assert successSchedule : "This must not happen";
 							  }
 							  if (startT>= start) 
@@ -471,7 +477,7 @@ private HashMap<Integer, CommunicationTask> setCommunicationTasks;
 						  int maxVal = startTime.get(w) > (startTime.get(v)+ wholeExecTime)  ? startTime.get(w) : (startTime.get(v)+wholeExecTime);
 						  startTime.put(w,maxVal);
 					  }
-					  System.out.println("scheduled "+application.getActors().get(v).getName());
+					  //System.out.println("scheduled "+application.getActors().get(v).getName());
 					  removeV.add(v);
 					  break;
 				  }
@@ -662,7 +668,10 @@ private HashMap<Integer, CommunicationTask> setCommunicationTasks;
 			// including in the bound resources list, the core triggering the read of the write
 			  Actor operator = null;
 			  if (comm.getType() == ACTOR_TYPE.READ_COMMUNICATION_TASK) 
-				  operator = application.getActors().get( comm.getFifo().getDestination().getId() ) ;
+				  if (comm.getFifoFromMRB() != null)
+					  operator = application.getActors().get( comm.getFifoFromMRB().getDestination().getId());
+				  else
+					  operator = application.getActors().get( comm.getFifo().getDestination().getId() ) ;
 			  else
 				  operator = application.getActors().get( comm.getFifo().getSource().getId() ) ;
 			  assert operator != null;
