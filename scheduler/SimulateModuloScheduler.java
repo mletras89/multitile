@@ -96,7 +96,8 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 	public int getMakeSpan() {
 		ArrayList<Integer> endTimes = new ArrayList<>();
 		for(TimeSlot t : schedulePipelinedActions) {
-			endTimes.add(t.getEndTime());
+			if (t.getIteration() == 0)
+				endTimes.add(t.getEndTime());
 		}
 		if (endTimes.size() == 0)
 			return 0;
@@ -137,39 +138,83 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 			if (f.getValue().isCompositeChannel())
 				readsMRB.put(f.getKey(), 0);
 		}
-		ArrayList<TimeSlot> l = new ArrayList<>();
+		
+		//ArrayList<TimeSlot> l = new ArrayList<>();
 		for(TimeSlot t :  schedulePipelinedActions) {
-			Processor p = architecture.isProcessor(t.getResourceId());
-			if(heuristic.getSetCommunicationTasks().containsKey(t.getActorId()) && p == null && !l.contains(t) ) {
-				CommunicationTask communication = null;
-				if (heuristic.getSetCommunicationTasks().containsKey(t.getActorId()) )
-					communication = heuristic.getSetCommunicationTasks().get(t.getActorId());
-				assert communication != null : "This should never happen";
+			if(application.getActors().containsKey(t.getActorId())) {
+				// it is an actor
+				Actor actor = application.getActors().get(t.getActorId());
+				int currentIteration = t.getIteration();
+				HashMap<String,TimeSlot> reads = new HashMap<>();
+				HashMap<String,TimeSlot> writes = new HashMap<>();
 				
-				Fifo fifo = communication.getFifo();
-				//System.err.println("fifo:"+fifo.getName()+"CONS: "+fifo.getProdRate()+" PRD:"+fifo.getConsRate());
-				int nTokens = 0;
-				double insertTime = t.getEndTime()*scaleFactor;
-				if (communication.getType() == ACTOR_TYPE.WRITE_COMMUNICATION_TASK) 
-					nTokens += fifo.getConsRate();
-				if (communication.getType() == ACTOR_TYPE.READ_COMMUNICATION_TASK) {
-					nTokens -= fifo.getProdRate();
-					if(t.getLength() == 0)
-						insertTime += 0000000000000000000000001;  // this trick to track the reads from local memories
+				//System.out.println("Firing "+actor.getName()+" from "+t.getStartTime()+" to "+t.getEndTime()+" current iteration "+currentIteration);
+				
+				for(TimeSlot tp : schedulePipelinedActions) {
+					if (currentIteration == tp.getIteration() &&  !application.getActors().containsKey(tp.getActorId())) {
+						// then it is a communication task, check if it is read or write of actor
+						assert heuristic.getSetCommunicationTasks().containsKey(tp.getActorId()) : "This must happen!";
+						CommunicationTask cTask = heuristic.getSetCommunicationTasks().get(tp.getActorId());
+						// writeTasks
+						if (cTask.getFifo().getSource().getId() == actor.getId() && cTask.getType() == ACTOR_TYPE.WRITE_COMMUNICATION_TASK)
+							writes.put(cTask.getName(), tp);
+						if (cTask.getFifo().getDestination().getId() == actor.getId() && cTask.getType() == ACTOR_TYPE.READ_COMMUNICATION_TASK )
+							reads.put(cTask.getName(), tp);
+					} 
+				}
+				// smallest startTime of reads
+				int minStartReads = Integer.MAX_VALUE;
+				for(TimeSlot tp : reads.values()) {
+					minStartReads = (tp.getStartTime() < minStartReads) ? tp.getStartTime() : minStartReads;
+					//System.out.println("\tRead  "+heuristic.getSetCommunicationTasks().get(tp.getActorId()).getName()+" iteration "+tp.getIteration());
+				}
+				if (minStartReads == Integer.MAX_VALUE)
+					minStartReads = t.getStartTime();
+				
+				int maxEndWrites = Integer.MIN_VALUE;
+				for(TimeSlot tp : writes.values()) {
+					maxEndWrites = (tp.getEndTime() > maxEndWrites) ? tp.getEndTime() : maxEndWrites;
+					//System.out.println("\tWrite  "+heuristic.getSetCommunicationTasks().get(tp.getActorId()).getName()+" iteration "+tp.getIteration());
+				}
+				if (maxEndWrites == Integer.MIN_VALUE)
+					maxEndWrites = t.getEndTime();
+				
+				// now check that at the beginning of the first read, there exists enough spaces at the outputs
+				checkAndIncreseTargetFifos(actor, capacityFifo,mapTokensCounting, minStartReads);
+				// remove all the reads after the execution of the actor
+				for(TimeSlot tp : reads.values()) {
+					CommunicationTask cTask = heuristic.getSetCommunicationTasks().get(tp.getActorId());
+					int insertTime =  maxEndWrites; //;t.getEndTime();
+					Fifo fifo = cTask.getFifo();
+					int nTokens = -1*fifo.getProdRate();
+					//if(t.getLength() == 0)
+					//	insertTime += 0000000000000000000000001;  // this trick to track the reads from local memories
 					if(fifo.isCompositeChannel())
 						readsMRB.put(fifo.getId(), readsMRB.get(fifo.getId())+1);
-					// before read I have to adjust the capacities of those fifos connected at the output of the actor reading this fifo
-					checkAndIncreseTargetFifos(fifo, capacityFifo, mapTokensCounting, insertTime);
+					insertCommunicationsInSchedule(mapTokensCounting, fifo, nTokens, insertTime, readsMRB);
+					//update the capacity
+					TreeMap<Double,Integer> tokensCounting = mapTokensCounting.get(fifo.getId());
+					int fifoCapacity = Collections.max(tokensCounting.values());
+					if (capacityFifo.get(fifo.getId()) < fifoCapacity)
+						capacityFifo.put(fifo.getId(), fifoCapacity);	
 				}
-				insertCommunicationsInSchedule(mapTokensCounting, fifo, nTokens, insertTime, readsMRB);
-				l.add(t);
-				//update the capacity
-				TreeMap<Double,Integer> tokensCounting = mapTokensCounting.get(fifo.getId());
-				int fifoCapacity = Collections.max(tokensCounting.values());
-				if (capacityFifo.get(fifo.getId()) < fifoCapacity)
-					capacityFifo.put(fifo.getId(), fifoCapacity);				
+				for(TimeSlot tp : writes.values()) {
+					CommunicationTask cTask = heuristic.getSetCommunicationTasks().get(tp.getActorId());
+					int insertTime = tp.getEndTime();
+					Fifo fifo = cTask.getFifo();
+					int nTokens = fifo.getConsRate();
+					insertCommunicationsInSchedule(mapTokensCounting, fifo, nTokens, insertTime, readsMRB);
+					//update the capacity
+					TreeMap<Double,Integer> tokensCounting = mapTokensCounting.get(fifo.getId());
+					int fifoCapacity = Collections.max(tokensCounting.values());
+					if (capacityFifo.get(fifo.getId()) < fifoCapacity)
+						capacityFifo.put(fifo.getId(), fifoCapacity);
+				}
+				//System.out.println("mapTokensCounting "+mapTokensCounting);
+				//System.out.println("Fifo capacity "+capacityFifo);
 			}
 		}
+
 		//printCommunicationsInSchedule(mapTokensCounting);
 		// then set the FIFO capacities
 		for(Map.Entry<Integer, Integer> f: capacityFifo.entrySet()) {
@@ -200,6 +245,15 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 		}
 	}
 	
+	public void checkAndIncreseTargetFifos(Actor actor, HashMap<Integer,Integer> capacityFifo,HashMap<Integer, TreeMap<Double,Integer> > mapTokensCounting, double time){
+		for(Fifo f : actor.getOutputFifos()) {
+			int cons = f.getConsRate();
+			int storedTokens = checkCurrentStoredTokens(mapTokensCounting, f, time);
+			if (capacityFifo.get(f.getId()) <  storedTokens + cons)
+				capacityFifo.put(f.getId() ,  storedTokens + cons);
+		}
+	}
+	
 	public void checkAndIncreseTargetFifos(Fifo fifo, HashMap<Integer,Integer> capacityFifo,HashMap<Integer, TreeMap<Double,Integer> > mapTokensCounting, double time){
 		Actor destination = fifo.getDestination();
 		for(Fifo f : destination.getOutputFifos()) {
@@ -216,7 +270,6 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 		// in case of negative, tokens must be consumed
 		//HashMap<Integer, TreeMap<Integer,Integer> > result = mapTokensCounting;
 		TreeMap<Double,Integer> tokensCounting = mapTokensCounting.get(fifo.getId());
-		
 		int count =0 ;
 		for(Map.Entry<Double, Integer> t : tokensCounting.entrySet()) {
 			if( t.getKey() <= time )
@@ -350,6 +403,17 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 	}
 	
 	public Queue<TimeSlot> getSchedulePipelinedActions(){
+		// order queue
+		ArrayList<TimeSlot> q = new ArrayList<TimeSlot>(schedulePipelinedActions);
+		q.sort((o1,o2) -> {
+			int result = o1.getStartTime() - o2.getStartTime();
+			if (result == 0) result = o1.getLength() - o2.getLength();
+					return result;
+			});
+		
+		
+		schedulePipelinedActions = new LinkedList<TimeSlot>(q);
+		
 		return this.schedulePipelinedActions;
 	}
 	
