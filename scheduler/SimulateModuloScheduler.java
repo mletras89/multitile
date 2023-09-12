@@ -148,19 +148,23 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 				HashMap<String,TimeSlot> reads = new HashMap<>();
 				HashMap<String,TimeSlot> writes = new HashMap<>();
 				
-				//System.out.println("Firing "+actor.getName()+" from "+t.getStartTime()+" to "+t.getEndTime()+" current iteration "+currentIteration);
+				//System.out.println("Analysis actor "+actor.getName()+" from "+t.getStartTime()+" to "+t.getEndTime()+" current iteration "+currentIteration);
 				
-				for(TimeSlot tp : schedulePipelinedActions) {
-					if (currentIteration == tp.getIteration() &&  !application.getActors().containsKey(tp.getActorId())) {
-						// then it is a communication task, check if it is read or write of actor
-						assert heuristic.getSetCommunicationTasks().containsKey(tp.getActorId()) : "This must happen!";
-						CommunicationTask cTask = heuristic.getSetCommunicationTasks().get(tp.getActorId());
-						// writeTasks
-						if (cTask.getFifo().getSource().getId() == actor.getId() && cTask.getType() == ACTOR_TYPE.WRITE_COMMUNICATION_TASK)
-							writes.put(cTask.getName(), tp);
-						if (cTask.getFifo().getDestination().getId() == actor.getId() && cTask.getType() == ACTOR_TYPE.READ_COMMUNICATION_TASK )
-							reads.put(cTask.getName(), tp);
-					} 
+				for(CommunicationTask ct : heuristic.getActorReads().get(actor.getId())) {
+					for(TimeSlot tp : schedulePipelinedActions) {
+						if (currentIteration == tp.getIteration() && ct.getId() == tp.getActorId()) { //       !application.getActors().containsKey(tp.getActorId())) {
+							reads.put(ct.getName(), tp);
+							//System.out.println("CTask read "+ct.getName());
+						}
+					}
+				}
+				for(CommunicationTask ct :heuristic.getActorWrites().get(actor.getId())) {
+					for(TimeSlot tp : schedulePipelinedActions) {
+						if (currentIteration == tp.getIteration() && ct.getId() == tp.getActorId()) { // !application.getActors().containsKey(tp.getActorId())) {
+							writes.put(ct.getName(), tp);
+							//System.out.println("CTask write "+ct.getName());
+						}
+					}
 				}
 				// smallest startTime of reads
 				int minStartReads = Integer.MAX_VALUE;
@@ -253,7 +257,7 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 				capacityFifo.put(f.getId() ,  storedTokens + cons);
 		}
 	}
-	
+	/*
 	public void checkAndIncreseTargetFifos(Fifo fifo, HashMap<Integer,Integer> capacityFifo,HashMap<Integer, TreeMap<Double,Integer> > mapTokensCounting, double time){
 		Actor destination = fifo.getDestination();
 		for(Fifo f : destination.getOutputFifos()) {
@@ -262,7 +266,7 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 			if (capacityFifo.get(f.getId()) <  storedTokens + prod)
 				capacityFifo.put(f.getId() ,  storedTokens + prod);
 		}
-	}
+	}*/
 	
 	public int checkCurrentStoredTokens(HashMap<Integer, TreeMap<Double,Integer> > mapTokensCounting, Fifo fifo, double time) {
 		// tokens might be positive or negative
