@@ -78,20 +78,24 @@ public class HeuristicModuloSchedulerConstrained extends BaseScheduler implement
   private HashMap<Integer, ArrayList<CommunicationTask>> actorReads;
   private HashMap<Integer, ArrayList<CommunicationTask>> actorWrites;
   
-  public HashMap<Integer, ArrayList<CommunicationTask>> getActorReads() {
+  
+  private HashMap<CommunicationTask, MyEntry<Integer,ArrayList<Integer>>> infoBoundResourcesCTask;
+  private HashMap<Actor, MyEntry<Integer,ArrayList<Integer>>> infoBoundResourcesTask;
+  
+  private HashMap<Integer, CommunicationTask> setCommunicationTasks;
+  
+  public HashMap<Integer, CommunicationTask> getSetCommunicationTasks() {
+	return setCommunicationTasks;
+  }
+/*  public HashMap<Integer, ArrayList<CommunicationTask>> getActorReads() {
 	return actorReads;
   }
 
   public HashMap<Integer, ArrayList<CommunicationTask>> getActorWrites() {
 	return actorWrites;
-  }
+  }*/
+	  
   
-private HashMap<Integer, CommunicationTask> setCommunicationTasks;
-  
-  public HashMap<Integer, CommunicationTask> getSetCommunicationTasks() {
-	return setCommunicationTasks;
-  }
-
 	public HeuristicModuloSchedulerConstrained(Architecture architecture, Application application, ArrayList<String> coreTypes, double scaleFactor){
 		  super();
 		  //this.resourceOcupation = new HashMap<>();
@@ -139,7 +143,7 @@ private HashMap<Integer, CommunicationTask> setCommunicationTasks;
 				  actorW = new CommunicationTask("writeTask::"+fifoName);
 			  else {
 				  CompositeFifo mrb = (CompositeFifo)f.getValue();
-				  actorW = new CommunicationTask(mrb.getWriter().getName());
+				  actorW = new CommunicationTask("writeTask::"+mrb.getWriter().getName());
 			  }
 			  actorW.setType(ACTOR_TYPE.WRITE_COMMUNICATION_TASK);
 			  actorW.setInputs(1);
@@ -190,7 +194,7 @@ private HashMap<Integer, CommunicationTask> setCommunicationTasks;
 					  actorR.setFifoFromMRB(fs.getValue());
 					  
 					  ArrayList<CommunicationTask> listReads = actorReads.get(fs.getValue().getDestination().getId());
-					  list.add(actorR);
+					  listReads.add(actorR);
 					  setCommunicationTasks.put(actorR.getId(),actorR);
 					  actorReads.put(fs.getValue().getDestination().getId(), listReads);
 				  }
@@ -223,9 +227,18 @@ private HashMap<Integer, CommunicationTask> setCommunicationTasks;
 	  }
 	  
 	  public void printRoutingsInfo() {
-		  for(Map.Entry<Integer, CommunicationTask> s : setCommunicationTasks.entrySet()) {
-			  CommunicationTask c = s.getValue();
-			  System.out.println("Communicaiton task "+c.getName()+" routing "+c.getUsedInterconnects()+" time "+c.getDiscretizedRuntime());
+		  for(Map.Entry<CommunicationTask, MyEntry<Integer,ArrayList<Integer>>> iCTask : infoBoundResourcesCTask.entrySet()) {
+			  CommunicationTask c = iCTask.getKey();
+			  System.out.print("Communication task "+c.getName()+" routing ");//+c.getUsedInterconnects()+" time "+c.getDiscretizedRuntime());
+			  for(int idResource : iCTask.getValue().getValue()) {
+				  if (this.getArchitecture().getCrossbar(idResource) != null) 
+					  System.out.print(this.getArchitecture().getCrossbar(idResource).getName()+" ");
+				  if (this.getArchitecture().getNoC().getId() == idResource) 
+					  System.out.print(this.getArchitecture().getNoC().getName()+" ");
+				  if (this.getArchitecture().getProcessor(idResource) != null) 
+					  System.out.print(this.getArchitecture().getProcessor(idResource).getName()+" ");
+			  }
+			  System.out.println("time task "+c.getDiscretizedRuntime()+" time map "+iCTask.getKey());
 		  }
 	  }
 	  
@@ -360,7 +373,20 @@ private HashMap<Integer, CommunicationTask> setCommunicationTasks;
 			  PCOUNT.put(actor.getKey(), getPCOUNT(actor.getValue()));
 			  SUCC.put(actor.getKey(), getSUCC(actor.getValue()));
 		  }
-		  //System.out.println("Testing period "+this.P);
+		  System.out.println("Testing period "+this.P);
+		  
+		  // fill the map of bound resouruces
+		  this.infoBoundResourcesCTask = new HashMap<>();
+		  this.infoBoundResourcesTask = new HashMap<>();
+		  
+		  for(CommunicationTask c : setCommunicationTasks.values()) {
+			  MyEntry<Integer,ArrayList<Integer>> infoBoundCTask = this.getBoundResources(bindings, c.getId());
+			  infoBoundResourcesCTask.put(c, infoBoundCTask);
+		  }
+		  for(Actor a : this.getApplication().getActors().values()) {
+			  MyEntry<Integer,ArrayList<Integer>> infoBoundResources = this.getBoundResources(bindings, a.getId());
+			  infoBoundResourcesTask.put(a, infoBoundResources);
+		  }
 		  
 		  while(!V.isEmpty()) {
 			  List<Integer> removeV = new ArrayList<>();
@@ -370,22 +396,25 @@ private HashMap<Integer, CommunicationTask> setCommunicationTasks;
 				  /* Check whether data dependences are satisfied */
 				  if (PCOUNT.get(v) == 0) {
 					  HashMap<CommunicationTask,Integer> startTimes = new HashMap<>();
-					  MyEntry<Integer,ArrayList<Integer>> infoBoundResources = this.getBoundResources(bindings, v);
+					  MyEntry<Integer,ArrayList<Integer>> infoBoundResources =  infoBoundResourcesTask.get(this.getApplication().getActors().get(v));  //   this.getBoundResources(bindings, v);
 					  ArrayList<Integer> boundResources = infoBoundResources.getValue();
 					  int discreteRuntime = infoBoundResources.getKey();
 					  
 					  int wholeExecTime = discreteRuntime;
+					  
 					  for(CommunicationTask  c: actorReads.get(v)) {
-						  MyEntry<Integer,ArrayList<Integer>> infoBoundResourcesCTask = this.getBoundResources(bindings, c.getId());
-						  wholeExecTime += infoBoundResourcesCTask.getKey();
-						  //System.out.println("Read "+c.getName()+" costs "+infoBoundResourcesCTask.getKey());
+						  wholeExecTime += c.getDiscretizedRuntime();
+						  //MyEntry<Integer,ArrayList<Integer>> infoBoundResourcesC = infoBoundResourcesCTask.get(c);  //   this.getBoundResources(bindings, c.getId());
+						  //wholeExecTime += infoBoundResourcesC.getKey();
+						  System.out.println("Read "+c.getName()+" costs "+c.getDiscretizedRuntime());
 					  }
 					  for(CommunicationTask  c: actorWrites.get(v)) {
-						  MyEntry<Integer,ArrayList<Integer>> infoBoundResourcesCTask = this.getBoundResources(bindings, c.getId());
-						  wholeExecTime += infoBoundResourcesCTask.getKey();
-						  //System.out.println("Write "+c.getName()+" costs "+infoBoundResourcesCTask.getKey());
+						  wholeExecTime += c.getDiscretizedRuntime();
+						  //MyEntry<Integer,ArrayList<Integer>> infoBoundResourcesC = infoBoundResourcesCTask.get(c); //this.getBoundResources(bindings, c.getId());
+						  //wholeExecTime += infoBoundResourcesC.getKey();
+						  System.out.println("Write "+c.getName()+" costs "+c.getDiscretizedRuntime());
 					  }
-					  //System.out.println("Scheduling actor "+application.getActors().get(v).getName()+" discreteRuntime "+discreteRuntime + " wholeExecTime "+wholeExecTime);
+					  System.out.println("Comms of actor "+application.getActors().get(v).getName()+" discreteRuntime "+discreteRuntime + " wholeExecTime "+wholeExecTime);
 					  
 					  int start = startTime.get(v);
 					  //System.out.println("here1 ");
@@ -427,8 +456,8 @@ private HashMap<Integer, CommunicationTask> setCommunicationTasks;
 							  ArrayList<Boolean> canSchedule = new ArrayList<>();
 							  for(Map.Entry<CommunicationTask, Integer> sp : startTimes.entrySet()) {
 								  CommunicationTask c = sp.getKey();
-								  MyEntry<Integer,ArrayList<Integer>> infoBoundResourcesCTask = this.getBoundResources(bindings, c.getId());
-								  if(U.canInsertIntervalUtilizationTable(c.getId(), infoBoundResourcesCTask.getValue(), sp.getValue(), sp.getValue() +  c.getDiscretizedRuntime(), c.getDiscretizedRuntime()))
+								  MyEntry<Integer,ArrayList<Integer>> infoBoundResourcesC =   infoBoundResourcesCTask.get(c);     //this.getBoundResources(bindings, c.getId());
+								  if(U.canInsertIntervalUtilizationTable(c.getId(), infoBoundResourcesC.getValue(), sp.getValue(), sp.getValue() +  c.getDiscretizedRuntime(), c.getDiscretizedRuntime()))
 									  canSchedule.add(true);
 								  else
 									  canSchedule.add(false);
@@ -446,13 +475,13 @@ private HashMap<Integer, CommunicationTask> setCommunicationTasks;
 							  assert successSchedule : "This must not happen";
 							  for(Map.Entry<CommunicationTask, Integer> sp : startTimes.entrySet()) {
 								  CommunicationTask c = sp.getKey();
-								  MyEntry<Integer,ArrayList<Integer>> infoBoundResourcesCTask = this.getBoundResources(bindings, c.getId());
-								  ArrayList<Integer> listBoundResources = infoBoundResourcesCTask.getValue();
-								  successSchedule = U.insertIntervalUtilizationTable(c.getId(),listBoundResources , sp.getValue(), sp.getValue() + c.getDiscretizedRuntime() , c.getDiscretizedRuntime());
+								  MyEntry<Integer,ArrayList<Integer>> infoBoundResourcesC = infoBoundResourcesCTask.get(c); // this.getBoundResources(bindings, c.getId());
+								  successSchedule = U.insertIntervalUtilizationTable(c.getId(), infoBoundResourcesC.getValue() , sp.getValue(), sp.getValue() + c.getDiscretizedRuntime() , c.getDiscretizedRuntime());
 								  //U.printUtilizationTable(application.getActors(), setCommunicationTasks, coreTypes);
-								  //System.out.println("Tryng to insert "+c.getName()+"at "+sp.getValue()+" on "+listBoundResources+" length "+c.getDiscretizedRuntime());
 								  assert successSchedule : "This must not happen";
 							  }
+							  System.out.println("Scheduling "+this.getApplication().getActors().get(v).getName()+"!");
+							  U.printUtilizationTable(application.getActors(), setCommunicationTasks, coreTypes);
 							  if (startT>= start) 
 								  startTime.put(v, startT);
 						      else {
@@ -685,8 +714,11 @@ private HashMap<Integer, CommunicationTask> setCommunicationTasks;
 			  assert operator != null;
 			  int coreId = bindings.getActorProcessorBindings().get(operator.getId()).getTarget().getId();
 			  boundResources.add(coreId);
+			  //System.out.println("Operator "+comm.getName()+" bound resoruces "+boundResources);
 		  }else
 			  assert false : "This should not happen!!!!";
+		  
+		  
 		  
 		  MyEntry<Integer,ArrayList<Integer>> result = new MyEntry<Integer,ArrayList<Integer>>(discreteRuntime,boundResources);
 		  
