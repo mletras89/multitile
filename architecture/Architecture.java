@@ -118,6 +118,7 @@ public class Architecture{
 		  Tile clonedTile = new Tile(t.getValue());
 		  tiles.put(clonedTile.getId(), clonedTile);
 	  }
+	  
 	  this.noc = new NoC(another.getNoC());
 	  this.globalMemory = new GlobalMemory(another.getGlobalMemory()); 
   }
@@ -378,6 +379,19 @@ public class Architecture{
 	  }
 	  return null;
   }
+  
+  public Processor getProcessor(String nameProc) {
+	  Processor proc = null;
+	  for(Map.Entry<Integer, Tile>  t : this.tiles.entrySet()) {
+		  for(Map.Entry<Integer, Processor> p :t.getValue().getProcessors().entrySet()) {
+			  if(p.getValue().getName().compareTo(nameProc) == 0)
+				  return p.getValue();
+		  }
+		  
+	  }
+	  return proc;
+  }
+  
   
   public Processor isProcessor(int resourceId) {
 	  Processor processor = null;
