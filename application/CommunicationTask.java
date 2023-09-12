@@ -117,6 +117,8 @@ public class CommunicationTask extends Actor{
 			double lengthTransfer = Collections.max(transferTimes);
 			this.runtime = lengthTransfer;
 			this.discretizedRuntime = (int)Math.ceil(lengthTransfer/scaleFactor);
+			if (this.discretizedRuntime < 1)
+				this.discretizedRuntime = 1;
 		}
 		
 	}
