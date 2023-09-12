@@ -87,14 +87,14 @@ public class HeuristicModuloSchedulerConstrained extends BaseScheduler implement
   public HashMap<Integer, CommunicationTask> getSetCommunicationTasks() {
 	return setCommunicationTasks;
   }
-/*  public HashMap<Integer, ArrayList<CommunicationTask>> getActorReads() {
-	return actorReads;
+  
+  public HashMap<Integer, ArrayList<CommunicationTask>> getActorReads() {
+	return this.actorReads;
   }
 
   public HashMap<Integer, ArrayList<CommunicationTask>> getActorWrites() {
-	return actorWrites;
-  }*/
-	  
+	return this.actorWrites;
+  }	  
   
 	public HeuristicModuloSchedulerConstrained(Architecture architecture, Application application, ArrayList<String> coreTypes, double scaleFactor){
 		  super();
@@ -122,14 +122,14 @@ public class HeuristicModuloSchedulerConstrained extends BaseScheduler implement
   
 	  public void setApplicationWithMessages() {
 		  setCommunicationTasks = new HashMap<>(); 
-		  actorReads = new HashMap<>();
-		  actorWrites = new HashMap<>();
+		  this.actorReads = new HashMap<>();
+		  this.actorWrites = new HashMap<>();
 		  
 		  // copy the actors
 		  for(Map.Entry<Integer, Actor> a : application.getActors().entrySet()) {
 			  // create a new actor
-			  actorReads.put(a.getKey(), new ArrayList<>());
-			  actorWrites.put(a.getKey(), new ArrayList<>());
+			  this.actorReads.put(a.getKey(), new ArrayList<>());
+			  this.actorWrites.put(a.getKey(), new ArrayList<>());
 		  }
 		  // generate the communication tasks
 		  for(Map.Entry<Integer, Fifo> f : application.getFifos().entrySet()) {
@@ -155,7 +155,7 @@ public class HeuristicModuloSchedulerConstrained extends BaseScheduler implement
 			  ArrayList<CommunicationTask> list = actorWrites.get(f.getValue().getSource().getId());
 			  list.add(actorW);
 			  setCommunicationTasks.put(actorW.getId(),actorW);
-			  actorWrites.put(f.getValue().getSource().getId(), list);
+			  this.actorWrites.put(f.getValue().getSource().getId(), list);
 			  
 			  if (!f.getValue().isCompositeChannel()) {
 				  Transfer readTransfer = new Transfer(f.getValue().getDestination(),f.getValue());
@@ -173,7 +173,7 @@ public class HeuristicModuloSchedulerConstrained extends BaseScheduler implement
 				  ArrayList<CommunicationTask> listReads = actorReads.get(f.getValue().getDestination().getId());
 				  listReads.add(actorR);
 				  setCommunicationTasks.put(actorR.getId(),actorR);
-				  actorReads.put(f.getValue().getDestination().getId(), listReads);
+				  this.actorReads.put(f.getValue().getDestination().getId(), listReads);
 			  }
 			  else {
 				  CompositeFifo mrb = (CompositeFifo)f.getValue();
@@ -196,7 +196,7 @@ public class HeuristicModuloSchedulerConstrained extends BaseScheduler implement
 					  ArrayList<CommunicationTask> listReads = actorReads.get(fs.getValue().getDestination().getId());
 					  listReads.add(actorR);
 					  setCommunicationTasks.put(actorR.getId(),actorR);
-					  actorReads.put(fs.getValue().getDestination().getId(), listReads);
+					  this.actorReads.put(fs.getValue().getDestination().getId(), listReads);
 				  }
 			  }
 			  
@@ -207,14 +207,14 @@ public class HeuristicModuloSchedulerConstrained extends BaseScheduler implement
 		  // generate the communication tasks
 		  for(Map.Entry<Integer, Actor> a : application.getActors().entrySet()) {
 			  if(a.getValue().getType() == ACTOR_TYPE.ACTOR || a.getValue().getType() == ACTOR_TYPE.MULTICAST) {
-				  for(CommunicationTask c : actorWrites.get(a.getKey())) {
+				  for(CommunicationTask c : this.actorWrites.get(a.getKey())) {
 					  Transfer transfer = c.getTransfer();
 					  Queue<PassTransferOverArchitecture> setInterconnects = this.calculatePathOfTransfer(transfer, bindings);
 					  c.setUsedInterconnects(setInterconnects);
 					  c.setRuntimeFromInterconnects(this.scaleFactor);
 					  setCommunicationTasks.put(c.getId(), c);
 				  }
-				  for(CommunicationTask c : actorReads.get(a.getKey())) {
+				  for(CommunicationTask c : this.actorReads.get(a.getKey())) {
 					  Transfer transfer = c.getTransfer();
 					  Queue<PassTransferOverArchitecture> setInterconnects = this.calculatePathOfTransfer(transfer, bindings);
 					  c.setUsedInterconnects(setInterconnects);
@@ -373,7 +373,7 @@ public class HeuristicModuloSchedulerConstrained extends BaseScheduler implement
 			  PCOUNT.put(actor.getKey(), getPCOUNT(actor.getValue()));
 			  SUCC.put(actor.getKey(), getSUCC(actor.getValue()));
 		  }
-		  System.out.println("Testing period "+this.P);
+		  //System.out.println("Testing period "+this.P);
 		  
 		  // fill the map of bound resouruces
 		  this.infoBoundResourcesCTask = new HashMap<>();
@@ -402,19 +402,15 @@ public class HeuristicModuloSchedulerConstrained extends BaseScheduler implement
 					  
 					  int wholeExecTime = discreteRuntime;
 					  
-					  for(CommunicationTask  c: actorReads.get(v)) {
+					  for(CommunicationTask  c: this.actorReads.get(v)) {
 						  wholeExecTime += c.getDiscretizedRuntime();
-						  //MyEntry<Integer,ArrayList<Integer>> infoBoundResourcesC = infoBoundResourcesCTask.get(c);  //   this.getBoundResources(bindings, c.getId());
-						  //wholeExecTime += infoBoundResourcesC.getKey();
-						  System.out.println("Read "+c.getName()+" costs "+c.getDiscretizedRuntime());
+						  //System.out.println("Read "+c.getName()+" costs "+c.getDiscretizedRuntime());
 					  }
-					  for(CommunicationTask  c: actorWrites.get(v)) {
+					  for(CommunicationTask  c: this.actorWrites.get(v)) {
 						  wholeExecTime += c.getDiscretizedRuntime();
-						  //MyEntry<Integer,ArrayList<Integer>> infoBoundResourcesC = infoBoundResourcesCTask.get(c); //this.getBoundResources(bindings, c.getId());
-						  //wholeExecTime += infoBoundResourcesC.getKey();
-						  System.out.println("Write "+c.getName()+" costs "+c.getDiscretizedRuntime());
+						  //System.out.println("Write "+c.getName()+" costs "+c.getDiscretizedRuntime());
 					  }
-					  System.out.println("Comms of actor "+application.getActors().get(v).getName()+" discreteRuntime "+discreteRuntime + " wholeExecTime "+wholeExecTime);
+					  //System.out.println("Comms of actor "+application.getActors().get(v).getName()+" discreteRuntime "+discreteRuntime + " wholeExecTime "+wholeExecTime);
 					  
 					  int start = startTime.get(v);
 					  //System.out.println("here1 ");
@@ -428,13 +424,6 @@ public class HeuristicModuloSchedulerConstrained extends BaseScheduler implement
 					  
 					  boolean state = false;
 					  //System.out.println("start "+start);
-					  //int upperBound = start % this.P;
-					  //System.out.println("Upper bound "+upperBound);
-					  //System.exit(1);
-					  // first check if I can use the suggested start time
-					  //for(MyEntry<Integer,Integer> q : candidateStartTimes) {
-					  //startTime.put(v, startTime.get(v)-1);
-					  //System.out.println("startTIME!!! "+startTime.get(v)+" upperBound "+(startTime.get(v)+this.P) + " startTime.get(v) % P "+startTime.get(v) % this.P+" PERIOD "+this.P );
 					  for(int startT = startTime.get(v); startT < startTime.get(v)+this.P; startT++) {
 						  if(U.canInsertIntervalUtilizationTable(v, boundResources, startT, startT+wholeExecTime ,wholeExecTime)) {
 							  // propose a start time for each communication task 
@@ -442,13 +431,13 @@ public class HeuristicModuloSchedulerConstrained extends BaseScheduler implement
 							  // first set the reads
 							  int taskStart = startT;
 							  int lengthReads = 0;
-							  for(CommunicationTask c : actorReads.get(v)) {
+							  for(CommunicationTask c : this.actorReads.get(v)) {
 								  startTimes.put(c, taskStart);
 								  taskStart += c.getDiscretizedRuntime();
 								  lengthReads += c.getDiscretizedRuntime();
 							  }
 							  taskStart += discreteRuntime;
-							  for(CommunicationTask c : actorWrites.get(v)) {
+							  for(CommunicationTask c : this.actorWrites.get(v)) {
 								  startTimes.put(c, taskStart);
 								  taskStart += c.getDiscretizedRuntime();
 							  }
@@ -480,8 +469,8 @@ public class HeuristicModuloSchedulerConstrained extends BaseScheduler implement
 								  //U.printUtilizationTable(application.getActors(), setCommunicationTasks, coreTypes);
 								  assert successSchedule : "This must not happen";
 							  }
-							  System.out.println("Scheduling "+this.getApplication().getActors().get(v).getName()+"!");
-							  U.printUtilizationTable(application.getActors(), setCommunicationTasks, coreTypes);
+							  //System.out.println("Scheduling "+this.getApplication().getActors().get(v).getName()+"!");
+							  //U.printUtilizationTable(application.getActors(), setCommunicationTasks, coreTypes);
 							  if (startT>= start) 
 								  startTime.put(v, startT);
 						      else {
@@ -496,14 +485,14 @@ public class HeuristicModuloSchedulerConstrained extends BaseScheduler implement
 						  return false;
 					  // update info for communication tasks
 					  int taskStart = startTime.get(v);
-					  for(CommunicationTask c : actorReads.get(v)) {
+					  for(CommunicationTask c : this.actorReads.get(v)) {
 						  timeInfoActors.put(c.getId(), new TimeSlot(c.getId(), taskStart, taskStart + c.getDiscretizedRuntime()));
 						  taskStart += c.getDiscretizedRuntime();
 					  }
 					  // update info for actor
 					  timeInfoActors.put(v, new TimeSlot(v, taskStart,taskStart + discreteRuntime ));
 					  taskStart += discreteRuntime;
-					  for(CommunicationTask c : actorWrites.get(v)) {
+					  for(CommunicationTask c : this.actorWrites.get(v)) {
 						  timeInfoActors.put(c.getId(), new TimeSlot(c.getId(), taskStart, taskStart + c.getDiscretizedRuntime()));
 						  taskStart += c.getDiscretizedRuntime();
 					  }
