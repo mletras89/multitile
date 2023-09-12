@@ -173,7 +173,7 @@ private HashMap<Integer, CommunicationTask> setCommunicationTasks;
 			  }
 			  else {
 				  CompositeFifo mrb = (CompositeFifo)f.getValue();
-				  int counter = 0;
+				  //int counter = 0;
 				  for(Map.Entry<Integer, Fifo> fs : mrb.getReaders().entrySet()) {
 					  
 					  Transfer readTransfer = new Transfer(fs.getValue().getDestination(),f.getValue());
@@ -221,6 +221,14 @@ private HashMap<Integer, CommunicationTask> setCommunicationTasks;
 		  
 		  }
 	  }
+	  
+	  public void printRoutingsInfo() {
+		  for(Map.Entry<Integer, CommunicationTask> s : setCommunicationTasks.entrySet()) {
+			  CommunicationTask c = s.getValue();
+			  System.out.println("Communicaiton task "+c.getName()+" routing "+c.getUsedInterconnects()+" time "+c.getDiscretizedRuntime());
+		  }
+	  }
+	  
 	  
 	  @Override
 	  public void schedule(Bindings bindings) {
