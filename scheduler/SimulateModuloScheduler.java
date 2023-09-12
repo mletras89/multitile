@@ -369,18 +369,37 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 			}
 		}
 		
-		// order queue
-		ArrayList<TimeSlot> q = new ArrayList<TimeSlot>(schedulePipelinedActions);
-		q.sort((o1,o2) -> {
-			int result = o1.getStartTime() - o2.getStartTime();
-			if (result == 0) result = o1.getLength() - o2.getLength();
-					return result;
-			});
-		
-		
-		schedulePipelinedActions = new LinkedList<TimeSlot>(q);
+		sortSchedulePipelinedActions();
 	}	
-		
+    public void	sortSchedulePipelinedActions() {
+    	// order queue
+    			ArrayList<TimeSlot> q = new ArrayList<TimeSlot>(schedulePipelinedActions);
+    			q.sort((o1,o2) -> {
+    				int result = o1.getStartTime() - o2.getStartTime();
+    				if (result == 0) {
+    					if (o1.getLength() == 0 && o2.getLength()==0) {
+    						// both are communication tasks
+    						CommunicationTask c1 = heuristic.getSetCommunicationTasks().get(o1.getActorId());
+    						assert c1 != null : "C1 must never be null!";
+    						CommunicationTask c2 = heuristic.getSetCommunicationTasks().get(o2.getActorId());
+    						assert c2 != null : "C2 must never be null!";
+    						if (c1.getType() == ACTOR_TYPE.READ_COMMUNICATION_TASK && c2.getType() == ACTOR_TYPE.READ_COMMUNICATION_TASK) {
+    							return 0;
+    						}else if (c1.getType() == ACTOR_TYPE.READ_COMMUNICATION_TASK && c2.getType() == ACTOR_TYPE.WRITE_COMMUNICATION_TASK) {
+    							return 1;
+    						}else if (c1.getType() == ACTOR_TYPE.WRITE_COMMUNICATION_TASK && c2.getType() == ACTOR_TYPE.READ_COMMUNICATION_TASK) {
+    							return -1;
+    						}else
+    							return 0;
+    					}
+    					result = o1.getLength() - o2.getLength();
+    				}
+    						return result;
+    				});
+    			
+    			
+    			schedulePipelinedActions = new LinkedList<TimeSlot>(q);
+    }	
 	public void savePipelinedSchedule(String path, String fileName, double scaleFactor) throws IOException{
 		try{
 			File memUtilStatics = new File(path+"/"+fileName+".csv");
@@ -404,15 +423,7 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 	
 	public Queue<TimeSlot> getSchedulePipelinedActions(){
 		// order queue
-		ArrayList<TimeSlot> q = new ArrayList<TimeSlot>(schedulePipelinedActions);
-		q.sort((o1,o2) -> {
-			int result = o1.getStartTime() - o2.getStartTime();
-			if (result == 0) result = o1.getLength() - o2.getLength();
-					return result;
-			});
-		
-		
-		schedulePipelinedActions = new LinkedList<TimeSlot>(q);
+		sortSchedulePipelinedActions();
 		
 		return this.schedulePipelinedActions;
 	}
