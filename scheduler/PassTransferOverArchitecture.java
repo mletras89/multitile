@@ -57,6 +57,23 @@ public class PassTransferOverArchitecture {
     SCRATCHPAD
   }
 
+  @Override
+  public String toString() {
+	  String val = "";
+	  switch(this.type) {
+	  	case CROSSBAR:
+	  		val = crossbar.getName();
+	  	break;
+	  	case NOC:
+	  		val = noc.getName();
+	  	break;
+	  	case SCRATCHPAD:
+	  		val = processor.getName();
+	  	break;	  	
+	  }
+	  return val;
+  }
+  
   public PassTransferOverArchitecture(Crossbar crossbar){
     this.crossbar = crossbar;
     this.type = PASS_TYPE.CROSSBAR;
