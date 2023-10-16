@@ -97,6 +97,11 @@ public class Actor{
     this.setType(ACTOR_TYPE.ACTOR);
   }
 
+  @Override
+  public String toString() {
+	  return this.name;
+  }
+  
   public boolean equals(Actor actor){
     return this.getId() == actor.getId() && this.getName().equals(actor.getName());
   }
