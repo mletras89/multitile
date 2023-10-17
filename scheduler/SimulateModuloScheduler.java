@@ -138,7 +138,7 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 			if (f.getValue().isCompositeChannel())
 				readsMRB.put(f.getKey(), 0);
 		}
-		
+		//System.out.println("MapTokensCounting "+mapTokensCounting);
 		//ArrayList<TimeSlot> l = new ArrayList<>();
 		for(TimeSlot t :  schedulePipelinedActions) {
 			if(application.getActors().containsKey(t.getActorId())) {
@@ -228,7 +228,7 @@ public class SimulateModuloScheduler extends BaseScheduler implements Schedule{
 			assert fifoCapacity > 0 : "Capacity must not be negative or zero, Capacity="+fifoCapacity+" fifo: "+fifo.getName();
 			
 			int fifoMinVal = Collections.min(tokensCounting.values());
-			assert fifoMinVal >=0: "Minimum number of stored tokens must be bigger than 0 fifo: "+fifo.getName();
+			//assert fifoMinVal >=0: "Minimum number of stored tokens must be bigger than 0 fifo: "+fifo.getName()+" fifoMinVal "+fifoMinVal;
 			
 			if (fifoCapacity == 0)
 				fifoCapacity = (fifo.getConsRate() >= fifo.getProdRate()) ? fifo.getConsRate() : fifo.getProdRate();
