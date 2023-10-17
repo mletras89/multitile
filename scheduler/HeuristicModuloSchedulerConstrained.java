@@ -394,7 +394,7 @@ public class HeuristicModuloSchedulerConstrained extends BaseScheduler implement
 				  int v = V.get(k);
 				  //System.out.println("Scheduling actor "+application.getActors().get(v).getName());
 				  /* Check whether data dependences are satisfied */
-				  if (PCOUNT.get(v) == 0) {
+				  if (PCOUNT.get(v) <= 0) {
 					  HashMap<CommunicationTask,Integer> startTimes = new HashMap<>();
 					  MyEntry<Integer,ArrayList<Integer>> infoBoundResources =  infoBoundResourcesTask.get(this.getApplication().getActors().get(v));  //   this.getBoundResources(bindings, v);
 					  ArrayList<Integer> boundResources = infoBoundResources.getValue();
@@ -519,7 +519,8 @@ public class HeuristicModuloSchedulerConstrained extends BaseScheduler implement
 		  Set<Integer> predecessors = new HashSet<Integer>();
 		  for(Fifo fifo : v.getInputFifos()) {
 			  if(!fifo.isFifoRecurrence()) {
-				  predecessors.add( fifo.getSource().getId() );
+				  if (fifo.get_tokens() == 0)
+					  predecessors.add( fifo.getSource().getId() );
 			  }
 		  }
 		  return predecessors.size();
