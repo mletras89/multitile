@@ -537,6 +537,80 @@ public class Application{
 	  	  }
 	    }
 	    
+	    public void setApplicationTopologicalOrder() {
+	    	// topological order from source to sink
+	    	HashMap<String, Integer> inDegreeMap = new HashMap<>();
+	    	for(Actor actor : this.getActors().values()) {
+	    		inDegreeMap.put(actor.getName(),actor.getInputFifos().size());
+	    	}
+	    	System.out.println("inDegreeMap "+inDegreeMap);
+	    	Queue<Actor> queue = new LinkedList<>();
+	    	
+	    	while(inDegreeMap.size() > 0) {
+	    		String actorKey = null;
+	    		for(Map.Entry<String, Integer> e : inDegreeMap.entrySet()) {
+	    			 if (e.getValue() == 0 ) {
+	    				 actorKey = e.getKey();
+	    				 break;
+	    			 }
+	    		}
+	    		assert actorKey != null;
+	    		System.out.println("selected actor "+actorKey);
+	    		for(Fifo f : this.getActor(actorKey).getOutputFifos()) {
+	    			String dst = f.getDestination().getName();
+	    			System.out.println("dst "+dst);
+	    			int currentVal = inDegreeMap.get(dst);
+	    			inDegreeMap.put(dst, currentVal - 1);
+	    		}
+	    		inDegreeMap.remove(actorKey);
+	    		queue.add(this.getActor(actorKey));
+	    	}
+	    	int nElements = queue.size();
+	    	int priority = 0;
+	    	for(int i = 0; i < nElements; i++) {
+	    		Actor actor = queue.poll();
+	    		this.getActors().get(actor.getId()).setPriority(priority++);
+	    	}
+	    }
+	    
+	    
+	    public void setInverseTopologicalOrder() {
+	    	// topological order from sink to source
+	    	HashMap<String, Integer> inDegreeMap = new HashMap<>();
+	    	for(Actor actor : this.getActors().values()) {
+	    		inDegreeMap.put(actor.getName(),actor.getInputFifos().size());
+	    	}
+	    	System.out.println("inDegreeMap "+inDegreeMap);
+	    	Stack<Actor> stack = new Stack<>();
+	    	
+	    	while(inDegreeMap.size() > 0) {
+	    		String actorKey = null;
+	    		for(Map.Entry<String, Integer> e : inDegreeMap.entrySet()) {
+	    			 if (e.getValue() == 0 ) {
+	    				 actorKey = e.getKey();
+	    				 break;
+	    			 }
+	    		}
+	    		assert actorKey != null;
+	    		System.out.println("selected actor "+actorKey);
+	    		for(Fifo f : this.getActor(actorKey).getOutputFifos()) {
+	    			String dst = f.getDestination().getName();
+	    			System.out.println("dst "+dst);
+	    			int currentVal = inDegreeMap.get(dst);
+	    			inDegreeMap.put(dst, currentVal - 1);
+	    		}
+	    		inDegreeMap.remove(actorKey);
+	    		stack.push(this.getActor(actorKey));
+	    	}
+	    	int nElements = stack.size();
+	    	int priority = 0;
+	    	for(int i = 0; i < nElements; i++) {
+	    		Actor actor = stack.pop();
+	    		this.getActors().get(actor.getId()).setPriority(priority++);
+	    	}
+	    }
+	    
+	    
 	    public int getMaxActorPriority() {
 	    	ArrayList<Actor> actors = new ArrayList<>(this.actors.values());
 		  	actors.sort((o1,o2) ->  o1.getPriority() - o2.getPriority());
