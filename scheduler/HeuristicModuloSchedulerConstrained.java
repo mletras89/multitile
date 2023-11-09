@@ -168,6 +168,7 @@ public class HeuristicModuloSchedulerConstrained extends BaseScheduler implement
 				  //actorR.setUsedInterconnects(readInterconnects);
 				  actorR.setTransfer(readTransfer);
 				  //actorR.setRuntimeFromInterconnects(this.scaleFactor);
+				  // the priority is not longer the priority of the actor firing, instead it is the number of interconnects to visit
 				  actorR.setPriority( application.getActors().get(f.getValue().getDestination().getId()).getPriority());
 				  
 				  ArrayList<CommunicationTask> listReads = actorReads.get(f.getValue().getDestination().getId());
@@ -431,13 +432,19 @@ public class HeuristicModuloSchedulerConstrained extends BaseScheduler implement
 							  // first set the reads
 							  int taskStart = startT;
 							  int lengthReads = 0;
-							  for(CommunicationTask c : this.actorReads.get(v)) {
+							  ArrayList<CommunicationTask> actorReads =  this.actorReads.get(v);
+							  // then sort according to the new priory
+							  actorReads.sort((o1,o2) ->  o1.calculatePriorityFromInterconnects() - o2.calculatePriorityFromInterconnects());
+							  for(CommunicationTask c : actorReads) {
 								  startTimes.put(c, taskStart);
 								  taskStart += c.getDiscretizedRuntime();
 								  lengthReads += c.getDiscretizedRuntime();
 							  }
 							  taskStart += discreteRuntime;
-							  for(CommunicationTask c : this.actorWrites.get(v)) {
+							  ArrayList<CommunicationTask> actorWrites =  this.actorWrites.get(v);
+							  // then sort according to the new priory
+							  actorWrites.sort((o1,o2) ->  o1.calculatePriorityFromInterconnects() - o2.calculatePriorityFromInterconnects());
+							  for(CommunicationTask c : actorWrites) {
 								  startTimes.put(c, taskStart);
 								  taskStart += c.getDiscretizedRuntime();
 							  }

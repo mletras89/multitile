@@ -122,6 +122,18 @@ public class CommunicationTask extends Actor{
 		}
 		
 	}
+	
+	public int calculatePriorityFromInterconnects() {
+		int priorityInterconnects = 7;
+		if (this.usedNoC == null && this.usedCrossbar.size() == 0)
+			return priorityInterconnects;
+		// priority of each crossbar 1
+		// priotity of the NoC 2
+		priorityInterconnects -= this.usedCrossbar.size();
+		if (this.usedNoC != null)
+			priorityInterconnects -= 2;	
+		return priorityInterconnects;
+	}
   
 	public CommunicationTask(String name){
 		 super(name);
